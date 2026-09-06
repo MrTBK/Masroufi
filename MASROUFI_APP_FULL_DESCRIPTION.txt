@@ -1,0 +1,142 @@
+================================================================
+MASROUFI — مصروفي — FULL APPLICATION DESCRIPTION
+================================================================
+Last updated: 2026-09-06. Status: MVP v1.0 + Track A shipped and verified.
+This file describes the ENTIRE application: product, features, tech,
+architecture, database, flows, QA evidence, files, toolchain, and roadmap.
+
+----------------------------------------------------------------
+1. IDENTITY
+----------------------------------------------------------------
+- Name: Masroufi (Arabic: مصروفي, French: Masroufi).
+- What: original Tunisia-focused personal-finance Android app (offline-first).
+- Branding centralized in lib/core/config/brand.dart (rename in one place).
+- Android applicationId: com.masroufi.app. Version 1.0.0+1.
+- Visual identity: original teal-green (#0E7C5B) + white coin icon, splash.
+- Inspired by the finance-app category only; no copied code, logos, or IDs.
+
+----------------------------------------------------------------
+2. WHAT THE APP DOES (screens)
+----------------------------------------------------------------
+- Onboarding: choose language (ar/fr/en) -> first wallet + starting balance
+  (+ optional name) -> theme -> dashboard. No account, skippable optionals.
+- Dashboard (/): total balance, month income / expenses / remaining, budget
+  bar, recent transactions, top spending categories, quick actions with a
+  dominant Expense button, bottom nav (Dashboard/History/Wallets/More).
+- Add/Edit form (/add?type=expense|income|transfer): amount first (numeric
+  keyboard, autofocus), category dropdown, wallet dropdown(s), date picker,
+  note, save. Transfer = from/to wallets, never counted as spend.
+- History (/history): search, type chips, wallet/category/date filters,
+  edit on tap, swipe-to-delete (confirm), duplicate on long-press.
+- Wallets (/wallets): create/rename/archive, derived balances, per-wallet
+  history dialog.
+- Categories (/more/categories): 20 Tunisian defaults (Café, Taxi, Louage,
+  Bus, Metro, Fuel, STEG, SONEDE, Internet, Mobile, Groceries, Restaurants,
+  Fast Food, Clothing, Electronics, Household, Health, Entertainment, Gym,
+  Other) translated in 3 languages + custom create/rename/archive.
+  Archiving never breaks history (no FK constraints by design).
+- Monthly budget (/more/budget): one overall budget per month with spent /
+  remaining / percent + over-budget warning; edit/delete.
+- Reports (/more/reports): monthly total, income-vs-expense bars,
+  by-category bars (custom widgets, no chart dependency).
+- Backup (/more/backup): versioned JSON backup (save dialog), validated
+  restore (destructive-confirm), UTF-8-BOM CSV export (Excel-compatible).
+- Settings (/more/settings): language, theme (system/light/dark), user name.
+
+----------------------------------------------------------------
+3. TECH STACK (exact, verified)
+----------------------------------------------------------------
+- Flutter 3.47.2 (stable) / Dart 3.13.2 in ~/flutter; JDK 17 Temurin
+  (~/jdk17); Android SDK 36 + build-tools 36.0.0 + NDK 28.2 (~/Android/Sdk).
+- Packages: flutter_riverpod 2.x, go_router 14.x, drift 2.34 + drift_flutter,
+  path_provider, intl, uuid, csv, file_picker 12 (save/pick; share_plus was
+  REMOVED after its v13 broke the Android build), flutter_lints, drift_dev +
+  build_runner (codegen, dev only). No backend, no analytics, no ads.
+- State: Riverpod. Routing: go_router StatefulShellRoute. DB: Drift/SQLite.
+- Money: ALL amounts are int millimes (10.500 TND = 10500). Parsing accepts
+  12.500 / 12,500 / 1,250.500; formatting e.g. "12.500 د.ت" (ar) /
+  "12.500 TND". No double anywhere in finance math (lib/core/money/).
+
+----------------------------------------------------------------
+4. ARCHITECTURE
+----------------------------------------------------------------
+UI widgets -> Riverpod providers (lib/app/providers.dart) -> repository
+classes (lib/data/repositories/) -> Drift AppDb (lib/data/database/) ->
+SQLite file (app_flutter/masroufi.sqlite on device). No logic in widgets.
+Repos use stable UUID ids + createdAt/updatedAt (sync-ready for V1.2+).
+Tables (schema v1): wallets, categories, transactions (type expense|income|
+transfer; transfer = single row with to_wallet_id), budgets (unique
+year+month), app_settings (language/theme/onboarding_done/user_name).
+Indexes on transactions(date, wallet, category, type). Balances DERIVED
+(initial + income - expense + transfersIn - transfersOut), never stored.
+
+----------------------------------------------------------------
+5. LOCALIZATION / OFFLINE / SECURITY
+----------------------------------------------------------------
+- Hand-rolled EN/FR/AR string tables (lib/core/l10n/strings.dart), no codegen;
+  genuine RTL (Material locale + Directionality), intl dates/numbers.
+- Fully offline: zero network permission for core features; no account.
+- Secrets hygiene: ~/.masroufi/ keystore (4096-bit RSA, 25y) outside git;
+  android/key.properties git-ignored; release signing with debug fallback;
+  secret scan clean. PRIVACY.md + store/privacy-policy.md state: no data
+  leaves the device.
+
+----------------------------------------------------------------
+6. QA EVIDENCE (all executed, none invented)
+----------------------------------------------------------------
+- flutter analyze: No issues. flutter test: 27/27 (money, calc, backup
+  codec incl. Arabic CSV, full money flow on in-memory DB, widget+RTL).
+- Device matrix on Pixel emulator API 36: 5/5 integration tests
+  (onboarding AR Cash 100 -> 87.500 -> 79.500 -> 579.500 -> transfer
+  479.500/100.000 conserved -> budget 250 -> FR switch -> dark assertion)
+  + on-device backup/CSV round-trip test.
+- Physical device DB pulled: exact end-state verified by SQL.
+- Cold-start screenshot: Arabic RTL dark dashboard, 579.500 total.
+- QA-fixed bugs: MainActivity package crash, zero-balance wallet block,
+  FAB hero-tag collision.
+- Builds: debug APK + release AAB (signed, jarsigner-verified, cert
+  CN=Masroufi Local Release). Artifacts backed up with SHA-256 at
+  ~/masroufi-releases/2026-09-06/ (repo build/ deleted: 4.7 GB -> 7.7 MB).
+- Play assets prepared only (store/ listings EN/FR/AR, checklist). NOTHING
+  published; no Play Console account.
+
+----------------------------------------------------------------
+7. REPO FILE INVENTORY
+----------------------------------------------------------------
+- lib/main.dart (bootstrap) + lib/app/ (app, providers)
+- lib/core/: config/brand, theme, routing/router, l10n/strings, money/
+  (money, calc), utils, widgets (states, icons, tr helper)
+- lib/features/: onboarding, dashboard, transactions (form+history),
+  wallets, categories, budgets, reports, backup (codec+page), settings
+- lib/data/: database (tables, app_db, app_db.g.dart committed) +
+  repositories (wallets, categories, transactions, budgets, settings)
+- test/: money, calc, backup, finance_db, widget (27 tests)
+- integration_test/: qa_matrix_test (5 device tests), io_test (file I/O)
+- android/: app module (ID com.masroufi.app, signing config, icon, splash)
+- docs/: architecture, database, localization, testing, release, product
+- store/: listings en/fr/ar, privacy-policy, release-checklist
+- Root: README, ROADMAP, PRIVACY, MVP_COMPLETION_REPORT,
+  MASROUFI_MASTER_TASKS (source of truth), TASKS_STATUS (summary),
+  this file. Deleted (regenerable): build/, .dart_tool/, IDE noise.
+
+----------------------------------------------------------------
+8. TOOLCHAIN COMMANDS
+----------------------------------------------------------------
+export PATH="$HOME/flutter/bin:$HOME/jdk17/bin:$PATH" JAVA_HOME="$HOME/jdk17"
+ANDROID_HOME="$HOME/Android/Sdk"
+flutter pub get | dart format . | flutter analyze | flutter test
+flutter build apk --debug | flutter build appbundle --release
+flutter test integration_test/qa_matrix_test.dart --no-uninstall (needs AVD:
+avdmanager create avd -n masroufi -k "system-images;android-36;google_apis;x86_64")
+Regenerate DB code: dart run build_runner build --delete-conflicting-outputs.
+
+----------------------------------------------------------------
+9. ROADMAP (explicitly NOT in MVP)
+----------------------------------------------------------------
+V1.1: recurring transactions (migration v2), debts + partial payments,
+savings goals, category budgets, PDF export, reminders, app lock.
+V1.2+: cloud sync/backup, receipt OCR, family budgets. V2: official Tunisian
+integrations, advanced analytics, optional read-only AI queries (never direct
+DB mutation). Prior QA note: emulator `pm clear` flaky -> tests reset DB
+in-test; cold-start once appeared stuck (transient GPU state, not reproduced).
+================================================================
