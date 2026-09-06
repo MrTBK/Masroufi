@@ -251,6 +251,47 @@ POST-MVP: App lock
 POST-MVP acceptance (skip): Debts, Savings, Recurring transactions
 
 ==================================================
+SKILLS / DEVELOPMENT CAPABILITIES
+=================================
+(Audit 2026-09-06. No app code touched in this phase.)
+
+Installed skills (agent skill systems found on host):
+[x] Codex .system skills present (read-only reference): imagegen, openai-docs,
+    plugin-creator, review-agent, skill-creator, skill-installer
+    in /home/tbk/.codex/skills/.system — inspected, none installed/loaded
+    (they target Codex runtime + MCP tools not present here).
+[x] @opencode-ai/plugin 1.18.16 (node dep in ~/.config/opencode) — present.
+
+Built-in capabilities already available (no install needed):
+[x] File ops: read / write / edit / glob / grep
+[x] Shell: bash (git, flutter, dart, sdkmanager, adb, gradle)
+[x] Planning: todowrite, task subagents (explore/general)
+[x] Network: webfetch, websearch (used: pub.dev versions, skills catalog)
+[x] Q&A: question tool (used for applicationId decision)
+[~] skill tool: only 'customize-opencode' offered (opencode self-config only,
+    explicitly NOT for app code — correctly unused).
+
+Relevance verdicts (Flutter/Dart/Drift/Riverpod/Android/RTL needs):
+[ ] imagegen — REJECTED: needs image_gen tool or OPENAI_API_KEY; icon done via PIL.
+[ ] openai-docs — REJECTED: needs Docs MCP + OpenAI API; no AI features in MVP.
+[ ] plugin-creator — REJECTED: Codex plugin scaffolding, unrelated.
+[ ] skill-creator — REJECTED: meta-skill for authoring skills, no app value.
+[ ] skill-installer — REJECTED: installs Codex skills; curated catalog contains
+    NO Flutter/Dart/Drift/Riverpod/Android/RTL skill (verified list 2026-09-06).
+[ ] security-best-practices (curated, not installed) — REJECTED for now: general
+    guidance only; MVP already applies its substance (no secrets, min permissions,
+    offline-first). Revisit for V1.1 app-lock work if needed.
+[~] review-agent workflow (defect-first checklist) — AVAILABLE as reference for
+    V1.1 self-reviews; Codex-delegation parts not applicable here.
+
+Unavailable capabilities:
+[!] No Flutter/Dart/Drift/Riverpod/RTL skill exists in any reachable catalog.
+[!] No MCP servers configured; none required (all needs covered by shell+SDK).
+[!] No Android device/emulator connected (pre-existing, unrelated to skills).
+
+Installation problems: none (nothing needed installation).
+
+==================================================
 FUTURE / POST-MVP
 =================
 
