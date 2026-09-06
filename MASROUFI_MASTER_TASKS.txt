@@ -6,10 +6,10 @@ MASTER DEVELOPMENT TASKS
 
 PROJECT STATUS
 
-Current Phase: DONE — MVP v1.0 complete, awaiting instructions
-Current Task: none — MVP complete
+Current Phase: DONE — Track A shipped (QA on emulator, signed AAB, Play assets)
+Current Task: none — Track A complete; Track B (V1.1) not started
 Overall Progress: 100% (MVP scope)
-Last Updated: 2026-09-06 — 27 tests pass, analyze clean, debug APK + release AAB built
+Last Updated: 2026-09-06 — Track A: 5/5 device integration tests pass, signed AAB, Play assets ready
 
 Environment (verified):
 - CachyOS x86_64, Flutter 3.47.2, Dart 3.13.2 (~/flutter)
@@ -51,7 +51,7 @@ Environment (verified):
 [x] Run flutter doctor
 [x] Install missing required tools
 [x] Verify Android build environment
-[!] Verify emulator/device — no device connected; headless builds+tests for MVP
+[x] Verify emulator/device — Pixel AVD API 36 booted, used for full QA matrix
 [x] Inspect available skills
 [x] Use relevant skills
 
@@ -301,3 +301,25 @@ FUTURE / POST-MVP
 - Advanced debts, advanced savings goals, PDF reports, Wear OS, iOS/Web/Desktop
 - Server infra, admin dashboard, push infra, payments, ads, premium subs
 - V1.1 candidates: recurring txns, debts, savings goals, category budgets, PDF, reminders, app lock
+
+==================================================
+TRACK A — SHIP MVP (2026-09-06, all verified)
+==================================================
+
+[x] Emulator created (Pixel, API 36 x86_64, KVM) and booted
+[x] QA matrix 5/5 integration tests pass on device (onboarding AR, expenses,
+    income, transfer conservation, budget, FR switch, dark brightness)
+[x] On-device file I/O test passes (backup JSON + Arabic CSV round-trip)
+[x] Physical SQLite verified (pulled masroufi.sqlite: exact QA end-state)
+[x] Persistence verified (force-stop + cold start, data intact)
+[x] Offline verified (no network permission in manifest)
+[x] Arabic RTL dark dashboard screenshotted on device (579.500 total)
+[x] Blockers fixed from QA: MainActivity package, zero-balance wallet,
+    FAB hero-tag collision
+[x] Local release keystore generated (~/.masroufi, 4096-bit, git-ignored)
+[x] Release signing wired with debug fallback (key.properties git-ignored)
+[x] Signed release AAB built + verified (jarsigner, CN=Masroufi Local Release)
+[x] Play assets prepared, nothing published (store/ listings EN/FR/AR,
+    privacy policy, release checklist)
+[!] pm clear unreliable on emulator (package absent -> "Failed"); tests use
+    in-test DB reset instead — no app impact

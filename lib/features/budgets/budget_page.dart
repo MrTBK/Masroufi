@@ -26,6 +26,7 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => _dialog(context, ref),
         child: const Icon(Icons.edit),
       ),

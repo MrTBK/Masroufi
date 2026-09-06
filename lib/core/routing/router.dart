@@ -97,6 +97,7 @@ class ScaffoldWithNav extends ConsumerWidget {
       body: shell,
       floatingActionButton: shell.currentIndex == 0
           ? FloatingActionButton.extended(
+              heroTag: null,
               onPressed: () => context.push('/add?type=expense'),
               icon: const Icon(Icons.remove),
               label: Text(Strings.get(lang, 'expense')),

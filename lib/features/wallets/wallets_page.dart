@@ -20,6 +20,7 @@ class WalletsPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(Strings.get(lang, 'wallets'))),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => _walletDialog(context, ref, null),
         child: const Icon(Icons.add),
       ),
@@ -130,10 +131,13 @@ class WalletsPage extends ConsumerWidget {
               if (name.isEmpty) return;
               if (w == null) {
                 int initial = 0;
-                try {
-                  initial = Money.parse(balCtl.text);
-                } catch (_) {
-                  return;
+                final t = balCtl.text.trim();
+                if (t.isNotEmpty && !RegExp(r'^[0\s.,]+$').hasMatch(t)) {
+                  try {
+                    initial = Money.parse(t);
+                  } catch (_) {
+                    return;
+                  }
                 }
                 await repo.create(name: name, initialMillimes: initial);
               } else {

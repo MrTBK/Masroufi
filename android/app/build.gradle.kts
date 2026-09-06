@@ -4,6 +4,15 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.io.FileInputStream
+import java.util.Properties
+
+// Local release signing: android/key.properties (git-ignored, never committed).
+// Absent file -> release falls back to debug signing so any checkout still builds.
+val keystorePropsFile = rootProject.file("key.properties")
+val keystoreProps = Properties()
+if (keystorePropsFile.exists()) keystoreProps.load(FileInputStream(keystorePropsFile))
+
 android {
     namespace = "com.masroufi.app"
     compileSdk = flutter.compileSdkVersion
@@ -29,11 +38,24 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        create("masroufiRelease") {
+            if (keystorePropsFile.exists()) {
+                storeFile = file(keystoreProps["storeFile"] as String)
+                storePassword = keystoreProps["storePassword"] as String
+                keyAlias = keystoreProps["keyAlias"] as String
+                keyPassword = keystoreProps["keyPassword"] as String
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (keystorePropsFile.exists()) {
+                signingConfigs.getByName("masroufiRelease")
+            } else {
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }

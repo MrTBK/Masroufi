@@ -24,9 +24,27 @@
   total conserved, transfer excluded from income/expense sums).
 
 ## Build results
-- `flutter build apk --debug`: SUCCESS (`build/app/outputs/flutter-apk/app-debug.apk`)
-- `flutter build appbundle --release`: SUCCESS (59 MB, debug-signed;
-  real keystore deferred — never commit keys)
+- `flutter build apk --debug`: SUCCESS (rebuilt 2026-09-06 with all QA fixes)
+- `flutter build appbundle --release`: SUCCESS (59.9 MB, signed with local
+  release key `~/.masroufi/masroufi-release.jks`; verified via jarsigner,
+  cert CN=Masroufi Local Release). Debug-signing fallback kept when
+  `android/key.properties` is absent.
+
+## Track A — on-device QA (emulator Pixel API 36, 2026-09-06)
+- 5/5 integration tests pass on device: Arabic onboarding (Cash 100),
+  expenses 12.500 + 8, income 500, transfer 100 conservation, budget 250,
+  FR switch, dark-brightness assertion.
+- On-device file I/O test passes: backup JSON + Arabic CSV round-trip.
+- Physical `masroufi.sqlite` pulled: exact QA end-state
+  (Cash 100000, Bank 0, expenses 20500, income 500000, transfer 100000,
+  budget 250000, 20 categories, ar/dark/onboarded).
+- Persistence: force-stop + cold start shows intact Arabic dark dashboard
+  (total 579.500, remaining 479.500, budget 8%).
+- Offline: no network permission in manifest; all flows exercised offline-capable.
+- QA blockers found and fixed: MainActivity package mismatch (startup crash),
+  zero-balance wallet creation blocked, FAB hero-tag collision on tab switch.
+- Play assets prepared in `store/` (listings EN/FR/AR, privacy policy,
+  release checklist). Nothing published; no Play Console account.
 
 ## Known minor issues / limitations
 - On-device QA not performed (no Android device/emulator connected).

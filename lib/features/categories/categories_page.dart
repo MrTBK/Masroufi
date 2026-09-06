@@ -16,6 +16,7 @@ class CategoriesPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(Strings.get(lang, 'category'))),
       floatingActionButton: FloatingActionButton(
+        heroTag: null,
         onPressed: () => _dialog(context, ref, null),
         child: const Icon(Icons.add),
       ),

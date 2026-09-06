@@ -1,4 +1,4 @@
-package com.masroufi.masroufi
+package com.masroufi.app
 
 import io.flutter.embedding.android.FlutterActivity
 

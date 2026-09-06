@@ -44,8 +44,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     });
     try {
       int initial = 0;
-      if (balanceCtl.text.trim().isNotEmpty) {
-        initial = Money.parse(balanceCtl.text.trim());
+      final rawBalance = balanceCtl.text.trim();
+      if (rawBalance.isNotEmpty &&
+          !RegExp(r'^[0\s.,]+$').hasMatch(rawBalance)) {
+        initial = Money.parse(rawBalance);
       }
       final settings = ref.read(settingsRepoProvider);
       await settings.set('language', lang);
