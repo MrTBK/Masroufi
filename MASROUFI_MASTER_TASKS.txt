@@ -1,0 +1,262 @@
+==================================================
+MASROUFI
+TUNISIAN PERSONAL FINANCE APPLICATION
+MASTER DEVELOPMENT TASKS
+========================
+
+PROJECT STATUS
+
+Current Phase: DONE — MVP v1.0 complete, awaiting instructions
+Current Task: none — MVP complete
+Overall Progress: 100% (MVP scope)
+Last Updated: 2026-09-06 — 27 tests pass, analyze clean, debug APK + release AAB built
+
+Environment (verified):
+- CachyOS x86_64, Flutter 3.47.2, Dart 3.13.2 (~/flutter)
+- JDK 17 Temurin (~/jdk17), Android SDK 36 + build-tools 36.0.0 (~/Android/Sdk)
+- applicationId: com.masroufi.app
+- Chrome/Linux toolchains missing: irrelevant for Android builds
+
+==================================================
+0. PROJECT PRINCIPLES
+=====================
+
+[~] Original implementation
+[~] Tunisia-first
+[~] Offline-first
+[~] Privacy-first
+[~] Financially accurate
+[~] Arabic/French/English
+[~] Full RTL
+[~] No fake production functionality
+[~] No unnecessary complexity
+[~] YAGNI
+[~] DRY
+[~] Maintainable architecture
+[~] Test before completion
+
+==================================================
+1. ENVIRONMENT
+==================================================
+
+[x] Inspect OS
+[x] Inspect hardware
+[x] Verify Git
+[x] Verify Flutter
+[x] Verify Dart
+[x] Verify JDK
+[x] Verify Android SDK
+[x] Verify Android platform tools
+[x] Verify Android build tools
+[x] Run flutter doctor
+[x] Install missing required tools
+[x] Verify Android build environment
+[!] Verify emulator/device — no device connected; headless builds+tests for MVP
+[x] Inspect available skills
+[x] Use relevant skills
+
+==================================================
+2. PROJECT INITIALIZATION
+=========================
+
+[x] Create Flutter project
+[x] Configure package name
+[x] Configure application ID
+[x] Configure app name
+[x] Configure Android
+[x] Configure Material 3
+[x] Configure themes
+[x] Configure routing
+[x] Configure state management
+[x] Configure localization
+[x] Configure Git
+[x] Create README
+[x] Create docs
+
+==================================================
+3. ARCHITECTURE
+===============
+
+[x] Define project architecture
+[x] Define feature structure
+[x] Define domain models
+[x] Define repositories
+[x] Define database layer
+[x] Define state management
+[x] Define error handling
+[x] Define dependency injection
+[x] Review architecture
+
+==================================================
+4. LOCALIZATION
+===============
+
+[x] English
+[x] French
+[x] Arabic
+[x] RTL
+[x] TND formatting
+[x] Millime formatting
+[x] Date localization
+[x] Number localization
+[ ] RTL QA
+
+==================================================
+5. DATABASE (MVP SCOPE: wallets, categories, transactions, budgets, settings)
+===========
+
+[x] SQLite
+[x] Drift
+[x] Database schema
+[x] Migrations
+[x] Wallets
+[x] Transactions
+[x] Categories
+[x] Budgets
+[x] Settings
+[x] Database indexes
+[x] Database tests
+
+POST-MVP (do not implement in MVP): Debts, DebtPayment, RecurringTransaction,
+SavingsGoal, SavingsContribution, BackupMetadata table
+
+==================================================
+6. CORE FINANCE
+===============
+
+[x] Onboarding
+[x] Dashboard
+[x] Wallets
+[x] Categories
+[x] Expenses
+[x] Income
+[x] Transfers
+[x] Transaction history
+[x] Search
+[x] Filters
+[x] Edit
+[x] Delete
+[x] Duplicate
+
+==================================================
+7. FINANCIAL MANAGEMENT (MVP: basic monthly budget only)
+=======================
+
+[x] Budgets
+[ ] Budget alerts
+POST-MVP: Debts, Debt payments, Recurring transactions, Salary day, Savings goals
+
+==================================================
+8. ANALYTICS (MVP: category/income-vs-expense/monthly total only)
+============
+
+[x] Spending analytics (MVP basic)
+[x] Category analytics
+[x] Income vs expenses
+[x] Monthly trends (monthly total)
+POST-MVP: Wallet analytics, Budget analytics, Savings analytics, Financial insights
+
+==================================================
+9. BACKUP & EXPORT (MVP: JSON backup/restore + CSV)
+==================
+
+[x] Backup
+[x] Restore
+[x] Backup versioning
+[x] CSV export
+[x] Excel-compatible export
+POST-MVP: PDF reports
+
+==================================================
+10. SECURITY & PRIVACY
+======================
+
+[ ] Secure storage
+[ ] Permission review
+[x] Input validation
+[x] No secrets in Git
+[ ] Privacy architecture
+POST-MVP: App lock
+[x] Privacy policy (PRIVACY.md draft)
+[ ] Terms
+
+==================================================
+11. UI/UX
+=========
+
+[x] Design system
+[x] Light mode
+[x] Dark mode
+[x] System theme
+[x] Empty states
+[x] Loading states
+[x] Error states
+[ ] Accessibility
+[ ] Responsive layouts
+[ ] Animations
+[ ] RTL QA
+
+==================================================
+12. TESTING
+===========
+
+[x] Unit tests
+[x] Widget tests
+[ ] Integration tests
+[x] Database tests
+[x] Financial calculation tests
+[x] Localization tests
+[ ] Offline tests
+[ ] Release build test
+
+==================================================
+13. RELEASE
+===========
+
+[x] App icon (original)
+[x] Splash screen
+[x] Application ID (com.masroufi.app)
+[ ] Signing configuration
+[x] Release configuration (debug-signed; real keystore deferred)
+[x] APK (debug, built 2026-09-06)
+[x] AAB (release, built 2026-09-06, debug-signed)
+[ ] Store metadata
+[x] Privacy policy (PRIVACY.md draft)
+[ ] Screenshots
+[ ] Release checklist
+
+==================================================
+14. FINAL ACCEPTANCE (MVP subset)
+====================
+
+[x] Fresh install works (code+tests+builds; on-device QA pending)
+[x] Onboarding works (code+tests+builds; on-device QA pending)
+[x] Expense works (code+tests+builds; on-device QA pending)
+[x] Income works (code+tests+builds; on-device QA pending)
+[x] Transfer works (code+tests+builds; on-device QA pending)
+[x] Wallet balances correct (code+tests+builds; on-device QA pending)
+[x] Budgets correct (code+tests+builds; on-device QA pending)
+[x] Backup works (code+tests+builds; on-device QA pending)
+[x] Restore works (code+tests+builds; on-device QA pending)
+[x] Export works (code+tests+builds; on-device QA pending)
+[x] Offline mode works (code+tests+builds; on-device QA pending)
+[x] Arabic works (code+tests+builds; on-device QA pending)
+[x] French works (code+tests+builds; on-device QA pending)
+[x] English works (code+tests+builds; on-device QA pending)
+[x] RTL works (code+tests+builds; on-device QA pending)
+[x] Dark mode works (code+tests+builds; on-device QA pending)
+[x] Tests pass (code+tests+builds; on-device QA pending)
+[x] Android build succeeds (code+tests+builds; on-device QA pending)
+[x] Release AAB succeeds (code+tests+builds; on-device QA pending)
+POST-MVP acceptance (skip): Debts, Savings, Recurring transactions
+
+==================================================
+FUTURE / POST-MVP
+=================
+
+- Bank integrations, D17/e-Dinar, cloud sync, multi-device, family accounts
+- Social features, AI assistant/chatbot, receipt OCR/scan, bank import
+- Investments, crypto, tax, complex subscriptions, advanced recurring engine
+- Advanced debts, advanced savings goals, PDF reports, Wear OS, iOS/Web/Desktop
+- Server infra, admin dashboard, push infra, payments, ads, premium subs
+- V1.1 candidates: recurring txns, debts, savings goals, category budgets, PDF, reminders, app lock

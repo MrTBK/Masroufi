@@ -1,0 +1,5 @@
+package com.masroufi.masroufi
+
+import io.flutter.embedding.android.FlutterActivity
+
+class MainActivity : FlutterActivity()

@@ -1,0 +1,18 @@
+# Masroufi — never commit secrets or local data
+.env
+*.env
+*.jks
+*.keystore
+*.p12
+android/key.properties
+android/*.jks
+*.db
+*.sqlite
+*.sqlite-journal
+build/
+.dart_tool/
+.flutter-plugins*
+.pub-cache/
+.idea/
+*.iml
+.DS_Store
