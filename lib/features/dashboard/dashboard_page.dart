@@ -1960,8 +1960,8 @@ class _ExportRow extends ConsumerWidget {
               txnCount: s.txnCount,
               byCategory: s.byCategory,
               categoryNames: {
-                for (final e in s.byCategory.keys)
-                  if (e != null) e: _catName(lang, s.cats, e),
+                for (final e in s.byCategory.keys.whereType<String>())
+                  e: _catName(lang, s.cats, e),
               },
             );
             ByteData? font;
