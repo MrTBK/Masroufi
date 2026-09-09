@@ -44,3 +44,25 @@ flutter:
   assets:
     - assets/fonts/Amiri-Regular.ttf
     - assets/fonts/OFL.txt
+    - assets/fonts/plex/OFL.txt
+  fonts:
+    - family: PlexSans
+      fonts:
+        - asset: assets/fonts/plex/IBMPlexSans.ttf
+          weight: 100
+        - asset: assets/fonts/plex/IBMPlexSans.ttf
+          weight: 200
+        - asset: assets/fonts/plex/IBMPlexSans.ttf
+          weight: 300
+        - asset: assets/fonts/plex/IBMPlexSans.ttf
+          weight: 400
+        - asset: assets/fonts/plex/IBMPlexSans.ttf
+          weight: 500
+        - asset: assets/fonts/plex/IBMPlexSans.ttf
+          weight: 600
+        - asset: assets/fonts/plex/IBMPlexSans.ttf
+          weight: 700
+        - asset: assets/fonts/plex/IBMPlexSans.ttf
+          weight: 800
+        - asset: assets/fonts/plex/IBMPlexSans.ttf
+          weight: 900
