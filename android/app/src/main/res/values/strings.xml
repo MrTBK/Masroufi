@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Masroufi</string>
+    <string name="widget_savings_desc">Masroufi savings goal</string>
     <string name="widget_desc">Masroufi balance and today</string>
 </resources>

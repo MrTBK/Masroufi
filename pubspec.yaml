@@ -1,7 +1,7 @@
 name: masroufi
 description: "Masroufi — Tunisian offline-first personal finance (مصروفي)."
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ^3.13.2
@@ -26,6 +26,8 @@ dependencies:
   timezone: ^0.11.1
   home_widget: ^0.9.4
   crypto: ^3.0.7
+  pdf: ^3.11.3
+  printing: ^5.14.2
 
 dev_dependencies:
   flutter_test:
@@ -39,3 +41,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/fonts/Amiri-Regular.ttf
+    - assets/fonts/OFL.txt

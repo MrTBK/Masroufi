@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Savings-goal widget variant (Track 7): same Kotlin provider
+     (MasroufiWidgetProvider) + separate manifest entry. Reuses the same
+     RemoteViews layout; Dart pushes the top savings goal into the same
+     prefs keys when present (documented fallback: balance view). -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/masroufi_widget"
+    android:description="@string/widget_savings_desc"
+    android:widgetCategory="home_screen"
+    android:resizeMode="horizontal" />

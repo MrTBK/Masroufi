@@ -30,6 +30,20 @@ final masroufiWidgetProvider = Provider<MasroufiWidget>((ref) => MasroufiWidget(
       '${Money.inline(todaySpentMillimes, lang: lang)}',
 );
 
+/// Pure savings-variant builder (unit-tested, Track 7): top goal name +
+/// current/target. Same provider pushes it alongside the balance view.
+({String title, String balance}) savingsWidgetLines({
+  required String goalName,
+  required int currentMillimes,
+  required int targetMillimes,
+  required String lang,
+}) => (
+  title: goalName,
+  balance:
+      '${Money.inline(currentMillimes, lang: lang)} / '
+      '${Money.inline(targetMillimes, lang: lang)}',
+);
+
 class MasroufiWidget {
   /// Push fresh numbers from live repos, then nudge the provider.
   /// Fire-and-forget: callers must not await success.
@@ -50,6 +64,34 @@ class MasroufiWidget {
       await HomeWidget.saveWidgetData<String>('title', lines.title);
       await HomeWidget.saveWidgetData<String>('balance', lines.balance);
       await HomeWidget.saveWidgetData<String>('today', lines.today);
+      // Savings variant (same provider): push the top goal too. The
+      // native provider renders the same layout for both picker entries;
+      // the savings entry documents the goal without a second codebase.
+      try {
+        final goals = await ref.read(savingsRepoProvider).all(
+          includeArchived: false,
+        );
+        if (goals.isNotEmpty) {
+          final top = goals.first;
+          final cur = await ref
+              .read(savingsRepoProvider)
+              .currentAmount(top.id);
+          final sLines = savingsWidgetLines(
+            goalName: top.name,
+            currentMillimes: cur,
+            targetMillimes: top.targetMillimes,
+            lang: lang,
+          );
+          await HomeWidget.saveWidgetData<String>(
+            'savings_title',
+            sLines.title,
+          );
+          await HomeWidget.saveWidgetData<String>(
+            'savings_balance',
+            sLines.balance,
+          );
+        }
+      } catch (_) {}
       await HomeWidget.updateWidget(
         androidName: 'MasroufiWidgetProvider',
         qualifiedAndroidName: 'com.masroufi.app.MasroufiWidgetProvider',

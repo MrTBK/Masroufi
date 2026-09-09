@@ -6,8 +6,15 @@ import '../../core/l10n/strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/design.dart';
 import '../../core/widgets/widgets.dart';
+import 'package:flutter/services.dart';
+import 'package:printing/printing.dart';
+
+import '../../core/export/monthly_statement.dart';
+import '../../core/wealth/net_worth.dart';
 import '../../data/database/app_db.dart';
 import '../../data/database/category_hierarchy.dart';
+import '../../data/repositories/transactions_repo.dart';
+import 'year_review_card.dart';
 
 /// Reports (§16): monthly total, income vs expenses, by-category, monthly
 /// comparison, 6-month trend, budget adherence, savings progress.
@@ -29,7 +36,16 @@ class ReportsPage extends ConsumerWidget {
       for (var i = 5; i >= 0; i--) DateTime(now.year, now.month - i, 1),
     ];
     return Scaffold(
-      appBar: AppBar(title: Text(Strings.get(lang, 'reports'))),
+      appBar: AppBar(
+        title: Text(Strings.get(lang, 'reports')),
+        actions: [
+          IconButton(
+            tooltip: Strings.get(lang, 'exportPdf'),
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: () => _exportPdf(context, ref, lang),
+          ),
+        ],
+      ),
       body: FutureBuilder(
         future: Future.wait([
           db.monthSums(now.year, now.month),
@@ -335,12 +351,84 @@ class ReportsPage extends ConsumerWidget {
                     },
                   ),
               ],
+              _NetWorthSection(db: db, lang: lang),
+              _YearReviewSection(lang: lang),
               const SizedBox(height: AppSpacing.xl),
             ],
           );
         },
       ),
     );
+  }
+
+  /// Monthly PDF export (Track 2): builds the statement from the same
+  /// [AnalyticsRepo]/budget sources as the screen, renders via
+  /// [MonthlyStatementBuilder] with the bundled Amiri font for Arabic
+  /// shaping, then opens the platform share sheet. No schema, no
+  /// permissions, offline.
+  Future<void> _exportPdf(
+    BuildContext context,
+    WidgetRef ref,
+    String lang,
+  ) async {
+    final db = ref.read(appDbProvider);
+    final catsRepo = ref.read(categoriesRepoProvider);
+    final budgets = ref.read(budgetsRepoProvider);
+    final txns = ref.read(transactionsRepoProvider);
+    final now = DateTime.now();
+    final range = (start: DateTime(now.year, now.month, 1), end: now.month == 12
+        ? DateTime(now.year + 1, 1, 1)
+        : DateTime(now.year, now.month + 1, 1));
+    try {
+      final sums = await db.monthSums(now.year, now.month);
+      final byCat = await db.expenseByCategory(now.year, now.month);
+      final cats = await catsRepo.all();
+      final byId = {for (final c in cats) c.id: c};
+      final names = {
+        for (final e in byCat.keys.whereType<String>())
+          e: byId[e] == null
+              ? e
+              : CategoryHierarchy.displayName(lang, byId[e]!, byId),
+      };
+      final monthTxns = await txns.list(
+        TxnFilter(from: range.start, to: range.end, limit: 100000),
+      );
+      final budget = await budgets.getMonth(now.year, now.month);
+      final spent = await budgets.spent(now.year, now.month);
+      final data = MonthlyStatementBuilder.build(
+        year: now.year,
+        month: now.month,
+        incomeMillimes: sums.income,
+        expenseMillimes: sums.expense,
+        txnCount: monthTxns.length,
+        byCategory: byCat,
+        categoryNames: names,
+        budgetMillimes: budget?.amountMillimes,
+        budgetSpentMillimes: budget == null ? null : spent,
+      );
+      ByteData? font;
+      try {
+        font = await rootBundle.load('assets/fonts/Amiri-Regular.ttf');
+      } catch (_) {
+        font = null;
+      }
+      final bytes = await MonthlyStatementBuilder.buildPdf(
+        data: data,
+        lang: lang,
+        arabicFont: font,
+      );
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename:
+            'masroufi_${now.year}-${now.month.toString().padLeft(2, '0')}.pdf',
+      );
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(Strings.get(lang, 'invalidBackup'))),
+        );
+      }
+    }
   }
 
   Widget _barRow(
@@ -371,6 +459,143 @@ class ReportsPage extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Net-worth trend mini-chart (Track 7): documented formula in
+/// [NetWorth], custom bars (no chart dep), never relabeled as anything
+/// else. Data-tested, not pixel-tested.
+class _NetWorthSection extends StatelessWidget {
+  final AppDb db;
+  final String lang;
+  const _NetWorthSection({required this.db, required this.lang});
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder(
+      future: NetWorth.trend(db: db, now: DateTime.now()),
+      builder: (context, snap) {
+        final trend = snap.data ?? const <WorthPoint>[];
+        if (trend.isEmpty) return const SizedBox.shrink();
+        final maxV = trend.map((p) => p.worth).fold(0, (a, b) => a > b ? a : b);
+        final minV = trend.map((p) => p.worth).fold(maxV, (a, b) => a < b ? a : b);
+        final span = (maxV - minV) <= 0 ? 1 : (maxV - minV);
+        return Column(
+          children: [
+            SectionHeader(title: Strings.get(lang, 'netWorth')),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  MoneyText(
+                    millimes: trend.last.worth,
+                    lang: lang,
+                    type: 'neutral',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      for (final p in trend)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 3),
+                            child: Column(
+                              children: [
+                                Container(
+                                  height:
+                                      12 + 64 * (p.worth - minV) / span,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${p.month}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    Strings.get(lang, 'netWorthNote'),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Year-in-review loader (Track 7): yearly aggregates → [YearReviewCard]
+/// (RepaintBoundary, offline share). Data-tested via [YearReviewData].
+class _YearReviewSection extends ConsumerWidget {
+  final String lang;
+  const _YearReviewSection({required this.lang});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final analytics = ref.watch(analyticsRepoProvider);
+    final catsRepo = ref.watch(categoriesRepoProvider);
+    final txns = ref.watch(transactionsRepoProvider);
+    final now = DateTime.now();
+    final start = DateTime(now.year, 1, 1);
+    final end = DateTime(now.year + 1, 1, 1);
+    return FutureBuilder(
+      future: Future.wait([
+        analytics.incomeTotal(start, end),
+        analytics.expenseTotal(start, end),
+        analytics.expenseByCategory(start, end),
+        catsRepo.all(),
+        txns.list(TxnFilter(from: start, to: end, limit: 100000)),
+      ]),
+      builder: (context, snap) {
+        if (!snap.hasData) return const SizedBox.shrink();
+        final income = snap.data![0] as int;
+        final expense = snap.data![1] as int;
+        final byCat = snap.data![2] as Map<String?, int>;
+        final cats = snap.data![3] as List<Category>;
+        final list = snap.data![4] as List<Transaction>;
+        if (income <= 0 && expense <= 0) return const SizedBox.shrink();
+        final byId = {for (final c in cats) c.id: c};
+        final names = {
+          for (final e in byCat.keys.whereType<String>())
+            e: byId[e] == null
+                ? e
+                : CategoryHierarchy.displayName(lang, byId[e]!, byId),
+        };
+        final data = YearReviewData.build(
+          year: now.year,
+          incomeMillimes: income,
+          expenseMillimes: expense,
+          txnCount: list.length,
+          byCategory: byCat,
+          names: names,
+        );
+        return Column(
+          children: [
+            SectionHeader(title: Strings.get(lang, 'yearReview')),
+            YearReviewCard(data: data),
+          ],
+        );
+      },
     );
   }
 }
