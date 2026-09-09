@@ -18,3 +18,14 @@ budget -> Basic reports -> JSON backup/restore -> CSV export -> Settings
 
 Debts, recurring transactions, savings goals, salary mode, category budgets,
 PDF, cloud sync, AI, bank/e-Dinar integrations. See ROADMAP.md.
+
+## Upgrade decisions (Track 3)
+
+- Savings ↔ wallets: documented as designed — savings goals are a
+  separate ledger (default unlinked). Contributing/withdrawing never
+  moves wallet money; wallet balances stay derived from the transaction
+  ledger only. No auto-link; shown inline in the savings page.
+- Exact alarms + boot receiver: stay OFF on demand. Notifications use
+  inexact 20:00 digest scheduling only; a reboot clears alerts until the
+  next launch (documented limitation). No `SCHEDULE_EXACT_ALARM` /
+  `RECEIVE_BOOT_COMPLETED` unless reminders are explicitly enabled.

@@ -1,6 +1,6 @@
 # Release checklist (prepare only — do NOT publish without authorization)
 
-- [x] applicationId `com.masroufi.app`, version 1.0.0+1
+- [x] applicationId `com.masroufi.app`, version 1.1.0+2
 - [x] Original icon + splash, brand green #0E7C5B
 - [x] Debug APK builds; release AAB builds with local keystore
       (`.tooling/keystore/masroufi-release.jks`, git-ignored; `android/key.properties`
