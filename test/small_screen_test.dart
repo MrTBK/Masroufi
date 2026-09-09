@@ -225,5 +225,20 @@ void main() {
       expect(find.text('Add expense'), findsWidgets);
       await unmountClean(t);
     });
+
+    testWidgets('transactions home at 200% text scale stays functional',
+        (t) async {
+      smallSurface(t);
+      addTearDown(
+        () => t.platformDispatcher.textScaleFactorTestValue = 1.0,
+      );
+      t.platformDispatcher.textScaleFactorTestValue = 2.0;
+      final container = await seed(lang: 'en', withBudget: true);
+      await pumpPage(t, container, const TransactionsPage());
+      // Full scroll at double text: any RenderFlex overflow fails here.
+      await scrollThrough(t);
+      expect(find.text('Today'), findsWidgets);
+      await unmountClean(t);
+    });
   });
 }

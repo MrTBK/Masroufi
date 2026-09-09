@@ -474,6 +474,7 @@ class _SplitsSection extends StatelessWidget {
                     type: 'neutral',
                   ),
                   IconButton(
+                    tooltip: Strings.get(lang, 'delete'),
                     icon: const Icon(Icons.delete_outline, size: 20),
                     onPressed: () async {
                       final rest = lines

@@ -84,6 +84,7 @@ class MoneyText extends StatelessWidget {
   final String type; // expense | income | transfer | neutral
   final TextStyle? style;
   final TextAlign? textAlign;
+  final TextOverflow? overflow;
   const MoneyText({
     super.key,
     required this.millimes,
@@ -91,6 +92,7 @@ class MoneyText extends StatelessWidget {
     required this.type,
     this.style,
     this.textAlign,
+    this.overflow,
   });
 
   @override
@@ -135,6 +137,9 @@ class MoneyText extends StatelessWidget {
       child: Text(
         text,
         textAlign: textAlign,
+        overflow: overflow,
+        maxLines: overflow == null ? null : 1,
+        softWrap: overflow == null,
         style: effective,
         semanticsLabel: text,
       ),
@@ -465,29 +470,45 @@ class TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.xs,
-      ),
-      leading: CategoryAvatar(iconKey: iconKey, semanticLabel: title),
-      title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            _typeGlyph,
-            size: 16,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            semanticLabel: type,
+    // Trailing width is constraint-derived (never screen math): at large
+    // text scales the amount ellipsizes instead of eating the tile.
+    return LayoutBuilder(
+      builder: (context, constraints) => ListTile(
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.xs,
+        ),
+        leading: CategoryAvatar(iconKey: iconKey, semanticLabel: title),
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        subtitle: Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis),
+        trailing: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: constraints.maxWidth * 0.45,
           ),
-          const SizedBox(width: 4),
-          MoneyText(millimes: millimes, lang: lang, type: type),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _typeGlyph,
+                size: 16,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+                semanticLabel: type,
+              ),
+              const SizedBox(width: 4),
+              Flexible(
+                child: MoneyText(
+                  millimes: millimes,
+                  lang: lang,
+                  type: type,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+        onTap: onTap,
+        onLongPress: onLongPress,
       ),
-      onTap: onTap,
-      onLongPress: onLongPress,
     );
   }
 }

@@ -92,17 +92,8 @@ class _PickerSheetState extends State<_PickerSheet> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outlineVariant,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
+              // Drag handle comes from the bottom-sheet theme.
+              const SizedBox(height: AppSpacing.xs),
               if (parent == null) ...[
                 Text(
                   Strings.get(lang, 'selectCategory'),

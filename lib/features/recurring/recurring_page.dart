@@ -332,6 +332,7 @@ class RecurringPage extends ConsumerWidget {
                   trailing: end == null
                       ? null
                       : IconButton(
+                          tooltip: Strings.get(lang, 'endDate'),
                           icon: const Icon(Icons.clear),
                           onPressed: () => setS(() => end = null),
                         ),
