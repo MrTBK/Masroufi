@@ -455,7 +455,7 @@ class DashboardPage extends ConsumerWidget {
                 style: Theme.of(context).textTheme.headlineMedium
                     ?.copyWith(fontWeight: FontWeight.bold),
               ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           Strings.get(lang, 'totalSpent'),
           style: Theme.of(context).textTheme.bodySmall
@@ -468,7 +468,7 @@ class DashboardPage extends ConsumerWidget {
           style: Theme.of(context).textTheme.headlineSmall
               ?.copyWith(fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         Text(
           Strings.get(lang, 'totalIncome'),
           style: Theme.of(context).textTheme.bodySmall
@@ -502,7 +502,9 @@ class DashboardPage extends ConsumerWidget {
           label: _catName(lang, d.cats, top[i].key),
           iconKey: _catIcon(d.cats, top[i].key),
           value: top[i].value,
-          color: DonutPalette.colors[i % DonutPalette.colors.length],
+          color: DonutPalette.of(
+            context,
+          )[i % DonutPalette.colors.length],
         ),
     ];
     return Column(
@@ -513,7 +515,7 @@ class DashboardPage extends ConsumerWidget {
         // current month vs previous, direction icon + sentence.
         if (d.momPct != null && d.momPct != 0 && d.curMonthExpense > 0)
           Padding(
-            padding: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Row(
               children: [
                 Icon(
@@ -524,7 +526,7 @@ class DashboardPage extends ConsumerWidget {
                       : AppColors.expense,
                   semanticLabel: '${d.momPct}%',
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     Strings.tpl(
@@ -547,10 +549,10 @@ class DashboardPage extends ConsumerWidget {
             lang: lang,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         for (final s in slices)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Row(
               children: [
                 CategoryAvatar(
@@ -558,7 +560,7 @@ class DashboardPage extends ConsumerWidget {
                   radius: 16,
                   semanticLabel: s.label,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: AppSpacing.md2),
                 Expanded(
                   child: Text(
                     s.label,
@@ -626,7 +628,7 @@ class DashboardPage extends ConsumerWidget {
                         radius: 18,
                         semanticLabel: name,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: AppSpacing.md2),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -722,7 +724,7 @@ class DashboardPage extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: Theme.of(context).textTheme.bodySmall),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           MoneyText(
             millimes: millimes,
             lang: lang,
@@ -730,7 +732,7 @@ class DashboardPage extends ConsumerWidget {
             style: Theme.of(context).textTheme.titleLarge
                 ?.copyWith(fontWeight: FontWeight.bold),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             note,
             style: Theme.of(context).textTheme.bodySmall
@@ -769,12 +771,12 @@ class DashboardPage extends ConsumerWidget {
         SectionHeader(title: Strings.get(lang, 'insights')),
         for (final line in d.insightsLines)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
                   child: Icon(
                     Icons.lightbulb_outline,
                     size: 18,
@@ -782,19 +784,19 @@ class DashboardPage extends ConsumerWidget {
                     semanticLabel: line,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.md2),
                 Expanded(child: Text(line)),
               ],
             ),
           ),
         for (final h in d.healthLines)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(top: 2),
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
                   child: Icon(
                     h.warn ? Icons.warning_amber : Icons.check_circle_outline,
                     size: 18,
@@ -804,7 +806,7 @@ class DashboardPage extends ConsumerWidget {
                     semanticLabel: h.text,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: AppSpacing.md2),
                 Expanded(child: Text(h.text)),
               ],
             ),
@@ -983,7 +985,7 @@ class DashboardPage extends ConsumerWidget {
               ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: AppSpacing.xs),
         for (final week in weeks)
           Row(
             children: [
@@ -1017,7 +1019,7 @@ class DashboardPage extends ConsumerWidget {
                                         v,
                                       ),
                                 child: Container(
-                                  margin: const EdgeInsets.all(2),
+                                  margin: const EdgeInsets.all(AppSpacing.xs),
                                   decoration: BoxDecoration(
                                     color: v <= 0
                                         ? Colors.transparent
@@ -1073,7 +1075,12 @@ class DashboardPage extends ConsumerWidget {
       showDragHandle: true,
       builder: (c) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.lg,
+              ),
           child: FutureBuilder(
             future: txnsRepo.list(
               TxnFilter(
@@ -1085,7 +1092,7 @@ class DashboardPage extends ConsumerWidget {
             builder: (c, snap) {
               if (!snap.hasData) {
                 return const Padding(
-                  padding: EdgeInsets.all(32),
+                  padding: EdgeInsets.all(AppSpacing.xl),
                   child: Center(child: CircularProgressIndicator()),
                 );
               }
@@ -1114,7 +1121,7 @@ class DashboardPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Flexible(
                     child: ListView(
                       shrinkWrap: true,

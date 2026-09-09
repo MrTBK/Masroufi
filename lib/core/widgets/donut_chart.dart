@@ -109,19 +109,16 @@ class DonutSlice {
   });
 }
 
-/// Fixed categorical palette ( Ambos light/dark legible, 8 entries cycled).
-/// Chart color carries no financial meaning; type stays typographic.
+/// Fixed categorical palette, 8 entries cycled, resolved per brightness
+/// from [AppChartColors] (single token home). Chart color carries no
+/// financial meaning; type stays typographic.
 abstract final class DonutPalette {
-  static const List<Color> colors = [
-    Color(0xFF0E7C5B),
-    Color(0xFF1D4ED8),
-    Color(0xFFC2410C),
-    Color(0xFF7C3AED),
-    Color(0xFFBE123C),
-    Color(0xFF0E7490),
-    Color(0xFFB45309),
-    Color(0xFF4D7C0F),
-  ];
+  static const List<Color> colors = AppChartColors.light;
+
+  static List<Color> of(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+      ? AppChartColors.dark
+      : AppChartColors.light;
 }
 
 class _DonutPainter extends CustomPainter {

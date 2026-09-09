@@ -48,6 +48,32 @@ abstract final class AppRadius {
   static const double lg = 24;
 }
 
+/// Categorical chart palette (DESIGN.md). Chart color carries no
+/// financial meaning; type stays typographic. Separate light and dark
+/// ramps keep every slice legible on its background in both modes.
+abstract final class AppChartColors {
+  static const List<Color> light = [
+    Color(0xFF0E7C5B),
+    Color(0xFF1D4ED8),
+    Color(0xFFC2410C),
+    Color(0xFF7C3AED),
+    Color(0xFFBE123C),
+    Color(0xFF0E7490),
+    Color(0xFFB45309),
+    Color(0xFF4D7C0F),
+  ];
+  static const List<Color> dark = [
+    Color(0xFF4DB8A4),
+    Color(0xFF7FA8F5),
+    Color(0xFFF0955A),
+    Color(0xFFB79CFF),
+    Color(0xFFF08CA0),
+    Color(0xFF5CC8DC),
+    Color(0xFFE8B34B),
+    Color(0xFFA8C256),
+  ];
+}
+
 abstract final class AppMotion {
   static const Duration press = Duration(milliseconds: 140);
   static const Duration state = Duration(milliseconds: 220);
