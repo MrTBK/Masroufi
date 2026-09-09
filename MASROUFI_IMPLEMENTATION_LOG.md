@@ -1191,3 +1191,27 @@ Verification: `flutter analyze` 0 issues, `flutter test` 226/226
 (220 baseline + 4 theme + 1 scale + 1 refund-glyph), debug APK green.
 Degraded verification declared: on-device toggle proof and visual
 screenshot QA need real hardware (emulator cold-start stall).
+
+---
+
+## 23. DESKTOP LAUNCH — 2026-09-09 (redesigned app run)
+
+User asked to open the new app. `flutter devices` showed Linux desktop
+only (no emulator booted), so the final redesigned tree (1.1.0+2, Steps
+1–13) was launched with `flutter run -d linux` (project-local
+toolchain, detached via setsid after the first background attempt was
+reaped by the tool session).
+
+- Build compiled clean; hot-sync to device completed in 252ms.
+- App binary `build/linux/x64/debug/bundle/masroufi` ran persistently
+  (observed alive across checks), Dart VM service plus DevTools came
+  up, run log showed zero errors and zero exceptions.
+- Screenshot capture was attempted (`import -window root`, DISPLAY=:0
+  present) but the screen-grab path failed, so no pixel proof was
+  captured; frame rendering was not independently confirmed beyond
+  process persistence plus a clean log.
+- Session later ended with "Lost connection to device" (window
+  closed/process exit, no errors logged). Debug `flutter run` wrapper
+  does not survive on its own; relaunch with the same command to open
+  again. For a phone artifact, cut a fresh signed release AAB (the
+  AAB in `releases/` predates the redesign).
