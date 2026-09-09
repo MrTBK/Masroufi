@@ -92,22 +92,126 @@ class AnalyticsRepo {
   Future<int> incomeTotal(DateTime start, DateTime end) =>
       _sum('income', start, end);
 
-  Future<Map<String?, int>> _byCategory(
+  /// Wallet-scoped sums for the BI filter bar. Empty [walletIds] means
+  /// all wallets (no extra predicate). Transfers follow the same
+  /// endpoint rule as [TxnFilter]: a transfer counts when EITHER
+  /// endpoint is in the set.
+  Future<int> _sumW(
     String type,
+    List<String> walletIds,
     DateTime start,
     DateTime end,
   ) async {
-    final rows = await db
+    var sql =
+        'SELECT COALESCE(SUM(amount_millimes),0) AS s FROM "transactions" '
+        'WHERE type=? AND occurred_at>=? AND occurred_at<?';
+    final vars = <Variable>[
+      Variable.withString(type),
+      Variable.withDateTime(start),
+      Variable.withDateTime(end),
+    ];
+    if (walletIds.isNotEmpty) {
+      final list = List.filled(walletIds.length, '?').join(',');
+      if (type == 'transfer') {
+        sql += ' AND (wallet_id IN ($list) OR to_wallet_id IN ($list))';
+        vars.addAll([
+          for (final id in walletIds) Variable.withString(id),
+          for (final id in walletIds) Variable.withString(id),
+        ]);
+      } else {
+        sql += ' AND wallet_id IN ($list)';
+        vars.addAll([for (final id in walletIds) Variable.withString(id)]);
+      }
+    }
+    final row = await db.customSelect(sql, variables: vars).getSingleOrNull();
+    return (row?.data['s'] as num?)?.toInt() ?? 0;
+  }
+
+  Future<int> expenseTotalW(
+    List<String> walletIds,
+    DateTime start,
+    DateTime end,
+  ) => _sumW('expense', walletIds, start, end);
+
+  Future<int> incomeTotalW(
+    List<String> walletIds,
+    DateTime start,
+    DateTime end,
+  ) => _sumW('income', walletIds, start, end);
+
+  /// Transaction count honoring the BI scope. Null/empty lists match all.
+  Future<int> txnCount({
+    List<String>? walletIds,
+    List<String>? categoryIds,
+    String? type,
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    final conds = <String>[];
+    final vars = <Variable>[];
+    if (type != null) {
+      conds.add('type=?');
+      vars.add(Variable.withString(type));
+    }
+    if (walletIds != null && walletIds.isNotEmpty) {
+      final list = List.filled(walletIds.length, '?').join(',');
+      conds.add('(wallet_id IN ($list) OR to_wallet_id IN ($list))');
+      // Bound twice: the placeholder list appears twice (both legs).
+      vars.addAll([
+        for (final id in walletIds) Variable.withString(id),
+        for (final id in walletIds) Variable.withString(id),
+      ]);
+    }
+    if (categoryIds != null && categoryIds.isNotEmpty) {
+      final list = List.filled(categoryIds.length, '?').join(',');
+      conds.add('category_id IN ($list)');
+      vars.addAll([for (final id in categoryIds) Variable.withString(id)]);
+    }
+    if (from != null) {
+      conds.add('occurred_at>=?');
+      vars.add(Variable.withDateTime(from));
+    }
+    if (to != null) {
+      conds.add('occurred_at<?');
+      vars.add(Variable.withDateTime(to));
+    }
+    final where = conds.isEmpty ? '' : 'WHERE ${conds.join(' AND ')}';
+    final row = await db
         .customSelect(
-          'SELECT category_id AS c, COALESCE(SUM(amount_millimes),0) AS s '
-          'FROM "transactions" WHERE type=? AND occurred_at>=? AND occurred_at<? '
-          'GROUP BY category_id',
-          variables: [
-            Variable.withString(type),
-            Variable.withDateTime(start),
-            Variable.withDateTime(end),
-          ],
+          'SELECT COUNT(*) AS s FROM "transactions" $where',
+          variables: vars,
         )
+        .getSingleOrNull();
+    return (row?.data['s'] as num?)?.toInt() ?? 0;
+  }
+
+  /// Same calendar month one year earlier (YoY anchor).
+  Future<({int income, int expense})> sameMonthLastYear(
+    int year,
+    int month,
+  ) => db.monthSums(year - 1, month);
+
+  Future<Map<String?, int>> _byCategory(
+    String type,
+    DateTime start,
+    DateTime end, {
+    List<String>? walletIds,
+  }) async {
+    var sql =
+        'SELECT category_id AS c, COALESCE(SUM(amount_millimes),0) AS s '
+        'FROM "transactions" WHERE type=? AND occurred_at>=? AND occurred_at<? ';
+    final vars = <Variable>[
+      Variable.withString(type),
+      Variable.withDateTime(start),
+      Variable.withDateTime(end),
+    ];
+    if (walletIds != null && walletIds.isNotEmpty) {
+      final list = List.filled(walletIds.length, '?').join(',');
+      sql += 'AND wallet_id IN ($list) ';
+      vars.addAll([for (final id in walletIds) Variable.withString(id)]);
+    }
+    final rows = await db
+        .customSelect('$sql GROUP BY category_id', variables: vars)
         .get();
     return {
       for (final r in rows)
@@ -115,11 +219,17 @@ class AnalyticsRepo {
     };
   }
 
-  Future<Map<String?, int>> expenseByCategory(DateTime start, DateTime end) =>
-      _byCategory('expense', start, end);
+  Future<Map<String?, int>> expenseByCategory(
+    DateTime start,
+    DateTime end, {
+    List<String>? walletIds,
+  }) => _byCategory('expense', start, end, walletIds: walletIds);
 
-  Future<Map<String?, int>> incomeByCategory(DateTime start, DateTime end) =>
-      _byCategory('income', start, end);
+  Future<Map<String?, int>> incomeByCategory(
+    DateTime start,
+    DateTime end, {
+    List<String>? walletIds,
+  }) => _byCategory('income', start, end, walletIds: walletIds);
 
   /// Expense grouped by category priority (inherited from the category).
   /// Uncategorized rows (null category) fall in the 'normal' bucket.
