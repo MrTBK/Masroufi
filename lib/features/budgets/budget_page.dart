@@ -8,7 +8,6 @@ import 'package:intl/intl.dart' hide TextDirection;
 import '../../app/providers.dart';
 import '../../core/analytics/summary.dart';
 import '../../core/budgets/budget_intel.dart';
-import '../../core/config/brand.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
 import '../../core/theme/app_theme.dart';
@@ -114,45 +113,46 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Apex answers "how much can I safely spend": the
+                      // remaining amount at display size, state-colored.
                       Text(
-                        Strings.get(lang, 'totalBudget'),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        Strings.get(lang, 'remaining'),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       MoneyText(
-                        millimes: budget.amountMillimes,
+                        millimes: status.remaining,
                         lang: lang,
                         type: 'neutral',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: status.remaining < 0
+                                  ? Theme.of(context).colorScheme.error
+                                  : null,
+                            ),
                       ),
-                      const SizedBox(height: 8),
+                      Text(
+                        '${Strings.get(lang, 'totalBudget')}: '
+                        '${Money.inline(budget.amountMillimes, lang: lang)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      BudgetBar(
+                        spentMillimes: status.spent,
+                        totalMillimes: budget.amountMillimes,
+                        lang: lang,
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
                       _row(
                         context,
                         Strings.get(lang, 'spent'),
                         status.spent,
                         lang,
                       ),
-                      _row(
-                        context,
-                        Strings.get(lang, 'remaining'),
-                        status.remaining,
-                        lang,
-                      ),
-                      Text(
-                        Brand.nameFor(lang),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      BudgetBar(
-                        spentMillimes: status.spent,
-                        totalMillimes: budget.amountMillimes,
-                        lang: lang,
-                      ),
-                      const SizedBox(height: 8),
                       _guidance(
                         context,
                         lang,
@@ -160,7 +160,7 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
                         status.spent,
                         now,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: AppSpacing.md2),
                       OutlinedButton(
                         onPressed: () async {
                           await repo.remove(now.year, now.month);
@@ -210,7 +210,7 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
                                   iconKey: catIcon(cb.categoryId),
                                   semanticLabel: catName(cb.categoryId),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: AppSpacing.md2),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment:
@@ -243,7 +243,7 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
                                             ),
                                         ],
                                       ),
-                                      const SizedBox(height: 2),
+                                      const SizedBox(height: AppSpacing.xs),
                                       // "spent / total" is a pure numeric run:
                                       // force LTR so the slash never migrates
                                       // in RTL paragraphs.
@@ -260,7 +260,7 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
                                               .bodyMedium,
                                         ),
                                       ),
-                                      const SizedBox(height: 6),
+                                      const SizedBox(height: AppSpacing.sm),
                                       BudgetBar(
                                         spentMillimes: s.spent,
                                         totalMillimes: cb.amountMillimes,
@@ -305,7 +305,7 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
       return Row(
         children: [
           Icon(Icons.warning_amber, size: 18, color: scheme.error),
-          const SizedBox(width: 6),
+          const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               Strings.get(lang, 'overBudget'),
@@ -330,7 +330,7 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
 
   Widget _row(BuildContext context, String label, int value, String lang) =>
       Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         child: Row(
           children: [
             Expanded(child: Text(label)),
@@ -523,7 +523,7 @@ class _IntelCard extends ConsumerWidget {
         children: [
           if (projected != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Text(
                 '${Strings.get(lang, 'projectionAlert')}: '
                 '${Strings.tpl(lang, 'projectionBody', {
