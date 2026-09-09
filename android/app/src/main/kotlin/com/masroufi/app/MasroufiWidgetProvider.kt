@@ -17,7 +17,7 @@ import es.antonborri.home_widget.HomeWidgetProvider
  * `masroufi://add?type=expense` deep link (cold start lands directly
  * in the expense form; warm start opens home — platform limitation).
  */
-class MasroufiWidgetProvider : HomeWidgetProvider() {
+open class MasroufiWidgetProvider : HomeWidgetProvider() {
 
     override fun onUpdate(
         context: Context,

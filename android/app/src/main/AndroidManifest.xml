@@ -50,12 +50,12 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/masroufi_widget_info" />
         </receiver>
-        <!-- Savings-goal variant (Track 7): same Kotlin provider class,
-             separate picker entry. Renders the same RemoteViews; Dart
-             pushes the top goal into the shared prefs (see
-             masroufi_widget.dart). -->
+        <!-- Savings-goal variant (Track 7): subclass of the same Kotlin
+             provider (shared onUpdate/layout/prefs) with a separate
+             picker entry. A subclass is required: the manifest merger
+             rejects two receivers with the same class name. -->
         <receiver
-            android:name=".MasroufiWidgetProvider"
+            android:name=".MasroufiSavingsWidgetProvider"
             android:exported="false"
             android:label="Masroufi Savings">
             <intent-filter>
