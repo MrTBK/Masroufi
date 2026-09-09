@@ -52,6 +52,10 @@ abstract final class Money {
   }
 
   /// Format millimes, e.g. 12500 -> "12.500 د.ت" (ar) / "12.500 TND".
+  ///
+  /// Raw ASCII, bidi-UNSAFE: never interpolate directly into RTL sentences.
+  /// UI code must use [inline] (embedded amounts) or the `MoneyText`
+  /// widget (standalone amounts). Storage/CSV/tests keep using this.
   static String format(int millimes, {String lang = 'en'}) {
     final negative = millimes < 0;
     final v = millimes.abs();
@@ -61,6 +65,13 @@ abstract final class Money {
     final suffix = lang == 'ar' ? 'د.ت' : 'TND';
     return '${negative ? '-' : ''}$grouped.$frac $suffix';
   }
+
+  /// Bidi-safe amount for embedding inside mixed-direction sentences
+  /// (Arabic + numbers + currency). Wraps [format] in LRI/PDI isolates
+  /// (U+2066/U+2069) so the sign stays attached to the number and the
+  /// currency never jumps sides. Pure int math; no doubles.
+  static String inline(int millimes, {String lang = 'en'}) =>
+      '\u2066${format(millimes, lang: lang)}\u2069';
 
   static String _groupThousands(String digits) {
     final buf = StringBuffer();

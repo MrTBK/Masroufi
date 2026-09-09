@@ -29,6 +29,8 @@ class WalletsRepo {
     required String name,
     String icon = 'cash',
     int initialMillimes = 0,
+    String colorKey = 'teal',
+    String design = 'classic',
   }) async {
     final id = newId();
     final now = DateTime.now();
@@ -40,6 +42,8 @@ class WalletsRepo {
             name: Value(name.trim()),
             icon: Value(icon),
             initialMillimes: Value(initialMillimes),
+            colorKey: Value(colorKey),
+            design: Value(design),
             createdAt: Value(now),
             updatedAt: Value(now),
           ),
@@ -50,8 +54,23 @@ class WalletsRepo {
   Future<void> rename(String id, String name) =>
       _touch(id, WalletsCompanion(name: Value(name.trim())));
 
+  Future<void> setIcon(String id, String icon) =>
+      _touch(id, WalletsCompanion(icon: Value(icon)));
+
+  /// Card styling (display-only keys; never affects balances).
+  Future<void> setColorKey(String id, String colorKey) =>
+      _touch(id, WalletsCompanion(colorKey: Value(colorKey)));
+
+  Future<void> setDesign(String id, String design) =>
+      _touch(id, WalletsCompanion(design: Value(design)));
+
   Future<void> setArchived(String id, bool archived) =>
       _touch(id, WalletsCompanion(isArchived: Value(archived)));
+
+  /// Presentation-only privacy flag. Balance math is untouched:
+  /// hidden wallets stay included in every total.
+  Future<void> setBalanceHidden(String id, bool hidden) =>
+      _touch(id, WalletsCompanion(isBalanceHidden: Value(hidden)));
 
   Future<void> _touch(String id, WalletsCompanion patch) =>
       (db.update(db.wallets)..where((w) => w.id.equals(id))).write(
@@ -73,6 +92,19 @@ class WalletsRepo {
   Future<int> totalBalance() async {
     var total = 0;
     for (final w in await all(includeArchived: false)) {
+      total += await balance(w);
+    }
+    return total;
+  }
+
+  /// Display-only "your money": like [totalBalance] but EXCLUDING hidden
+  /// wallets so a hidden balance can never leak through a prominent
+  /// summary by subtraction. Archived wallets are excluded too.
+  /// Ledger math is untouched: use [totalBalance] for real accounting.
+  Future<int> visibleBalance() async {
+    var total = 0;
+    for (final w in await all(includeArchived: false)) {
+      if (w.isBalanceHidden) continue;
       total += await balance(w);
     }
     return total;

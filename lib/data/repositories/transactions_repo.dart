@@ -1,12 +1,19 @@
 import 'package:drift/drift.dart';
 
+import '../../core/money/money.dart';
 import '../../core/utils/utils.dart';
 import '../database/app_db.dart';
 
 class TxnFilter {
   final String? search;
   final String? walletId;
+  // Matches any of these wallets (transfer-aware: either endpoint).
+  // When non-empty it takes precedence over [walletId].
+  final List<String>? walletIds;
   final String? categoryId;
+  // Matches any of these categories (e.g. parent + children rollup).
+  // When non-empty it takes precedence over [categoryId].
+  final List<String>? categoryIds;
   final String? type; // expense | income | transfer
   final DateTime? from;
   final DateTime? to;
@@ -15,7 +22,9 @@ class TxnFilter {
   const TxnFilter({
     this.search,
     this.walletId,
+    this.walletIds,
     this.categoryId,
+    this.categoryIds,
     this.type,
     this.from,
     this.to,
@@ -49,15 +58,19 @@ class TransactionsRepo {
     TxnFilter f,
   ) {
     if (f.type != null) q.where((t) => t.type.equals(f.type!));
-    if (f.walletId != null) {
-      final w = f.walletId!;
+    final walletIds = (f.walletIds != null && f.walletIds!.isNotEmpty)
+        ? f.walletIds!
+        : (f.walletId == null ? null : [f.walletId!]);
+    if (walletIds != null) {
       q.where(
         (t) =>
-            t.walletId.equals(w) |
-            (t.type.equals('transfer') & t.toWalletId.equals(w)),
+            t.walletId.isIn(walletIds) |
+            (t.type.equals('transfer') & t.toWalletId.isIn(walletIds)),
       );
     }
-    if (f.categoryId != null) {
+    if (f.categoryIds != null && f.categoryIds!.isNotEmpty) {
+      q.where((t) => t.categoryId.isIn(f.categoryIds!));
+    } else if (f.categoryId != null) {
       q.where((t) => t.categoryId.equals(f.categoryId!));
     }
     if (f.from != null) {
@@ -67,9 +80,52 @@ class TransactionsRepo {
       q.where((t) => t.occurredAt.isSmallerThanValue(f.to!));
     }
     if (f.search != null && f.search!.trim().isNotEmpty) {
-      q.where((t) => t.note.contains(f.search!.trim()));
+      final needle = f.search!.trim();
+      // Amount search: "12.5" jumps to the exact 12500-millime rows.
+      // Category/wallet NAME matching is resolved to id lists by the
+      // caller (timeline already holds both tables) and passed via
+      // categoryIds/walletIds — no JOINs in the hot query.
+      int? amountNeedle;
+      try {
+        amountNeedle = Money.parse(needle);
+      } catch (_) {
+        amountNeedle = null;
+      }
+      if (amountNeedle != null) {
+        final amount = amountNeedle;
+        q.where(
+          (t) => t.note.contains(needle) | t.amountMillimes.equals(amount),
+        );
+      } else {
+        q.where((t) => t.note.contains(needle));
+      }
     }
   }
+
+  Future<Transaction?> get(String id) =>
+      (db.select(db.transactions)..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+
+  /// Exact restore for undo: reinserts [t] with its ORIGINAL id and
+  /// timestamps (upsert so a double-undo can never duplicate).
+  /// The ledger is byte-identical to before the delete.
+  Future<void> restore(Transaction t) => db
+      .into(db.transactions)
+      .insertOnConflictUpdate(
+        TransactionsCompanion(
+          id: Value(t.id),
+          type: Value(t.type),
+          amountMillimes: Value(t.amountMillimes),
+          walletId: Value(t.walletId),
+          toWalletId: Value(t.toWalletId),
+          categoryId: Value(t.categoryId),
+          recurringRuleId: Value(t.recurringRuleId),
+          occurredAt: Value(t.occurredAt),
+          note: Value(t.note),
+          createdAt: Value(t.createdAt),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
 
   Future<String> addExpense({
     required int amountMillimes,
@@ -168,6 +224,48 @@ class TransactionsRepo {
       updatedAt: Value(DateTime.now()),
     ),
   );
+
+  /// Distinct category ids ordered by most-recent use (expense/income
+  /// only; transfers carry no category). Powers the quick-add "Recent"
+  /// row: purely history-driven, never invented.
+  Future<List<String>> recentCategoryIds({
+    required String type,
+    int limit = 6,
+  }) async {
+    final rows = await db
+        .customSelect(
+          'SELECT category_id AS c, MAX(occurred_at) AS m FROM "transactions" '
+          'WHERE type=? AND category_id IS NOT NULL '
+          'GROUP BY category_id ORDER BY m DESC LIMIT ?',
+          variables: [Variable.withString(type), Variable.withInt(limit)],
+        )
+        .get();
+    return [for (final r in rows) r.data['c'] as String];
+  }
+
+  /// Distinct category ids ordered by use frequency over the last [days].
+  /// Ties break by recency. Deterministic quick-add signal.
+  Future<List<String>> frequentCategoryIds({
+    required String type,
+    int days = 30,
+    int limit = 6,
+  }) async {
+    final since = DateTime.now().subtract(Duration(days: days));
+    final rows = await db
+        .customSelect(
+          'SELECT category_id AS c, COUNT(*) AS n, MAX(occurred_at) AS m '
+          'FROM "transactions" '
+          'WHERE type=? AND category_id IS NOT NULL AND occurred_at>=? '
+          'GROUP BY category_id ORDER BY n DESC, m DESC LIMIT ?',
+          variables: [
+            Variable.withString(type),
+            Variable.withDateTime(since),
+            Variable.withInt(limit),
+          ],
+        )
+        .get();
+    return [for (final r in rows) r.data['c'] as String];
+  }
 
   Future<void> delete(String id) =>
       (db.delete(db.transactions)..where((t) => t.id.equals(id))).go();
