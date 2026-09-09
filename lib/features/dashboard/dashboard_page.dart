@@ -1,12 +1,19 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 // Hide intl's own TextDirection class (shadows Flutter's enum).
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:path_provider/path_provider.dart';
 
 import '../../app/providers.dart';
 import '../../core/analytics/bi_scope.dart';
 import '../../core/analytics/forecast.dart';
+import '../../core/export/bi_export.dart';
+import '../../core/export/monthly_statement.dart';
 import '../../core/analytics/insights.dart';
 import '../../core/analytics/kpi.dart';
 import '../../core/analytics/periods.dart';
@@ -371,6 +378,8 @@ class DashboardPage extends ConsumerWidget {
                       _BudgetVsActual(lang: lang, s: s),
                       const SizedBox(height: AppSpacing.lg),
                       _HealthSection(lang: lang, s: s),
+                      const SizedBox(height: AppSpacing.lg),
+                      _ExportRow(lang: lang, s: s),
                       const SizedBox(height: AppSpacing.lg),
                       _insights(context, lang, d),
                       _Movers(lang: lang, s: s),
@@ -1857,6 +1866,126 @@ class _BudgetVsActual extends StatelessWidget {
           ),
           const Divider(height: 1),
         ],
+      ],
+    );
+  }
+}
+
+/// Scope export row: KPI summary CSV, filtered dataset CSV (capped,
+/// documented), and a statement PDF for the scope-end month with the
+/// filtered numbers. Same save-sheet pattern as backup (BOM for Excel).
+class _ExportRow extends ConsumerWidget {
+  final String lang;
+  final BiSnapshot s;
+  const _ExportRow({required this.lang, required this.s});
+
+  Future<void> _save(
+    BuildContext context,
+    String fileName,
+    String content,
+  ) async {
+    final dir = await getApplicationDocumentsDirectory();
+    final f = File('${dir.path}/$fileName');
+    await f.writeAsString('\uFEFF$content');
+    await FilePicker.saveFile(fileName: fileName, bytes: await f.readAsBytes());
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(Strings.get(lang, 'saved'))),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Wrap(
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.sm,
+      children: [
+        OutlinedButton.icon(
+          icon: const Icon(Icons.summarize_outlined, size: 20),
+          label: Text(Strings.get(lang, 'exportKpiCsv')),
+          onPressed: () => _save(
+            context,
+            'masroufi_kpi_${s.to.year}-${s.to.month.toString().padLeft(2, '0')}.csv',
+            BiExport.kpiCsv(s),
+          ),
+        ),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.table_chart_outlined, size: 20),
+          label: Text(Strings.get(lang, 'exportDataCsv')),
+          onPressed: () async {
+            final filter = ref.read(biFilterProvider);
+            final repo = ref.read(transactionsRepoProvider);
+            final txns = await repo.list(
+              TxnFilter(
+                walletIds: filter.walletIds.isEmpty ? null : filter.walletIds,
+                categoryIds: filter.categoryIds,
+                type: filter.type,
+                from: filter.from,
+                to: filter.to,
+                // Analytical sample cap (documented): full history stays
+                // in backup JSON; CSV is the working slice.
+                limit: 2000,
+              ),
+            );
+            final db = ref.read(appDbProvider);
+            final wallets = {
+              for (final w in await db.select(db.wallets).get()) w.id: w,
+            };
+            final cats = {
+              for (final c in await db.select(db.categories).get()) c.id: c,
+            };
+            if (!context.mounted) return;
+            await _save(
+              context,
+              'masroufi_data_${s.to.year}-${s.to.month.toString().padLeft(2, '0')}.csv',
+              BiExport.datasetCsv(
+                txns: txns,
+                wallets: wallets,
+                cats: cats,
+                lang: lang,
+              ),
+            );
+          },
+        ),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
+          label: Text(Strings.get(lang, 'exportPdf')),
+          onPressed: () async {
+            final data = MonthlyStatementBuilder.build(
+              year: s.to.year,
+              month: s.to.month,
+              incomeMillimes: s.income,
+              expenseMillimes: s.expense,
+              txnCount: s.txnCount,
+              byCategory: s.byCategory,
+              categoryNames: {
+                for (final e in s.byCategory.keys)
+                  if (e != null) e: _catName(lang, s.cats, e),
+              },
+            );
+            ByteData? font;
+            try {
+              font = await rootBundle.load('assets/fonts/Amiri-Regular.ttf');
+            } catch (_) {
+              font = null;
+            }
+            final bytes = await MonthlyStatementBuilder.buildPdf(
+              data: data,
+              lang: lang,
+              arabicFont: font,
+            );
+            final dir = await getApplicationDocumentsDirectory();
+            final name =
+                'masroufi_statement_${s.to.year}-${s.to.month.toString().padLeft(2, '0')}.pdf';
+            final f = File('${dir.path}/$name');
+            await f.writeAsBytes(bytes);
+            await FilePicker.saveFile(
+              fileName: name,
+              bytes: await f.readAsBytes(),
+            );
+          },
+        ),
       ],
     );
   }
