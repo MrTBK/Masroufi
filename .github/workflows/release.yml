@@ -1,0 +1,67 @@
+# Release builds.
+#
+# NOTE: `flutter build apk --release` is intentionally NOT used here: it fails
+# at compileReleaseJavaWithJavac because the generated registrant references
+# the dev-only `integration_test` plugin, which is absent from the release
+# classpath. `flutter build appbundle --release` is unaffected, so CI ships the
+# AAB plus a debug-signed universal APK derived via bundletool (same process
+# as tool/release_apk.sh, minus the release keystore which lives only on the
+# maintainer machine and is never committed).
+#
+# Blessed user-facing artifacts (release-key signed) are built locally with
+# tool/release_apk.sh and attached to the GitHub Release by the maintainer.
+# The README download button points at those: masroufi-vX.Y.Z.apk.
+
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          flutter-version: "3.47.2"
+
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+      - name: Build release AAB
+        run: flutter build appbundle --release
+
+      - name: Derive universal APK (debug-signed, CI only)
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          curl -sL -o /tmp/bundletool.jar \
+            https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
+          java -jar /tmp/bundletool.jar build-apks \
+            --bundle=build/app/outputs/bundle/release/app-release.aab \
+            --output="/tmp/${TAG}.apks" --mode=universal --overwrite
+          python3 -c "import zipfile; zipfile.ZipFile('/tmp/${TAG}.apks').extract('universal.apk','/tmp/ci-apk')"
+          cp build/app/outputs/bundle/release/app-release.aab "masroufi-${TAG}.aab"
+          cp /tmp/ci-apk/universal.apk "masroufi-${TAG}-ci.apk"
+          sha256sum "masroufi-${TAG}.aab" "masroufi-${TAG}-ci.apk" > "masroufi-${TAG}.sha256"
+
+      - name: Attach artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            masroufi-v*.aab
+            masroufi-v*-ci.apk
+            masroufi-v*.sha256

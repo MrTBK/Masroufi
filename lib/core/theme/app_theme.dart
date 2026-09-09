@@ -4,8 +4,8 @@ import 'package:flutter/services.dart';
 /// Centralized design system. No hard-coded colors, sizes, or radii
 /// in widgets: everything flows from here.
 /// Light-first palette generated from finance-category rules and verified
-/// against WCAG AA (see DESIGN.md for ratios). Dark mode is designed, not
-/// inverted.
+/// against WCAG AA (all body pairs 4.5:1 or better). Dark mode is designed,
+/// not inverted.
 abstract final class AppColors {
   // Brand chrome (petrol trust). Seed green kept for history only.
   static const Color seed = Color(0xFF0E7C5B); // original teal-green identity

@@ -17,7 +17,7 @@ budget -> Basic reports -> JSON backup/restore -> CSV export -> Settings
 ## Out of MVP (V1.1+)
 
 Debts, recurring transactions, savings goals, salary mode, category budgets,
-PDF, cloud sync, AI, bank/e-Dinar integrations. See ROADMAP.md.
+PDF, cloud sync, AI, bank/e-Dinar integrations (see README Roadmap).
 
 ## Upgrade decisions (Track 3)
 
