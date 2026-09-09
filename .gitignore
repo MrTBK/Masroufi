@@ -16,3 +16,12 @@ build/
 .idea/
 *.iml
 .DS_Store
+# Project-local toolchains, caches and artifacts — never in HOME, never committed
+.tooling/*
+!.tooling/env.sh
+releases/*.apk
+releases/*.aab
+releases/**/*.apk
+releases/**/*.aab
+.tooling/keystore/
+storepass.txt
