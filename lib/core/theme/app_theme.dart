@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 /// Centralized design system (DESIGN.md contract). No hard-coded colors,
 /// sizes, or radii in widgets: everything flows from here.
@@ -181,6 +182,15 @@ ThemeData _themed(ColorScheme scheme) {
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
+      // Status-bar icons stay legible under edge-to-edge in both
+      // themes; resolved per theme, never once at startup.
+      systemOverlayStyle: dark
+          ? SystemUiOverlayStyle.light.copyWith(
+              statusBarColor: Colors.transparent,
+            )
+          : SystemUiOverlayStyle.dark.copyWith(
+              statusBarColor: Colors.transparent,
+            ),
     ),
     cardTheme: CardThemeData(
       color: scheme.surface,

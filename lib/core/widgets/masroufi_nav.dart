@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/strings.dart';
@@ -56,9 +57,19 @@ class MasroufiNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return SafeArea(
-      top: false,
-      child: Container(
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // Gesture-nav icons stay legible over edge-to-edge in both themes.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: dark
+            ? Brightness.light
+            : Brightness.dark,
+        systemNavigationBarContrastEnforced: false,
+      ),
+      child: SafeArea(
+        top: false,
+        child: Container(
         decoration: BoxDecoration(
           color: scheme.surface,
           border: Border(top: BorderSide(color: scheme.outlineVariant)),
@@ -121,6 +132,7 @@ class MasroufiNavBar extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
