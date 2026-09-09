@@ -8,6 +8,7 @@ import '../../core/icons/category_icons.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
 import '../../core/security/hidden_gate.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/wallet_styles.dart';
 import '../../core/widgets/design.dart';
 import '../../core/widgets/masroufi_nav.dart';
@@ -63,9 +64,14 @@ class WalletsPage extends ConsumerWidget {
             );
           }
           return ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md2,
+              AppSpacing.md,
+              AppSpacing.xxl * 2,
+            ),
             itemCount: wallets.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
+            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md2),
             itemBuilder: (context, i) {
               final w = wallets[i];
               return FutureBuilder<int>(
@@ -165,28 +171,28 @@ class WalletsPage extends ConsumerWidget {
                     labelText: Strings.get(lang, 'walletName'),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   Strings.get(lang, 'pickIcon'),
                   style: Theme.of(c).textTheme.titleSmall,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 IconPickerGrid(
                   keys: walletIcons,
                   selected: icon,
                   onSelected: (k) => setS(() => icon = k),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   Strings.get(lang, 'walletColor'),
                   style: Theme.of(c).textTheme.titleSmall,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 WalletColorPicker(
                   selected: colorKey,
                   onSelected: (k) => setS(() => colorKey = k),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   Strings.get(lang, 'walletStyle'),
                   style: Theme.of(c).textTheme.titleSmall,
@@ -201,7 +207,7 @@ class WalletsPage extends ConsumerWidget {
                   onChanged: (v) => setS(() => design = v ?? 'classic'),
                 ),
                 if (w == null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: balCtl,
                     keyboardType: const TextInputType.numberWithOptions(
@@ -212,7 +218,7 @@ class WalletsPage extends ConsumerWidget {
                     ),
                   ),
                 ],
-                const SizedBox(height: 4),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   Strings.get(lang, 'hiddenNote'),
                   style: Theme.of(c).textTheme.bodySmall?.copyWith(
@@ -309,7 +315,12 @@ class WalletsPage extends ConsumerWidget {
       showDragHandle: true,
       builder: (c) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.sm,
+                AppSpacing.md,
+                AppSpacing.lg,
+              ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,7 +331,7 @@ class WalletsPage extends ConsumerWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 Strings.get(lang, 'totalBalance'),
                 style: Theme.of(c).textTheme.bodySmall,
@@ -340,7 +351,7 @@ class WalletsPage extends ConsumerWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.md2),
               Row(
                 children: [
                   Expanded(

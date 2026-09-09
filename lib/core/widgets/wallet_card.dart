@@ -10,6 +10,10 @@ import 'design.dart';
 /// Bank-card-like wallet presentation using Masroufi's own identity
 /// (solid tonal surfaces, no payment-network branding).
 /// Hiding masks the balance only; math always includes hidden wallets.
+/// Tracked uppercase card-name spacing: the single deliberate
+/// letterspacing exception, named and shared by all card text.
+const double _nameTracking = 0.8;
+
 class WalletCardView extends StatelessWidget {
   final String name;
   final String iconKey;
@@ -60,7 +64,7 @@ class WalletCardView extends StatelessWidget {
                 size: 22,
                 semanticLabel: name,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
                   name.toUpperCase(),
@@ -69,14 +73,14 @@ class WalletCardView extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     color: fg,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.8,
+                    letterSpacing: _nameTracking,
                   ),
                 ),
               ),
               if (onToggleHidden != null)
                 SizedBox(
-                  width: 40,
-                  height: 40,
+                  width: 48,
+                  height: 48,
                   child: IconButton(
                     tooltip: hidden
                         ? Strings.get(lang, 'showBalance')
@@ -113,12 +117,12 @@ class WalletCardView extends StatelessWidget {
           ),
           if (design == 'modern')
             Padding(
-              padding: const EdgeInsets.only(top: 8),
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
               child: Container(
                 height: 4,
                 decoration: BoxDecoration(
                   color: fg.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
               ),
             ),
@@ -151,19 +155,19 @@ class WalletColorPicker extends StatelessWidget {
       children: [
         for (final key in WalletStyles.colors)
           InkWell(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
             onTap: () => onSelected(key),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
                 color: WalletStyles.colorsFor(context, key).$1,
                 border: Border.all(
                   color: key == selected
                       ? Theme.of(context).colorScheme.primary
                       : Colors.transparent,
-                  width: 2.5,
+                  width: 2,
                 ),
               ),
               child: key == selected
