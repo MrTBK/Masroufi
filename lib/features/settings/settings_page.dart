@@ -7,6 +7,7 @@ import '../../app/providers.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/notify/notifier.dart';
 import '../../core/security/app_lock.dart';
+import '../../core/theme/app_theme.dart';
 import '../../data/repositories/settings_repo.dart';
 import '../lock/lock_page.dart';
 
@@ -49,7 +50,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       body: !loaded
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(AppSpacing.md),
               children: [
                 _group(context, lang, 'general'),
                 _langSection(lang),
@@ -62,17 +63,16 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   onSubmitted: (v) =>
                       ref.read(settingsRepoProvider).set('user_name', v.trim()),
                 ),
-                const Divider(height: 32),
-                _group(context, lang, 'categories'),
+                const SizedBox(height: AppSpacing.lg),
+                // Money: where funds live and how they are controlled.
+                _group(context, lang, 'money'),
                 _tile(
                   context,
                   lang,
-                  icon: Icons.category,
-                  title: Strings.get(lang, 'manageCategories'),
-                  route: '/settings/categories',
+                  icon: Icons.savings,
+                  title: Strings.get(lang, 'mizania'),
+                  route: '/mizania',
                 ),
-                const Divider(height: 32),
-                _group(context, lang, 'wallets'),
                 _tile(
                   context,
                   lang,
@@ -90,17 +90,49 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ref.read(hideBalancesProvider.notifier).state = !v;
                   },
                 ),
-                const Divider(height: 32),
-                _group(context, lang, 'budgetSettings'),
+                _tile(
+                  context,
+                  lang,
+                  icon: Icons.category,
+                  title: Strings.get(lang, 'manageCategories'),
+                  route: '/settings/categories',
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                // Analysis: understand spending.
+                _group(context, lang, 'analysis'),
+                _tile(
+                  context,
+                  lang,
+                  icon: Icons.bar_chart,
+                  title: Strings.get(lang, 'reports'),
+                  route: '/settings/reports',
+                ),
+                _weekStartSection(lang),
+                const SizedBox(height: AppSpacing.lg),
+                // Planning: future money.
+                _group(context, lang, 'planning'),
+                _tile(
+                  context,
+                  lang,
+                  icon: Icons.repeat,
+                  title: Strings.get(lang, 'recurring'),
+                  route: '/settings/recurring',
+                ),
                 _tile(
                   context,
                   lang,
                   icon: Icons.savings,
-                  title: Strings.get(lang, 'mizania'),
-                  route: '/mizania',
+                  title: Strings.get(lang, 'savingsGoals'),
+                  route: '/settings/savings',
                 ),
-                _weekStartSection(lang),
-                const Divider(height: 32),
+                _tile(
+                  context,
+                  lang,
+                  icon: Icons.handshake,
+                  title: Strings.get(lang, 'debts'),
+                  route: '/settings/debts',
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 _group(context, lang, 'data'),
                 _tile(
                   context,
@@ -123,6 +155,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   title: Strings.get(lang, 'fxRate'),
                   route: '/settings/fx-rates',
                 ),
+                const SizedBox(height: AppSpacing.lg),
+                _group(context, lang, 'notifications'),
                 FutureBuilder(
                   future: ref
                       .watch(settingsRepoProvider)
@@ -156,38 +190,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     },
                   ),
                 ),
-                _tile(
-                  context,
-                  lang,
-                  icon: Icons.bar_chart,
-                  title: Strings.get(lang, 'reports'),
-                  route: '/settings/reports',
-                ),
-                _tile(
-                  context,
-                  lang,
-                  icon: Icons.repeat,
-                  title: Strings.get(lang, 'recurring'),
-                  route: '/settings/recurring',
-                ),
-                _tile(
-                  context,
-                  lang,
-                  icon: Icons.savings,
-                  title: Strings.get(lang, 'savingsGoals'),
-                  route: '/settings/savings',
-                ),
-                _tile(
-                  context,
-                  lang,
-                  icon: Icons.handshake,
-                  title: Strings.get(lang, 'debts'),
-                  route: '/settings/debts',
-                ),
-                const Divider(height: 32),
+                const SizedBox(height: AppSpacing.lg),
                 _group(context, lang, 'security'),
                 _lockSection(lang),
-                const Divider(height: 32),
+                const SizedBox(height: AppSpacing.lg),
                 _group(context, lang, 'about'),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
@@ -347,7 +353,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   Widget _group(BuildContext context, String lang, String key) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Text(
         Strings.get(lang, key),
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -369,7 +375,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       contentPadding: EdgeInsets.zero,
       leading: Icon(icon),
       title: Text(title),
-      trailing: const Icon(Icons.chevron_right),
+      // Chevron mirrors in RTL; never a fixed-direction glyph.
+      trailing: Icon(
+        Directionality.of(context) == TextDirection.rtl
+            ? Icons.chevron_left
+            : Icons.chevron_right,
+      ),
       onTap: () => context.push(route),
     );
   }
