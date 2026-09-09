@@ -326,7 +326,6 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                           ?.copyWith(color: Theme.of(context).hintColor),
                     ),
                   ),
-                  const SizedBox(height: 2),
                   Center(
                     child: Text(
                       lang == 'ar' ? 'د.ت' : 'TND',
@@ -384,7 +383,7 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                     child: Row(
                       children: [
                         const Icon(Icons.calendar_today),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSpacing.md2),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -425,7 +424,7 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: DropdownButtonFormField<String>(
                           initialValue: origCurrency,
@@ -456,12 +455,33 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                       labelText: Strings.get(lang, 'note'),
                     ),
                   ),
+                  // Inline error names what happened; the field keeps its
+                  // value so fixing never retypes. Live region announces.
                   if (error != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      error!,
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.error,
+                    const SizedBox(height: AppSpacing.sm),
+                    Semantics(
+                      liveRegion: true,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              error!,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.error,
+                                  ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -476,7 +496,7 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                         widget.editId != null
                             ? Strings.get(lang, 'save')
                             : title,
-                        style: const TextStyle(fontSize: 17),
+                        style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
                   ),
@@ -515,7 +535,7 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                     selected.customName,
                   ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: AppSpacing.md2),
           Expanded(
             child: selected == null
                 ? Text(
@@ -582,14 +602,14 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   for (final t in items)
                     Padding(
-                      padding: const EdgeInsetsDirectional.only(end: 4),
+                      padding: const EdgeInsetsDirectional.only(end: AppSpacing.xs),
                       child: GestureDetector(
                         onLongPress: () async =>
                             _templateMenu(context, ref, lang, t.id, t.name),
@@ -765,14 +785,14 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   for (final id in ids)
                     Padding(
-                      padding: const EdgeInsetsDirectional.only(end: 4),
+                      padding: const EdgeInsetsDirectional.only(end: AppSpacing.xs),
                       child: ChoiceChip(
                         avatar: CategoryAvatar(
                           iconKey: byId[id]?.icon,

@@ -295,7 +295,7 @@ class _FilterSheetBodyState extends ConsumerState<_FilterSheetBody> {
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           _DateChips(lang: lang),
           const SizedBox(height: AppSpacing.md),
           FilledButton(

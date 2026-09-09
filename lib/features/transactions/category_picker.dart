@@ -125,7 +125,7 @@ class _PickerSheetState extends State<_PickerSheet> {
                       radius: 18,
                       semanticLabel: _name(parent),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.md2),
                     Expanded(
                       child: Text(
                         _name(parent),
