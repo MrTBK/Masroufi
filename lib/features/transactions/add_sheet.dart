@@ -12,19 +12,16 @@ Future<void> showAddSheet(BuildContext context, String lang) {
     context: context,
     builder: (c) => SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        // Drag handle comes from the bottom-sheet theme, never hand-drawn.
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.sm,
+          AppSpacing.md,
+          AppSpacing.lg,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Theme.of(c).colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 12),
             _AddRow(
               icon: Icons.remove,
               label: Strings.get(lang, 'addExpense'),
@@ -35,7 +32,7 @@ Future<void> showAddSheet(BuildContext context, String lang) {
                 context.push('/add?type=expense');
               },
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
                 Expanded(
@@ -49,7 +46,7 @@ Future<void> showAddSheet(BuildContext context, String lang) {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: _AddRow(
                     icon: Icons.swap_horiz,
@@ -92,7 +89,9 @@ class _AddRow extends StatelessWidget {
         Flexible(
           child: Text(
             label,
-            style: primary ? const TextStyle(fontSize: 18) : null,
+            style: primary
+                ? Theme.of(context).textTheme.titleLarge
+                : Theme.of(context).textTheme.titleMedium,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

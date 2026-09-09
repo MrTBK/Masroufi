@@ -22,7 +22,10 @@ class HomeTitle extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.sm),
         onTap: () => context.go('/'),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.sm,
+            horizontal: AppSpacing.xs,
+          ),
           child: Text(text),
         ),
       ),
@@ -60,7 +63,12 @@ class MasroufiNavBar extends StatelessWidget {
           color: scheme.surface,
           border: Border(top: BorderSide(color: scheme.outlineVariant)),
         ),
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          AppSpacing.sm,
+          AppSpacing.lg,
+          AppSpacing.md2,
+        ),
         child: Row(
           children: [
             Expanded(
@@ -71,8 +79,9 @@ class MasroufiNavBar extends StatelessWidget {
                 onTap: onWallets,
               ),
             ),
-            // Dominant center action: 64dp filled circle, min 48dp target
-            // exceeded for comfortable touch.
+            // Dominant center action: 64dp filled circle (the app's ONE
+            // action), flat by intent — depth comes from contrast, never
+            // glow shadows, in either theme.
             Semantics(
               button: true,
               label: Strings.get(lang, 'addExpense'),
@@ -85,17 +94,14 @@ class MasroufiNavBar extends StatelessWidget {
                 child: Container(
                   width: 64,
                   height: 64,
-                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  margin: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: scheme.primary,
-                    boxShadow: [
-                      BoxShadow(
-                        color: scheme.primary.withValues(alpha: 0.35),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+                    border: Border.all(
+                      color: scheme.onPrimary.withValues(alpha: 0.25),
+                      width: 2,
+                    ),
                   ),
                   child: Icon(
                     Icons.add,
@@ -141,12 +147,12 @@ class _NavItem extends StatelessWidget {
       borderRadius: BorderRadius.circular(AppRadius.md),
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: color, size: 26),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               label,
               maxLines: 1,
