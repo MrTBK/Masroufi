@@ -36,7 +36,12 @@ class _DebtsPageState extends ConsumerState<DebtsPage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md2,
+              AppSpacing.md,
+              0,
+            ),
             child: SegmentedButton<String>(
               segments: [
                 ButtonSegment(
@@ -152,7 +157,7 @@ class _DebtsPageState extends ConsumerState<DebtsPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(d.person, style: Theme.of(c).textTheme.titleLarge),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               if (d.status == 'open')
                 FilledButton(
                   onPressed: () {
@@ -223,7 +228,7 @@ class _DebtsPageState extends ConsumerState<DebtsPage> {
                   hintText: Strings.get(lang, 'amountHint'),
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               DropdownButtonFormField<String>(
                 initialValue: walletId,
                 decoration: InputDecoration(
@@ -315,7 +320,7 @@ class _DebtsPageState extends ConsumerState<DebtsPage> {
                 selected: {dir},
                 onSelectionChanged: (s) => setS(() => dir = s.first),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: personCtl,
                 decoration: InputDecoration(

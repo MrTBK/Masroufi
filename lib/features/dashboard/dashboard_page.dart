@@ -261,21 +261,19 @@ _monthAnalysis({
   }
   final byId = {for (final c in cats) c.id: c};
   final rolled = CategoryHierarchy.rollUp(byCat, cats);
-  final primaries = rolled.entries
-      .where((e) => e.value > 0)
-      .where((e) => e.key == null || byId[e.key]?.parentId == null)
-      .toList()
-    ..sort((a, b) => b.value.compareTo(a.value));
+  final primaries =
+      rolled.entries
+          .where((e) => e.value > 0)
+          .where((e) => e.key == null || byId[e.key]?.parentId == null)
+          .toList()
+        ..sort((a, b) => b.value.compareTo(a.value));
   final topName = primaries.isEmpty
       ? null
       : _catName(lang, cats, primaries.first.key);
   final secondTop = primaries.length < 2
       ? null
       : _catName(lang, cats, primaries[1].key);
-  final mom = AnalyticsStats.monthOverMonth(
-    current: curExp,
-    previous: prevExp,
-  );
+  final mom = AnalyticsStats.monthOverMonth(current: curExp, previous: prevExp);
   final elapsed = Periods.elapsedDays(cur.start, cur.end, now);
   return (
     lines: Insights.buildInsights(
@@ -303,10 +301,7 @@ _monthAnalysis({
 /// Pure calendar grid for a month: weeks × 7 day cells (null = padding),
 /// weeks starting on [weekStartWeekday] (DateTime.monday..sunday, from
 /// settings). Unit-tested; the widget only renders this structure.
-List<List<DateTime?>> buildCalendarWeeks(
-  DateTime month,
-  int weekStartWeekday,
-) {
+List<List<DateTime?>> buildCalendarWeeks(DateTime month, int weekStartWeekday) {
   final first = DateTime(month.year, month.month, 1);
   final daysInMonth = Periods.daysInMonth(month.year, month.month);
   final lead = (first.weekday - weekStartWeekday + 7) % 7;
@@ -317,9 +312,7 @@ List<List<DateTime?>> buildCalendarWeeks(
   while (cells.length % 7 != 0) {
     cells.add(null);
   }
-  return [
-    for (var w = 0; w < cells.length; w += 7) cells.sublist(w, w + 7),
-  ];
+  return [for (var w = 0; w < cells.length; w += 7) cells.sublist(w, w + 7)];
 }
 
 /// Financial-analysis dashboard (spec §8-14): totals → donut →
@@ -502,9 +495,7 @@ class DashboardPage extends ConsumerWidget {
           label: _catName(lang, d.cats, top[i].key),
           iconKey: _catIcon(d.cats, top[i].key),
           value: top[i].value,
-          color: DonutPalette.of(
-            context,
-          )[i % DonutPalette.colors.length],
+          color: DonutPalette.of(context)[i % DonutPalette.colors.length],
         ),
     ];
     return Column(
@@ -521,9 +512,7 @@ class DashboardPage extends ConsumerWidget {
                 Icon(
                   d.momPct! < 0 ? Icons.trending_down : Icons.trending_up,
                   size: 18,
-                  color: d.momPct! < 0
-                      ? AppColors.income
-                      : AppColors.expense,
+                  color: d.momPct! < 0 ? AppColors.income : AppColors.expense,
                   semanticLabel: '${d.momPct}%',
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -821,10 +810,9 @@ class DashboardPage extends ConsumerWidget {
     if (d.upcoming.isEmpty) return const SizedBox.shrink();
     final now = DateTime.now();
     final byId = {for (final c in d.cats) c.id: c};
-    String walletName(String id) => d.wallets
-        .where((w) => w.id == id)
-        .map((w) => w.name)
-        .firstOrNull ?? '—';
+    String walletName(String id) =>
+        d.wallets.where((w) => w.id == id).map((w) => w.name).firstOrNull ??
+        '—';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -868,9 +856,9 @@ class DashboardPage extends ConsumerWidget {
 
   /// "Tomorrow" / weekday label for an upcoming date (locale-aware).
   String _upcomingDay(DateTime date, DateTime now, String lang) {
-    final diff = Periods.dayStart(
-      date,
-    ).difference(Periods.dayStart(now)).inDays;
+    final diff = Periods.dayStart(date)
+        .difference(Periods.dayStart(now))
+        .inDays;
     if (diff <= 0) return Strings.get(lang, 'today');
     if (diff == 1) return Strings.get(lang, 'tomorrow');
     try {
@@ -1007,7 +995,8 @@ class DashboardPage extends ConsumerWidget {
                         ? const SizedBox.shrink()
                         : Builder(
                             builder: (context) {
-                              final v = d.calendarDays[Periods.dayStart(day)] ?? 0;
+                              final v =
+                                  d.calendarDays[Periods.dayStart(day)] ?? 0;
                               final frac = maxV <= 0
                                   ? 0.0
                                   : (v / maxV).clamp(0.0, 1.0);
@@ -1086,11 +1075,11 @@ class DashboardPage extends ConsumerWidget {
       builder: (c) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                AppSpacing.sm,
-                AppSpacing.md,
-                AppSpacing.lg,
-              ),
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.md,
+            AppSpacing.lg,
+          ),
           child: FutureBuilder(
             future: txnsRepo.list(
               TxnFilter(
@@ -1116,18 +1105,16 @@ class DashboardPage extends ConsumerWidget {
                       Expanded(
                         child: Text(
                           dayGroupHeader(day, DateTime.now(), lang),
-                          style: Theme.of(c).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(c).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ),
                       MoneyText(
                         millimes: dayTotal,
                         lang: lang,
                         type: 'neutral',
-                        style: Theme.of(c).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(c).textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),

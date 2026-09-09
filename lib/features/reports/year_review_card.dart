@@ -8,6 +8,7 @@ import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/design.dart';
+
 import 'package:flutter/services.dart';
 
 /// Year-in-review shareable card (Track 7, no schema, offline).
@@ -78,11 +79,10 @@ class YearReviewCard extends ConsumerWidget {
           children: [
             Text(
               '${Strings.get(lang, 'yearReview')} • ${data.year}',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             MoneyText(
               millimes: data.expenseMillimes,
               lang: lang,
@@ -95,7 +95,7 @@ class YearReviewCard extends ConsumerWidget {
               '${data.txnCount} txn • ${data.topCategory}',
               style: Theme.of(context).textTheme.bodySmall,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             OutlinedButton.icon(
               icon: const Icon(Icons.share),
               label: Text(Strings.get(lang, 'share')),
@@ -107,11 +107,7 @@ class YearReviewCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _share(
-    BuildContext context,
-    WidgetRef ref,
-    String lang,
-  ) async {
+  Future<void> _share(BuildContext context, WidgetRef ref, String lang) async {
     // Offline share: one-page PDF from the yearly totals (reuses the
     // monthly statement renderer with December as the label month and
     // the yearly sums as the payload — documented approximation).

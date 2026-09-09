@@ -158,9 +158,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 const SizedBox(height: AppSpacing.lg),
                 _group(context, lang, 'notifications'),
                 FutureBuilder(
-                  future: ref
-                      .watch(settingsRepoProvider)
-                      .notifEnabled(),
+                  future: ref.watch(settingsRepoProvider).notifEnabled(),
                   builder: (context, snap) => SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     secondary: const Icon(Icons.notifications),
@@ -225,19 +223,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           contentPadding: EdgeInsets.zero,
           leading: Icon(enabled ? Icons.lock : Icons.lock_open),
           title: Text(Strings.get(lang, 'appLock')),
-          subtitle: enabled
-              ? null
-              : Text(Strings.get(lang, 'setPin')),
+          subtitle: enabled ? null : Text(Strings.get(lang, 'setPin')),
         ),
         if (!enabled)
           Align(
             alignment: AlignmentDirectional.centerStart,
             child: FilledButton(
-              onPressed: () => showPinSetup(
-                context: context,
-                ref: ref,
-                verifyOld: false,
-              ),
+              onPressed: () =>
+                  showPinSetup(context: context, ref: ref, verifyOld: false),
               child: Text(Strings.get(lang, 'setPin')),
             ),
           )
@@ -274,9 +267,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                               // Prove presence before enabling.
                               final ok = await ref
                                   .read(bioAuthProvider)
-                                  .authenticate(
-                                    Strings.get(lang, 'unlockApp'),
-                                  );
+                                  .authenticate(Strings.get(lang, 'unlockApp'));
                               if (!ok) return;
                             }
                             await ref
@@ -300,9 +291,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     ],
                     onChanged: (v) async {
                       if (v == null) return;
-                      await ref
-                          .read(settingsRepoProvider)
-                          .setLockTimeout(v);
+                      await ref.read(settingsRepoProvider).setLockTimeout(v);
                       setState(() {});
                     },
                   ),
@@ -332,9 +321,8 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                             await ref
                                 .read(settingsRepoProvider)
                                 .setBioEnabled(false);
-                            ref
-                                .read(lockEnabledProvider.notifier)
-                                .state = false;
+                            ref.read(lockEnabledProvider.notifier).state =
+                                false;
                             ref.read(lockedProvider.notifier).state = false;
                           },
                           child: Text(Strings.get(lang, 'removePin')),

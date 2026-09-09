@@ -1141,3 +1141,53 @@ analyze 0 issues throughout.
 - Emulator matrix (`qa_matrix_test.dart`): not re-run in this pass;
   prior pass green; bare-launcher cold-start stall on this SwiftShader
   emulator is environment-specific — verdict needs real hardware.
+
+---
+
+## 22. UI/UX REDESIGN — 2026-09-09 build pass (Steps 1–13)
+
+Real community skills installed globally (UI/UX Pro Max 2.15.0 via
+`uipro`, beautify-flutter 1.5.0 via clone, ux-designer via copy; all in
+`~/.claude/skills/`, repo untouched by installation). Roles: Pro Max =
+palette/style authority, beautify-flutter = Flutter implementation,
+UX Designer = per-phase gate. Pro Max landing-page generator output
+rejected with cause (dark glass plus handwriting font unsuitable);
+raw finance CSV rules used instead. Votes honored: light-first, new
+petrol palette (all pairs verified 4.5:1+), 3-slot nav kept.
+
+- **Step 1:** DESIGN.md + design-system/MASTER.md frozen; IBM Plex Sans
+  variable TTF bundled (OFL); tuned light/dark schemes, Plex scale,
+  component themes, tokens. Wallet identities and DB defaults untouched.
+- **Step 2:** flat + action (no glow), theme drag handles, tokenized
+  nav and add sheet. design-check.sh triaged and adopted as gate.
+- **Step 3:** brightness-aware MoneyText with tabular figures, hero
+  skeleton (no bare spinner), fixed comparison strip (no shrinkWrap),
+  tokenized hero, 48dp eye. Detail/menu/UX tests green.
+- **Step 4:** live-region inline errors keeping field values, tokenized
+  form/picker/filter. Foundation/upgrade/small-screen tests green.
+- **Step 5:** detail sheet rhythm pass; actions and positions preserved.
+- **Step 6:** wallet cards flat tonal, 48dp targets, named tracking,
+  masked/visible metric parity. Caught and fixed: missing theme import,
+  radius token name.
+- **Step 7:** remaining as display-size hero (state-colored), total as
+  caption, merged rhythm, no new cards.
+- **Step 8:** AppChartColors light/dark ramps, brightness-aware donut,
+  dashboard tokenized; every viz answers a distinct question.
+- **Step 9:** settings hub regrouped (Money/Analysis/Planning/Data/
+  Notifications) on existing routes; RTL-mirroring chevron; one new
+  key (planning) with fr/ar parity.
+- **Step 10:** RTL audit (zero physical sides, zero raw money-in-Text);
+  pager and drill-in chevrons mirror; refund glyph made
+  direction-neutral with regression guard.
+- **Step 11:** per-theme status-bar and gesture-nav overlay styles
+  (edge-to-edge legible both ways).
+- **Step 12:** a11y sweep (tooltips, theme handle, 48dp); new 200%
+  text-scale home test caught a real ListTile trailing-width bug,
+  fixed with constraint-derived trailing plus MoneyText ellipsis.
+- **Step 13:** final sweep leaves zero inline sizes/colors in screens;
+  `dart format` normalized; debug APK green.
+
+Verification: `flutter analyze` 0 issues, `flutter test` 226/226
+(220 baseline + 4 theme + 1 scale + 1 refund-glyph), debug APK green.
+Degraded verification declared: on-device toggle proof and visual
+screenshot QA need real hardware (emulator cold-start stall).

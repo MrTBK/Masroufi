@@ -36,7 +36,12 @@ class SavingsPage extends ConsumerWidget {
           // separate ledger, default unlinked — contributing never moves
           // wallet money. Shown inline so the choice is explicit.
           final note = Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md2,
+              AppSpacing.md,
+              0,
+            ),
             child: Text(
               Strings.get(lang, 'savingsSeparate'),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -63,68 +68,79 @@ class SavingsPage extends ConsumerWidget {
               note,
               Expanded(
                 child: ListView.builder(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            itemCount: goals.length,
-            itemBuilder: (context, i) {
-              final g = goals[i];
-              return FutureBuilder<int>(
-                future: repo.currentAmount(g.id),
-                builder: (context, amt) {
-                  final current = amt.data ?? 0;
-                  final pct = SavingsRepo.progress(current, g.targetMillimes);
-                  final remaining = g.targetMillimes - current;
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                    child: AppCard(
-                      onTap: () => _detailSheet(context, ref, g),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  g.name,
-                                  style: Theme.of(context).textTheme.titleMedium
-                                      ?.copyWith(fontWeight: FontWeight.bold),
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  itemCount: goals.length,
+                  itemBuilder: (context, i) {
+                    final g = goals[i];
+                    return FutureBuilder<int>(
+                      future: repo.currentAmount(g.id),
+                      builder: (context, amt) {
+                        final current = amt.data ?? 0;
+                        final pct = SavingsRepo.progress(
+                          current,
+                          g.targetMillimes,
+                        );
+                        final remaining = g.targetMillimes - current;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: AppCard(
+                            onTap: () => _detailSheet(context, ref, g),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        g.name,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                    ),
+                                    if (g.isArchived)
+                                      Text(
+                                        Strings.get(lang, 'archived'),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall,
+                                      ),
+                                  ],
                                 ),
-                              ),
-                              if (g.isArchived)
+                                const SizedBox(height: AppSpacing.xs),
+                                Directionality(
+                                  textDirection: TextDirection.ltr,
+                                  child: Text(
+                                    '${Money.format(current, lang: lang)} / '
+                                    '${Money.format(g.targetMillimes, lang: lang)}',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyLarge,
+                                  ),
+                                ),
+                                const SizedBox(height: AppSpacing.sm),
+                                BudgetBar(
+                                  spentMillimes: current,
+                                  totalMillimes: g.targetMillimes,
+                                  lang: lang,
+                                ),
+                                const SizedBox(height: AppSpacing.xs),
                                 Text(
-                                  Strings.get(lang, 'archived'),
+                                  '${Strings.get(lang, 'remainingGoal')}: '
+                                  '${Money.inline(remaining, lang: lang)}'
+                                  '${pct * 100 >= 100 ? '' : ' • ${(pct * 100).toStringAsFixed(1)}%'}',
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Text(
-                              '${Money.format(current, lang: lang)} / '
-                              '${Money.format(g.targetMillimes, lang: lang)}',
-                              style: Theme.of(context).textTheme.bodyLarge,
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          BudgetBar(
-                            spentMillimes: current,
-                            totalMillimes: g.targetMillimes,
-                            lang: lang,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${Strings.get(lang, 'remainingGoal')}: '
-                            '${Money.inline(remaining, lang: lang)}'
-                            '${pct * 100 >= 100 ? '' : ' • ${(pct * 100).toStringAsFixed(1)}%'}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              );
-            },
+                        );
+                      },
+                    );
+                  },
                 ),
               ),
             ],
@@ -154,7 +170,7 @@ class SavingsPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(g.name, style: Theme.of(c).textTheme.titleLarge),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Row(
                 children: [
                   Expanded(
@@ -166,7 +182,7 @@ class SavingsPage extends ConsumerWidget {
                       child: Text(Strings.get(lang, 'contribute')),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: AppSpacing.sm),
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {

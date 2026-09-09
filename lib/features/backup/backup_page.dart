@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../app/providers.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/database/app_db.dart';
@@ -485,9 +486,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   categoryId: Value(t['categoryId'] as String?),
                   note: Value((t['note'] as String?) ?? ''),
                   sortOrder: Value((t['sortOrder'] as num?)?.toInt() ?? 0),
-                  createdAt: Value(
-                    DateTime.parse(t['createdAt'] as String),
-                  ),
+                  createdAt: Value(DateTime.parse(t['createdAt'] as String)),
                 ),
               );
         }
@@ -502,9 +501,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   categoryId: Value(s['categoryId'] as String?),
                   amountMillimes: Value((s['amountMillimes'] as num).toInt()),
                   note: Value((s['note'] as String?) ?? ''),
-                  createdAt: Value(
-                    DateTime.parse(s['createdAt'] as String),
-                  ),
+                  createdAt: Value(DateTime.parse(s['createdAt'] as String)),
                 ),
               );
         }
@@ -578,9 +575,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     );
     final path = picked.firstOrNull?.path;
     if (path == null) return;
-    final preview = BackupCodec.parseCsvImport(
-      await File(path).readAsString(),
-    );
+    final preview = BackupCodec.parseCsvImport(await File(path).readAsString());
     if (!mounted) return;
     final ok = await showDialog<bool>(
       context: context,
@@ -593,11 +588,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             children: [
               Text(
                 Strings.get(lang, 'csvBackupFirst'),
-                style: Theme.of(c).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(c).colorScheme.onSurfaceVariant,
-                ),
+                style: Theme.of(c).textTheme.bodySmall
+                    ?.copyWith(color: Theme.of(c).colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               Text(
                 Strings.tpl(lang, 'csvSummary', {
                   'ok': '${preview.rows.length}',
@@ -607,9 +601,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
               for (final e in preview.errors.take(10))
                 Text(
                   'Row ${e.row}: ${e.message}',
-                  style: Theme.of(c).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(c).colorScheme.error,
-                  ),
+                  style: Theme.of(c).textTheme.bodySmall
+                      ?.copyWith(color: Theme.of(c).colorScheme.error),
                 ),
               if (preview.errors.length > 10)
                 Text(
@@ -734,9 +727,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 bumpRefresh(ref);
                 if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(Strings.get(lang, 'csvUndone')),
-                  ),
+                  SnackBar(content: Text(Strings.get(lang, 'csvUndone'))),
                 );
               },
             ),
@@ -755,11 +746,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     return Scaffold(
       appBar: AppBar(title: Text(Strings.get(lang, 'backup'))),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          _BackupNag(
-            onBackup: createBackup,
-          ),
+          _BackupNag(onBackup: createBackup),
           FutureBuilder(
             future: ref.watch(settingsRepoProvider).lastBackupAt(),
             builder: (context, snap) {
@@ -787,24 +776,27 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             onPressed: busy ? null : createBackup,
             child: Text(Strings.get(lang, 'createBackup')),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           OutlinedButton(
             onPressed: busy ? null : restoreBackup,
             child: Text(Strings.get(lang, 'restoreBackup')),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           OutlinedButton(
             onPressed: busy ? null : exportCsv,
             child: Text(Strings.get(lang, 'exportCsv')),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           OutlinedButton(
             onPressed: busy ? null : importCsv,
             child: Text(Strings.get(lang, 'importCsv')),
           ),
-          if (busy) ...[const SizedBox(height: 16), const LoadingView()],
+          if (busy) ...[
+            const SizedBox(height: AppSpacing.md),
+            const LoadingView(),
+          ],
           if (msg != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             Text(msg!, style: Theme.of(context).textTheme.bodySmall),
           ],
         ],
@@ -840,11 +832,10 @@ class _BackupNag extends ConsumerWidget {
           dismissed = null;
         }
         final now = DateTime.now();
-        final stale = at == null || now.difference(at) >= const Duration(days: 14);
+        final stale =
+            at == null || now.difference(at) >= const Duration(days: 14);
         if (!stale) return const SizedBox.shrink();
-        if (dismissed != null &&
-            at != null &&
-            !dismissed.isBefore(at)) {
+        if (dismissed != null && at != null && !dismissed.isBefore(at)) {
           return const SizedBox.shrink();
         }
         return Card(
@@ -854,7 +845,7 @@ class _BackupNag extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(Strings.get(lang, 'backupStale')),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
                     TextButton(
@@ -871,7 +862,7 @@ class _BackupNag extends ConsumerWidget {
                       },
                       child: Text(Strings.get(lang, 'dismiss')),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     FilledButton(
                       onPressed: onBackup,
                       child: Text(Strings.get(lang, 'backupNow')),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/fx/fx.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/widgets/widgets.dart';
@@ -49,7 +50,7 @@ class _FxRatesPageState extends ConsumerState<FxRatesPage> {
     return Scaffold(
       appBar: AppBar(title: Text(Strings.get(lang, 'fxRate'))),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           for (final c in Fx.supported)
             Padding(

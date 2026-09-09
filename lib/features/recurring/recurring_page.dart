@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/widgets/design.dart';
 import '../../core/money/recurring.dart';
 import '../../core/widgets/widgets.dart';
@@ -226,7 +227,7 @@ class RecurringPage extends ConsumerWidget {
                     }
                   }),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 TextField(
                   controller: amountCtl,
                   autofocus: true,
@@ -237,7 +238,7 @@ class RecurringPage extends ConsumerWidget {
                     labelText: Strings.get(lang, 'amount'),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 DropdownButtonFormField<String>(
                   initialValue: frequency,
                   decoration: InputDecoration(
@@ -252,7 +253,7 @@ class RecurringPage extends ConsumerWidget {
                   ],
                   onChanged: (v) => setS(() => frequency = v ?? frequency),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 DropdownButtonFormField<String>(
                   initialValue: walletId,
                   decoration: InputDecoration(
@@ -264,7 +265,7 @@ class RecurringPage extends ConsumerWidget {
                   ],
                   onChanged: (v) => setS(() => walletId = v),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.sm),
                 Builder(
                   builder: (c) {
                     final catsForType = cats

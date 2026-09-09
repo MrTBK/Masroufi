@@ -39,7 +39,12 @@ class HistoryPage extends ConsumerWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.md2,
+              AppSpacing.md,
+              0,
+            ),
             child: TextField(
               decoration: InputDecoration(
                 hintText: Strings.get(lang, 'search'),
@@ -50,7 +55,10 @@ class HistoryPage extends ConsumerWidget {
           ),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.md2,
+              vertical: AppSpacing.sm,
+            ),
             child: Row(
               children: [
                 _chip(context, ref, Strings.get(lang, 'all'), type == null, () {
@@ -74,7 +82,12 @@ class HistoryPage extends ConsumerWidget {
               final cats = meta.data![1] as List<Category>;
               final catById = {for (final c in cats) c.id: c};
               return Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  0,
+                  AppSpacing.md,
+                  AppSpacing.xs,
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -96,7 +109,7 @@ class HistoryPage extends ConsumerWidget {
                             ref.read(walletFilterProvider.notifier).state = v,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: DropdownButtonFormField<String>(
                         initialValue: catId,
@@ -210,7 +223,12 @@ class HistoryPage extends ConsumerWidget {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    0,
+                    AppSpacing.md,
+                    AppSpacing.xl,
+                  ),
                   itemCount: groups.length,
                   itemBuilder: (context, gi) {
                     final key = groups.keys.elementAt(gi);
@@ -318,7 +336,7 @@ class HistoryPage extends ConsumerWidget {
     VoidCallback onTap,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: FilterChip(
         label: Text(label),
         selected: selected,

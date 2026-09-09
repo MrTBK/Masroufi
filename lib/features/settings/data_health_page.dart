@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/safety/data_health.dart';
 import '../../core/widgets/widgets.dart';
@@ -50,13 +51,13 @@ class _DataHealthPageState extends ConsumerState<DataHealthPage> {
     return Scaffold(
       appBar: AppBar(title: Text(Strings.get(lang, 'dataHealth'))),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           FilledButton(
             onPressed: busy ? null : _scan,
             child: Text(Strings.get(lang, 'dataHealth')),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           if (issues != null)
             Text(
               issues!.isEmpty
@@ -65,15 +66,18 @@ class _DataHealthPageState extends ConsumerState<DataHealthPage> {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           if (issues != null && issues!.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             OutlinedButton(
               onPressed: busy ? null : _repair,
               child: Text(Strings.get(lang, 'dataHealthFix')),
             ),
           ],
-          if (busy) ...[const SizedBox(height: 16), const LoadingView()],
+          if (busy) ...[
+            const SizedBox(height: AppSpacing.md),
+            const LoadingView(),
+          ],
           if (msg != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Text(msg!, style: Theme.of(context).textTheme.bodySmall),
           ],
         ],

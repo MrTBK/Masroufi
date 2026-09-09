@@ -113,7 +113,7 @@ class CategoryDetailPage extends ConsumerWidget {
               radius: 22,
               semanticLabel: parentName,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md2),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -230,7 +230,7 @@ class CategoryDetailPage extends ConsumerWidget {
         child: Row(
           children: [
             CategoryAvatar(iconKey: iconKey, radius: 18, semanticLabel: name),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md2),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,7 +252,7 @@ class CategoryDetailPage extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   LinearProgressIndicator(
                     value: maxV <= 0 ? 0 : amount / maxV,
                     minHeight: 6,

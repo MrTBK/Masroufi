@@ -216,7 +216,9 @@ abstract final class BackupCodec {
       final typeRaw = cell(r, typeCol).toLowerCase();
       final type = typeRaw.isEmpty
           ? 'expense'
-          : (typeRaw == 'expense' || typeRaw == 'income' || typeRaw == 'transfer'
+          : (typeRaw == 'expense' ||
+                    typeRaw == 'income' ||
+                    typeRaw == 'transfer'
                 ? typeRaw
                 : null);
       if (type == null) {

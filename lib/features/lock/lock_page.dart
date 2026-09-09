@@ -48,20 +48,17 @@ class _AppLockScopeState extends ConsumerState<AppLockScope>
     if (state == AppLifecycleState.resumed) {
       final ref = this.ref;
       if (ref.read(lockedProvider)) return;
-      ref
-          .read(settingsRepoProvider)
-          .lockTimeout()
-          .then((timeout) {
-            if (!mounted) return;
-            if (shouldRelock(
-              lockEnabled: ref.read(lockEnabledProvider),
-              backgroundedAt: _backgroundedAt,
-              timeoutSec: timeout,
-              now: DateTime.now(),
-            )) {
-              ref.read(lockedProvider.notifier).state = true;
-            }
-          });
+      ref.read(settingsRepoProvider).lockTimeout().then((timeout) {
+        if (!mounted) return;
+        if (shouldRelock(
+          lockEnabled: ref.read(lockEnabledProvider),
+          backgroundedAt: _backgroundedAt,
+          timeoutSec: timeout,
+          now: DateTime.now(),
+        )) {
+          ref.read(lockedProvider.notifier).state = true;
+        }
+      });
     }
   }
 
@@ -93,8 +90,10 @@ class _LockPageState extends ConsumerState<LockPage> {
   }
 
   Future<void> _initBio() async {
-    final on =
-        await ref.read(settingsRepoProvider).bioEnabled().catchError((_) => false);
+    final on = await ref
+        .read(settingsRepoProvider)
+        .bioEnabled()
+        .catchError((_) => false);
     if (!mounted || !on) return;
     final can = await ref.read(bioAuthProvider).canCheck;
     if (!mounted) return;
@@ -139,7 +138,7 @@ class _LockPageState extends ConsumerState<LockPage> {
             children: [
               const Spacer(),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: scheme.primaryContainer,
                   borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -154,11 +153,10 @@ class _LockPageState extends ConsumerState<LockPage> {
               const SizedBox(height: AppSpacing.md),
               Text(
                 Brand.nameFor(lang),
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 _wrong
                     ? Strings.get(lang, 'wrongPin')
@@ -263,9 +261,8 @@ class _PinPadState extends State<PinPad> {
                       ? const SizedBox.shrink()
                       : key == '⌫'
                       ? IconButton(
-                          tooltip: MaterialLocalizations.of(
-                            context,
-                          ).backButtonTooltip,
+                          tooltip: MaterialLocalizations.of(context)
+                              .backButtonTooltip,
                           icon: const Icon(Icons.backspace_outlined),
                           onPressed: _backspace,
                         )
@@ -319,9 +316,7 @@ Future<bool> showPinVerify({
               const SizedBox(height: AppSpacing.md),
               PinPad(
                 onComplete: (pin) async {
-                  final good = await ref
-                      .read(pinStoreProvider)
-                      .checkPin(pin);
+                  final good = await ref.read(pinStoreProvider).checkPin(pin);
                   if (!c.mounted) return;
                   if (good) {
                     Navigator.pop(c, true);
@@ -382,9 +377,7 @@ Future<bool> showPinSetup({
               PinPad(
                 onComplete: (pin) async {
                   if (needVerify && first == null && !confirmStep) {
-                    final ok = await ref
-                        .read(pinStoreProvider)
-                        .checkPin(pin);
+                    final ok = await ref.read(pinStoreProvider).checkPin(pin);
                     if (!c.mounted) return;
                     if (!ok) {
                       setS(() => mismatch = true);

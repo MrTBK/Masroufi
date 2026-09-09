@@ -6,6 +6,7 @@ import '../../core/l10n/strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/design.dart';
 import '../../core/widgets/widgets.dart';
+
 import 'package:flutter/services.dart';
 import 'package:printing/printing.dart';
 
@@ -113,7 +114,7 @@ class ReportsPage extends ConsumerWidget {
                     radius: 16,
                     semanticLabel: catName(id),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: AppSpacing.md2),
                   Expanded(
                     child: Text(
                       catName(id),
@@ -216,17 +217,18 @@ class ReportsPage extends ConsumerWidget {
                     for (var i = 0; i < months.length; i++)
                       Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.xs,
+                          ),
                           child: Column(
                             children: [
                               MoneyText(
                                 millimes: trend[i].expense ~/ 1000 * 1000,
                                 lang: lang,
                                 type: 'neutral',
-                                style: Theme.of(context).textTheme.bodySmall
-                                    ?.copyWith(fontSize: 10),
+                                style: Theme.of(context).textTheme.labelSmall,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: AppSpacing.xs),
                               Container(
                                 height:
                                     24 +
@@ -244,7 +246,7 @@ class ReportsPage extends ConsumerWidget {
                                   ),
                                 ),
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: AppSpacing.xs),
                               Text(
                                 '${months[i].month}',
                                 style: Theme.of(context).textTheme.bodySmall,
@@ -267,7 +269,7 @@ class ReportsPage extends ConsumerWidget {
                           Strings.get(lang, 'budget'),
                           style: Theme.of(context).textTheme.titleSmall,
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: AppSpacing.sm),
                         BudgetBar(
                           spentMillimes: spent,
                           totalMillimes: budget.amountMillimes,
@@ -301,7 +303,7 @@ class ReportsPage extends ConsumerWidget {
                                   catName(cb.categoryId),
                                   style: Theme.of(context).textTheme.titleSmall,
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: AppSpacing.sm),
                                 BudgetBar(
                                   spentMillimes: s.spent,
                                   totalMillimes: cb.amountMillimes,
@@ -336,7 +338,7 @@ class ReportsPage extends ConsumerWidget {
                                   g.name,
                                   style: Theme.of(context).textTheme.titleSmall,
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: AppSpacing.sm),
                                 BudgetBar(
                                   spentMillimes: cur,
                                   totalMillimes: g.targetMillimes,
@@ -376,9 +378,12 @@ class ReportsPage extends ConsumerWidget {
     final budgets = ref.read(budgetsRepoProvider);
     final txns = ref.read(transactionsRepoProvider);
     final now = DateTime.now();
-    final range = (start: DateTime(now.year, now.month, 1), end: now.month == 12
-        ? DateTime(now.year + 1, 1, 1)
-        : DateTime(now.year, now.month + 1, 1));
+    final range = (
+      start: DateTime(now.year, now.month, 1),
+      end: now.month == 12
+          ? DateTime(now.year + 1, 1, 1)
+          : DateTime(now.year, now.month + 1, 1),
+    );
     try {
       final sums = await db.monthSums(now.year, now.month);
       final byCat = await db.expenseByCategory(now.year, now.month);
@@ -450,7 +455,7 @@ class ReportsPage extends ConsumerWidget {
               MoneyText(millimes: value, lang: lang, type: 'neutral'),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           LinearProgressIndicator(
             value: max <= 0 ? 0 : value / max,
             minHeight: 8,
@@ -478,7 +483,9 @@ class _NetWorthSection extends StatelessWidget {
         final trend = snap.data ?? const <WorthPoint>[];
         if (trend.isEmpty) return const SizedBox.shrink();
         final maxV = trend.map((p) => p.worth).fold(0, (a, b) => a > b ? a : b);
-        final minV = trend.map((p) => p.worth).fold(maxV, (a, b) => a < b ? a : b);
+        final minV = trend
+            .map((p) => p.worth)
+            .fold(maxV, (a, b) => a < b ? a : b);
         final span = (maxV - minV) <= 0 ? 1 : (maxV - minV);
         return Column(
           children: [
@@ -491,33 +498,33 @@ class _NetWorthSection extends StatelessWidget {
                     millimes: trend.last.worth,
                     lang: lang,
                     type: 'neutral',
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       for (final p in trend)
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.xs,
+                            ),
                             child: Column(
                               children: [
                                 Container(
-                                  height:
-                                      12 + 64 * (p.worth - minV) / span,
+                                  height: 12 + 64 * (p.worth - minV) / span,
                                   decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary,
                                     borderRadius: BorderRadius.circular(
                                       AppRadius.sm,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: AppSpacing.xs),
                                 Text(
                                   '${p.month}',
                                   style: Theme.of(context).textTheme.bodySmall,
@@ -528,7 +535,7 @@ class _NetWorthSection extends StatelessWidget {
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xs),
                   Text(
                     Strings.get(lang, 'netWorthNote'),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(

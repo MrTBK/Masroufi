@@ -83,3 +83,9 @@ default text theme.
 - 2026-09-09: STEP 1 theme foundation (tokens, tuned schemes, type
   scale, component themes). Wallet card color identities unchanged
   (persisted user styling, DB defaults untouched).
+- 2026-09-09: STEPS 2-13 redesign complete (Utility overhaul of
+  visuals, IA preserved per vote except settings-hub regroup using
+  existing routes). Full anti-pattern sweep: zero inline sizes or
+  colors remain in screens; registry palettes tokenized
+  (AppChartColors light/dark); 200%-scale ListTile bug found and
+  fixed by test. Suite 226/226, analyzer clean, debug APK green.

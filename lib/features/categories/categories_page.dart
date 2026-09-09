@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
 import '../../core/icons/category_icons.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/widgets/design.dart';
 import '../../core/widgets/widgets.dart';
@@ -44,7 +45,7 @@ class CategoriesPage extends ConsumerWidget {
               _sectionHeader(context, lang, 'incomeCategories'),
               for (final node in _forest(income))
                 _node(context, ref, lang, repo, byId, node),
-              const SizedBox(height: 80),
+              const SizedBox(height: AppSpacing.xxl + AppSpacing.xl),
             ],
           );
         },
@@ -104,7 +105,12 @@ class CategoriesPage extends ConsumerWidget {
 
   Widget _sectionHeader(BuildContext context, String lang, String key) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.md,
+        AppSpacing.xs,
+      ),
       child: Text(
         Strings.get(lang, key),
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -244,7 +250,7 @@ class CategoriesPage extends ConsumerWidget {
                         parentId = null;
                       }),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md2),
                   ],
                   // Any category can be renamed (defaults gain a customName
                   // override while keeping their nameKey identity). Only
@@ -260,7 +266,7 @@ class CategoriesPage extends ConsumerWidget {
                           : null,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: AppSpacing.md2),
                   if (!isDefault) ...[
                     DropdownButtonFormField<String?>(
                       initialValue: parentId,
@@ -287,13 +293,13 @@ class CategoriesPage extends ConsumerWidget {
                       ],
                       onChanged: (v) => setS(() => parentId = v),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: AppSpacing.md2),
                   ],
                   Text(
                     Strings.get(lang, 'pickIcon'),
                     style: Theme.of(d).textTheme.titleSmall,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: AppSpacing.sm),
                   IconPickerGrid(
                     keys: CategoryIcons.all,
                     selected: icon,

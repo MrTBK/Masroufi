@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/providers.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
+import '../../core/theme/app_theme.dart';
 
 /// 2 steps: language -> first wallet (+balance, optional name).
 /// Theme stays on 'system' here (changeable later in Settings).
@@ -80,13 +81,13 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       appBar: AppBar(title: Text(Strings.get(lang, 'onboardingTitle'))),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.lg),
           child: [_langStep(), _walletStep()][step],
         ),
       ),
       bottomNavigationBar: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
             children: [
               if (step > 0)
@@ -119,7 +120,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         Strings.get(lang, 'onboardingLang'),
         style: Theme.of(context).textTheme.titleLarge,
       ),
-      const SizedBox(height: 16),
+      const SizedBox(height: AppSpacing.md),
       RadioGroup<String>(
         groupValue: lang,
         onChanged: (v) => setState(() => lang = v!),
@@ -146,7 +147,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           Strings.get(lang, 'onboardingWallet'),
           style: Theme.of(context).textTheme.titleLarge,
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppSpacing.md),
         TextField(
           controller: walletCtl,
           decoration: InputDecoration(
@@ -154,7 +155,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             hintText: Strings.get(lang, 'cash'),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md2),
         TextField(
           controller: balanceCtl,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -164,7 +165,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             hintText: '100',
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md2),
         TextField(
           controller: nameCtl,
           decoration: InputDecoration(
@@ -172,7 +173,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           ),
         ),
         if (error != null) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             error!,
             style: TextStyle(color: Theme.of(context).colorScheme.error),
