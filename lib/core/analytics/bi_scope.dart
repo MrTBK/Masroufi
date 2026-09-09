@@ -64,6 +64,7 @@ typedef BiSnapshot = ({
   ({int diff, int pct})? growth,
   int? yoyExpense,
   Map<String?, int> byCategory,
+  Map<String?, int> incomeByCat,
   Map<String, int> byPriority,
   Map<String, int> byWallet,
   List<MonthSlice> trend,
@@ -128,6 +129,7 @@ class FilteredAnalytics {
         to: f.to,
       ),
       analytics.expenseByCategory(f.from, f.to, walletIds: wids),
+      analytics.incomeByCategory(f.from, f.to, walletIds: wids),
       analytics.expenseByPriority(f.from, f.to),
       categories.all(includeArchived: true),
       wallets.all(includeArchived: false),
@@ -135,8 +137,9 @@ class FilteredAnalytics {
     final income = results[0] as int;
     final expense = results[1] as int;
     final byCat = results[3] as Map<String?, int>;
-    final cats = results[5] as List<Category>;
-    final allWallets = results[6] as List<Wallet>;
+    final incomeByCat = results[4] as Map<String?, int>;
+    final cats = results[6] as List<Category>;
+    final allWallets = results[7] as List<Wallet>;
 
     // Previous equal-length range for growth.
     final span = f.to.difference(f.from);
@@ -238,7 +241,8 @@ class FilteredAnalytics {
       growth: Kpi.expenseGrowth(current: expense, previous: prevExpense),
       yoyExpense: yoy,
       byCategory: byCat,
-      byPriority: results[4] as Map<String, int>,
+      incomeByCat: incomeByCat,
+      byPriority: results[5] as Map<String, int>,
       byWallet: byWallet,
       trend: trend.reversed.toList(),
       cats: cats,

@@ -79,6 +79,7 @@ void main() {
       expect(s.overallSpent, 300000);
       expect(s.trend, hasLength(6));
       expect(s.trend.last.expense, 300000);
+      expect(s.incomeByCat.values.fold(0, (a, b) => a + b), 1000000);
       expect(s.byWallet.values.fold(0, (a, b) => a + b), 300000);
     });
 
