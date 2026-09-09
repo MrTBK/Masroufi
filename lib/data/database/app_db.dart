@@ -1,19 +1,88 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 
+import 'category_hierarchy.dart';
+import 'category_priority.dart';
 import 'tables.dart';
 
 part 'app_db.g.dart';
 
 @DriftDatabase(
-  tables: [Wallets, Categories, Transactions, Budgets, AppSettings],
+  tables: [
+    Wallets,
+    Categories,
+    Transactions,
+    Budgets,
+    AppSettings,
+    RecurringRules,
+    CategoryBudgets,
+    SavingsGoals,
+    SavingsContributions,
+    Debts,
+    DebtPayments,
+    TxnTemplates,
+  ],
 )
 class AppDb extends _$AppDb {
   AppDb() : super(_open());
   AppDb.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 7;
+
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) async => await m.createAll(),
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.createTable(recurringRules);
+        await m.createTable(categoryBudgets);
+        await m.createTable(savingsGoals);
+        await m.createTable(savingsContributions);
+        await m.createTable(debts);
+        await m.createTable(debtPayments);
+        await m.addColumn(transactions, transactions.recurringRuleId);
+      }
+      if (from < 3) {
+        // Privacy flag (display-only) + income/expense category kinds.
+        // Defaults preserve existing behavior: balances visible,
+        // every existing category stays an expense category.
+        await m.addColumn(wallets, wallets.isBalanceHidden);
+        await m.addColumn(categories, categories.kind);
+      }
+      if (from < 4) {
+        // Priority classification (analytical metadata only).
+        // Existing rows default to 'normal'; beforeOpen backfills
+        // deterministic per-key defaults.
+        await m.addColumn(categories, categories.priority);
+      }
+      if (from < 5) {
+        // Single-level hierarchy (nullable parent ref). Existing rows
+        // default to top-level (null); beforeOpen backfills parentId
+        // for known default children by nameKey.
+        await m.addColumn(categories, categories.parentId);
+      }
+      if (from < 6) {
+        // Wallet card styling (display-only keys). Existing rows keep
+        // teal/classic via column defaults; no data rewrite needed.
+        await m.addColumn(wallets, wallets.colorKey);
+        await m.addColumn(wallets, wallets.design);
+      }
+      if (from < 7) {
+        // Transaction templates: brand-new table, empty for existing
+        // users. No backfill, no data touched.
+        await m.createTable(txnTemplates);
+      }
+    },
+    beforeOpen: (details) async {
+      if (details.versionBefore != null && details.versionBefore! < 4) {
+        await CategoryPriority.backfill(this);
+      }
+      if (details.versionBefore != null && details.versionBefore! < 5) {
+        await CategoryHierarchy.backfill(this);
+      }
+    },
+  );
 
   static QueryExecutor _open() => driftDatabase(name: 'masroufi');
 
