@@ -37,4 +37,4 @@ millimes; database upgrades are staged with data-preserving migrations.
 
 - Offline-first wallets, transactions, categories, budgets, reports
 - JSON backup, CSV export, onboarding, settings, ar/fr/en + RTL
-- See `MASROUFI_IMPLEMENTATION_LOG.md` §§1–15 for full history.
+- See git history for full details.

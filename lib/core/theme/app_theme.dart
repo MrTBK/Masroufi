@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// Centralized design system (DESIGN.md contract). No hard-coded colors,
-/// sizes, or radii in widgets: everything flows from here.
+/// Centralized design system. No hard-coded colors, sizes, or radii
+/// in widgets: everything flows from here.
 /// Light-first palette generated from finance-category rules and verified
 /// against WCAG AA (see DESIGN.md for ratios). Dark mode is designed, not
 /// inverted.
@@ -49,9 +49,9 @@ abstract final class AppRadius {
   static const double lg = 24;
 }
 
-/// Categorical chart palette (DESIGN.md). Chart color carries no
-/// financial meaning; type stays typographic. Separate light and dark
-/// ramps keep every slice legible on its background in both modes.
+/// Categorical chart palette. Chart color carries no financial
+/// meaning; type stays typographic. Separate light and dark ramps
+/// keep every slice legible on its background in both modes.
 abstract final class AppChartColors {
   static const List<Color> light = [
     Color(0xFF0E7C5B),

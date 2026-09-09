@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:masroufi/core/theme/app_theme.dart';
 
 void main() {
-  group('theme foundation (DESIGN.md contract)', () {
+  group('theme foundation (design contract)', () {
     test('light scheme is light-first paper, not seed default', () {
       final t = buildLightTheme();
       expect(t.brightness, Brightness.light);

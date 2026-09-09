@@ -12,7 +12,8 @@ Offline-first stays the default; anything cloud must preserve it.
 - Money safety: integer millimes end-to-end; no float conversion in
   transit; backup codec versioning reused for wire format.
 - Tunisia constraints: low bandwidth, French/Arabic UX, no bank APIs
-  assumed (see non-goals in UPGRADE_PLAN.md).
+  assumed (bank integrations, OCR, and family sharing are non-goals
+  for the offline-first scope).
 
 ## Backend matrix
 
