@@ -995,3 +995,149 @@ Drift, millime ints, transfer neutrality).
   release AAB + signing; template rename/reorder if requested;
   calendar month pager; exact-alarm + boot receiver; Glance;
   cloud sync (V1.2). Nothing committed (per instructions).
+
+---
+
+## 21. UPGRADE PLAN EXECUTION — 2026-09-09 build pass (Tracks 1–8)
+
+Executed `UPGRADE_PLAN.md` top-to-bottom. After every track:
+`flutter analyze` + `flutter test` green before continuing. No rewrites,
+no fake data, no AI in financial logic; schema v7→v8 only with staged
+Drift migration + codec bump + migration tests. Suite: 187 → **220/220**;
+analyze 0 issues throughout.
+
+### Track 1 — Ship readiness
+- Version `1.1.0+2` (already in tree) kept; `CHANGELOG.md` gained
+  Keep-a-Changelog fr/ar summaries; `store/release-checklist.md` →
+  1.1.0+2; settings about-line → 1.1.0+2.
+- Git hygiene: this pass ends with logical commits (see git log);
+  secrets never staged (`android/key.properties`, `*.jks` git-ignored;
+  local keystore `.tooling/keystore/masroufi-release.jks` reused).
+- Gate: analyze 0 + full unit suite green; release AAB build verified
+  separately (see §21.9); emulator matrix not re-run here (prior pass
+  green; SwiftShader cold-start stall is environment-specific).
+
+### Track 2 — PDF monthly export
+- Deps: `pdf ^3.11.3` + `printing ^5.14.2` (no schema, no permissions).
+- `lib/core/export/monthly_statement.dart`: pure `MonthlyStatementBuilder`
+  (brand header, localized month en/fr/ar-TN, income/expense/net,
+  top-5 categories, budget vs actual, txn count — from `AnalyticsRepo`
+  data) + `buildPdf` with bundled Amiri-Regular (SIL OFL under
+  `assets/fonts/` + OFL.txt, pubspec assets).
+- Reports AppBar → Export PDF → `Printing.sharePdf`; l10n
+  `exportPdf/monthlyStatement/pdfSaved` ×3.
+- Tests `test/monthly_statement_test.dart` (6): totals vs fixtures,
+  cap/sort, ar month bytes, pdf builds with attached minus, fallback
+  font, real ReportsPage export affordance.
+
+### Track 3 — Safety + small follow-ups
+- CSV-import undo: session restore point (`insertedIds` + 10s Snackbar
+  Undo → deletes); preview dialog gained backup-first advice
+  (`csvBackupFirst` ×3).
+- Savings↔wallet: documented as designed (separate ledger, default
+  unlinked) in `docs/product.md` + inline `savingsSeparate` note.
+- Calendar month pager: `calMonthProvider` + chevrons in dashboard
+  calendar (`calPrev/calNext` ×3).
+- Templates: `rename()` existed; added `move()` (sortOrder swap) +
+  long-press menu (rename/move up-down/delete, `renameTemplate`,
+  `templateRenamed` ×3, reuses existing `moveUp/moveDown`).
+- Exact-alarm + boot: stays OFF on demand (inexact digest only);
+  documented in `notifier.dart` + `exactAlarmNote` subtitle ×3.
+- Tests `test/track3_test.dart` (3): rename+move incl. edge no-op,
+  pager math + Jan boundary, l10n parity.
+
+### Track 4 — Cloud + receipts (research doc only)
+- `docs/cloud_receipts_options.md`: backend matrix (blob-sync first),
+  E2EE requirement, conflict sketch on stable UUIDs + `updatedAt`
+  (LWW + tombstones + rollup re-validation), receipts ratings. No code.
+
+### Track 5 — Money safety net (no schema)
+- `lib/core/backup/auto_backup.dart`: weekly run-if-stale on startup
+  (`main.dart`, try/caught), `masroufi_auto_<epoch>.json`, keep last 4
+  (`prune`), `auto_backup_at` + `last_backup_at` KV.
+- Backup-health nag in `BackupPage` (14+ days, `backupStale` + Dismiss
+  via `backup_nag_dismissed_at` + `backupNow`).
+- `DuplicateGuard` (same wallet+category+amount, 30 min, warn-only) wired
+  into `txn_form_page.save()` (`duplicateWarn/Body` already existed).
+- `DataHealth.scan/repair` (dangling refs from no-FK design; nulls
+  nullable category/parent refs, never deletes) + `DataHealthPage`
+  (`/settings/data-health`, tile in Settings → Data).
+- Tests `test/safety_net_test.dart` (6): weekly/prune/nag math,
+  window/findRecent incl. transfer exclusion, scan→repair→rescan.
+
+### Track 6 — Budget intelligence (no schema)
+- `lib/core/budgets/budget_intel.dart`: `projectionAlert` reusing
+  `AnalyticsStats.partialMonth`, `effectiveBudget` rollover math
+  (display-only), `prevMonth` (Jan boundary).
+- Planner rule: `NotificationPlanner.plan` + `projection*` params (id 150,
+  `projectionAlert/Body` already existed) + `notifier.replan` feeds
+  month spent/budget/elapsed/days.
+- Rollover: `rollover_enabled` KV + `rolloverProvider` (hydrated in
+  `main.dart`) + switch in Mizania `_IntelCard`.
+- Copy-last-month: `BudgetsRepo.copyFromPrev` + `CategoryBudgetsRepo.
+  copyFromPrev` (idempotent, never overwrite, Jan boundary) + button in
+  `_IntelCard` (`copyLastBudgets/copiedBudgets` ×3).
+- Tests `test/budget_intel_test.dart` (7 incl. month boundaries).
+
+### Track 7 — Wealth views (no schema)
+- `lib/core/wealth/net_worth.dart`: documented formula (visible
+  initials + flows before month-end + non-archived savings),
+  `buildTrend/delta` pure + `trend()` DB service (6 months).
+- Reports: `_NetWorthSection` mini-chart (custom bars, `netWorth` +
+  `netWorthNote` ×3, never relabeled) + `_YearReviewSection` →
+  `YearReviewCard` (`RepaintBoundary`, offline PDF share).
+- `lib/features/reports/year_review_card.dart`: pure `YearReviewData.
+  build` (top category, net) + card + share.
+- Savings widget variant: shared Kotlin implementation
+  (`MasroufiSavingsWidgetProvider : MasroufiWidgetProvider`, same
+  onUpdate/layout/prefs) + separate manifest receiver (`Masroufi
+  Savings`, `masroufi_savings_widget_info.xml`) + Dart
+  `savingsWidgetLines` + push (`savings_title/balance`).
+  Caught-by-build: manifest merger rejects two receivers with the same
+  class (fixed with the subclass); Kotlin classes are final by default
+  (`open` added to the parent).
+- Tests `test/wealth_test.dart` (4, builders not pixels): sort/delta,
+  hidden-exclusion formula, year builder, widget lines.
+
+### Track 8 — Everyday power (schema v8)
+- Schema: `txn_splits` child table + `transactions.orig_minor`/
+  `orig_currency` (nullable, display-only); `schemaVersion` 7→8,
+  `onUpgrade` create + addColumns; `app_db.g.dart` regenerated.
+- `SplitsRepo` (parent untouched, SUM == parent enforced, `setSplits`
+  atomic) + provider; detail sheet `_SplitsSection` (add/remove,
+  `splitWith/addSplit/splitTotal` already existed) scope-safe for tests.
+- Multi-currency: `lib/core/fx/fx.dart` (manual offline rates
+  `fx_rate_<CODE>` + timestamps, `toTndMillimes` int-only,
+  `formatOriginal`, `parseMinor`, 30-day `isStale`), `FxRatesPage`
+  (`/settings/fx-rates`), txn form orig fields (`originalAmount/
+  Currency` ×3 existed), detail `_FxRow` + stale badge.
+- `HiddenGate` (reuses `PinStore`/`BioAuth` + `showPinVerify`):
+  `needsAuth` pure + `ensureUnlocked`; wired into wallet eye toggle
+  (revealing challenges; `unlockHidden` ×3 existed).
+- Codec v8 (`txn_splits` + orig fields; v1–v7 accepted) + backup page
+  export/import + `restore()` orig passthrough + auto-backup v8;
+  `docs/database.md` → v8; `migration_test` → v1→v8 (null originals,
+  splits usable); `backup_test` → v8.
+- Tests `test/everyday_power_test.dart` (7): split invariants, FX math,
+  gate paths, codec v7→v8 + round-trip, fresh-v8 shapes.
+
+### Verification
+- `flutter analyze` → 0 issues. `flutter test` → **220/220 pass**
+  (187 baseline + 33 new: 6 statement + 3 track3 + 6 safety + 7 intel
+  + 4 wealth + 7 power).
+- `flutter build apk --debug` ✓ (validates v8 codegen, manifest
+  receivers, resources; see gate note below).
+- Caught-by-tests: duplicate l10n keys (`moveUp/Down` reused), v8
+  codec type for nullable by-category, scope-free sheet tests (fixed
+  with `_Maybe*` wrappers), backup version bumps (7→8).
+
+### Gate note (Track 1 close-out)
+- `flutter build apk --debug` green on the final tree (this pass).
+- Signed release AAB + Play Console upload stay operator-gated:
+  local keystore `.tooling/keystore/masroufi-release.jks` +
+  git-ignored `android/key.properties` are in place and `releases/`
+  keeps the previous signed artifact + SHA256SUMS pattern, but no new
+  AAB was cut or uploaded here and no store listing was published.
+- Emulator matrix (`qa_matrix_test.dart`): not re-run in this pass;
+  prior pass green; bare-launcher cold-start stall on this SwiftShader
+  emulator is environment-specific — verdict needs real hardware.
