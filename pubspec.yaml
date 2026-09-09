@@ -21,6 +21,11 @@ dependencies:
   uuid: ^4.6.0
   csv: ^6.0.0
   file_picker: ^12.2.0
+  local_auth: ^3.0.2
+  flutter_local_notifications: ^22.3.0
+  timezone: ^0.11.1
+  home_widget: ^0.9.4
+  crypto: ^3.0.7
 
 dev_dependencies:
   flutter_test:
@@ -30,6 +35,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   drift_dev: ^2.34.0
   build_runner: ^2.4.0
+  sqlite3: ^3.4.0 # migration tests only: builds v1-shaped files
 
 flutter:
   uses-material-design: true

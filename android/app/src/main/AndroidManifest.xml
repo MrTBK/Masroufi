@@ -1,4 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Biometric unlock (local_auth). Normal-level permission; the
+         biometric prompt itself is OS-handled, no data leaves device. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Local alert notifications (runtime-granted on Android 13+).
+         Inexact scheduling only: no exact-alarm permission needed. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
         android:label="Masroufi"
         android:name="${applicationName}"
@@ -24,7 +30,26 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Widget "+" shortcut: cold start via the path-style URI
+                 lands in the expense form through go_router's initial
+                 route. Warm start (singleTop) opens home instead. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="masroufi" android:pathPrefix="/add" />
+            </intent-filter>
         </activity>
+        <receiver
+            android:name=".MasroufiWidgetProvider"
+            android:exported="false"
+            android:label="Masroufi">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/masroufi_widget_info" />
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
