@@ -572,8 +572,11 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                     ],
                   ),
           ),
+          // Drill-in chevron follows reading direction.
           Icon(
-            Icons.chevron_right,
+            Directionality.of(context) == TextDirection.rtl
+                ? Icons.chevron_left
+                : Icons.chevron_right,
             color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ],

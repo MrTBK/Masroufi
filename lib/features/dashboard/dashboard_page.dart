@@ -945,7 +945,13 @@ class DashboardPage extends ConsumerWidget {
             ),
             IconButton(
               tooltip: Strings.get(lang, 'calPrev'),
-              icon: const Icon(Icons.chevron_left),
+              // Pager chevrons mirror: previous points toward the
+              // reading-start side in both directions.
+              icon: Icon(
+                Directionality.of(context) == TextDirection.rtl
+                    ? Icons.chevron_right
+                    : Icons.chevron_left,
+              ),
               onPressed: () {
                 final m = ref.read(calMonthProvider);
                 ref.read(calMonthProvider.notifier).state = DateTime(
@@ -957,7 +963,11 @@ class DashboardPage extends ConsumerWidget {
             ),
             IconButton(
               tooltip: Strings.get(lang, 'calNext'),
-              icon: const Icon(Icons.chevron_right),
+              icon: Icon(
+                Directionality.of(context) == TextDirection.rtl
+                    ? Icons.chevron_left
+                    : Icons.chevron_right,
+              ),
               onPressed: () {
                 final m = ref.read(calMonthProvider);
                 ref.read(calMonthProvider.notifier).state = DateTime(

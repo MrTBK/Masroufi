@@ -45,6 +45,13 @@ void main() {
       expect(v.lightBg, isNotNull);
       expect(CategoryIcons.iconFor('no_such_icon'), Icons.category);
     });
+
+    test('registry glyphs are direction-neutral (no per-locale mirror)', () {
+      // The refund undo-arrow used to need mirroring at every render
+      // site; the registry now promises neutral glyphs only.
+      expect(CategoryIcons.iconFor('refund'), isNot(Icons.undo));
+      expect(CategoryIcons.iconFor('refund'), Icons.monetization_on);
+    });
   });
 
   group('income/expense category kinds', () {

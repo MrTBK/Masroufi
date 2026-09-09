@@ -67,7 +67,9 @@ abstract final class CategoryIcons {
     'freelance': Icons.laptop_mac,
     'allowance': Icons.account_balance_wallet,
     'investment': Icons.trending_up,
-    'refund': Icons.undo,
+    // Refund uses a direction-neutral coin glyph: the undo arrow would
+    // need per-locale mirroring at every render site.
+    'refund': Icons.monetization_on,
     'other_income': Icons.attach_money,
     'shopping_cart': Icons.shopping_cart,
     'restaurant': Icons.restaurant,
