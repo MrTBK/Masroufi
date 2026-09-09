@@ -5,9 +5,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../core/fx/fx.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
 import '../../core/notify/notifier.dart';
+import '../../core/safety/duplicate_guard.dart';
 import '../../core/widget/masroufi_widget.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/dates.dart';
@@ -35,6 +37,10 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
   late String type;
   final amountCtl = TextEditingController();
   final noteCtl = TextEditingController();
+  // v8 multi-currency (display-only): foreign original + ISO code.
+  // 'TND' (default) = plain row, no originals stored.
+  final origCtl = TextEditingController();
+  String origCurrency = 'TND';
   String? walletId;
   String? toWalletId;
   String? categoryId;
@@ -94,6 +100,10 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
         amountCtl.text = (existing.amountMillimes / 1000).toStringAsFixed(3);
         noteCtl.text = existing.note;
         when = existing.occurredAt;
+        if (existing.origMinor != null && existing.origCurrency != null) {
+          origCurrency = existing.origCurrency!;
+          origCtl.text = (existing.origMinor! / 100).toStringAsFixed(2);
+        }
       }
       loading = false;
     });
@@ -138,6 +148,7 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
   void dispose() {
     amountCtl.dispose();
     noteCtl.dispose();
+    origCtl.dispose();
     super.dispose();
   }
 
@@ -159,6 +170,45 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
       setState(() => error = Strings.get(lang, 'required'));
       return;
     }
+    // v8 originals (display-only): foreign amount + ISO code travel
+    // together; TND (default) stores no originals.
+    int? origMinor;
+    String? origCode;
+    if (origCurrency != 'TND' && origCtl.text.trim().isNotEmpty) {
+      try {
+        origMinor = Fx.parseMinor(origCtl.text);
+        origCode = origCurrency;
+      } on FormatException {
+        setState(() => error = Strings.get(lang, 'invalidAmount'));
+        return;
+      }
+    }
+    // Track 5 duplicate warning (warn-only): same wallet+category+amount
+    // within 30 min. Never blocks — user confirms to keep saving.
+    if (widget.editId == null && (type == 'expense' || type == 'income')) {
+      try {
+        final hit = await DuplicateGuard.findRecent(
+          db: ref.read(appDbProvider),
+          type: type,
+          amountMillimes: amount,
+          walletId: walletId!,
+          categoryId: type == 'transfer' ? null : categoryId,
+          now: DateTime.now(),
+        );
+        if (hit != null && mounted) {
+          final proceed = await confirmDialog(
+            context,
+            title: Strings.get(lang, 'duplicateWarn'),
+            body: Strings.get(lang, 'duplicateWarnBody'),
+            confirmLabel: Strings.get(lang, 'save'),
+            cancelLabel: Strings.get(lang, 'cancel'),
+          );
+          if (!proceed) return;
+        }
+      } catch (_) {
+        // Warning is best-effort; a lookup failure never blocks saving.
+      }
+    }
     setState(() => saving = true);
     try {
       final repo = ref.read(transactionsRepoProvider);
@@ -171,6 +221,9 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
           categoryId: type == 'transfer' ? null : categoryId,
           when: when,
           note: noteCtl.text,
+          origMinor: origMinor,
+          origCurrency: origCode,
+          clearOrig: origMinor == null,
         );
       } else if (type == 'expense') {
         await repo.addExpense(
@@ -179,6 +232,8 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
           categoryId: categoryId,
           when: when,
           note: noteCtl.text,
+          origMinor: origMinor,
+          origCurrency: origCode,
         );
       } else if (type == 'income') {
         await repo.addIncome(
@@ -187,6 +242,8 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
           categoryId: categoryId,
           when: when,
           note: noteCtl.text,
+          origMinor: origMinor,
+          origCurrency: origCode,
         );
       } else {
         await repo.addTransfer(
@@ -195,6 +252,8 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
           toWalletId: toWalletId!,
           when: when,
           note: noteCtl.text,
+          origMinor: origMinor,
+          origCurrency: origCode,
         );
       }
       bumpRefresh(ref);
@@ -346,6 +405,51 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
+                  // v8 original amount (display-only): foreign minor units
+                  // + ISO code; TND (default) stores no originals.
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: TextField(
+                          controller: origCtl,
+                          keyboardType:
+                              const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                          decoration: InputDecoration(
+                            labelText: Strings.get(
+                              lang,
+                              'originalAmount',
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          initialValue: origCurrency,
+                          decoration: InputDecoration(
+                            labelText: Strings.get(
+                              lang,
+                              'originalCurrency',
+                            ),
+                          ),
+                          items: [
+                            for (final c in ['TND', ...Fx.supported])
+                              DropdownMenuItem(
+                                value: c,
+                                child: Text(c),
+                              ),
+                          ],
+                          onChanged: (v) => setState(
+                            () => origCurrency = v ?? 'TND',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: noteCtl,
                     decoration: InputDecoration(
@@ -460,7 +564,7 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
   /// Template row: one tap prefills type/amount/wallet/category/note
   /// from a saved template (never writes by itself). Dangling wallet/
   /// category refs (deleted since saving) fall back to current picks.
-  /// Long-press deletes the template (confirmed).
+  /// Long-press opens rename / reorder / delete (Track 3).
   Widget _templateRow(String lang) {
     return StreamBuilder(
       stream: ref.watch(templatesRepoProvider).watch(),
@@ -487,30 +591,8 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
                     Padding(
                       padding: const EdgeInsetsDirectional.only(end: 4),
                       child: GestureDetector(
-                        onLongPress: () async {
-                          final ok = await confirmDialog(
-                            context,
-                            title: t.name,
-                            body: Strings.get(lang, 'confirmDeleteBody'),
-                            confirmLabel: Strings.get(lang, 'delete'),
-                            cancelLabel: Strings.get(lang, 'cancel'),
-                          );
-                          if (ok) {
-                            await ref
-                                .read(templatesRepoProvider)
-                                .remove(t.id);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    Strings.get(lang, 'templateDeleted'),
-                                  ),
-                                  duration: const Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          }
-                        },
+                        onLongPress: () async =>
+                            _templateMenu(context, ref, lang, t.id, t.name),
                         child: ActionChip(
                           avatar: CategoryAvatar(
                             iconKey: t.categoryId == null
@@ -534,6 +616,106 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
         );
       },
     );
+  }
+
+  /// Long-press menu: rename (existing repo method), move up/down
+  /// (new Track 3 `move()`), delete (confirmed). All display-only order
+  /// changes; ledger untouched.
+  Future<void> _templateMenu(
+    BuildContext context,
+    WidgetRef ref,
+    String lang,
+    String id,
+    String currentName,
+  ) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (c) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: Text(Strings.get(lang, 'renameTemplate')),
+              onTap: () => Navigator.pop(c, 'rename'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.arrow_upward),
+              title: Text(Strings.get(lang, 'moveUp')),
+              onTap: () => Navigator.pop(c, 'up'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.arrow_downward),
+              title: Text(Strings.get(lang, 'moveDown')),
+              onTap: () => Navigator.pop(c, 'down'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete),
+              title: Text(Strings.get(lang, 'delete')),
+              onTap: () => Navigator.pop(c, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (action == null || !context.mounted) return;
+    final repo = ref.read(templatesRepoProvider);
+    if (action == 'up' || action == 'down') {
+      await repo.move(id, action == 'up' ? -1 : 1);
+      return;
+    }
+    if (action == 'delete') {
+      final ok = await confirmDialog(
+        context,
+        title: currentName,
+        body: Strings.get(lang, 'confirmDeleteBody'),
+        confirmLabel: Strings.get(lang, 'delete'),
+        cancelLabel: Strings.get(lang, 'cancel'),
+      );
+      if (ok) {
+        await repo.remove(id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(Strings.get(lang, 'templateDeleted')),
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+      return;
+    }
+    // Rename.
+    final ctl = TextEditingController(text: currentName);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(Strings.get(lang, 'renameTemplate')),
+        content: TextField(controller: ctl, autofocus: true),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: Text(Strings.get(lang, 'cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(c, ctl.text.trim()),
+            child: Text(Strings.get(lang, 'save')),
+          ),
+        ],
+      ),
+    );
+    if (name != null && name.isNotEmpty && context.mounted) {
+      try {
+        await repo.rename(id, name);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(Strings.get(lang, 'templateRenamed'))),
+          );
+        }
+      } catch (_) {
+        // Validation (empty name) stays silent; dialog already guards.
+      }
+    }
   }
 
   void _applyTemplate(TxnTemplate t) {

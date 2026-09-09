@@ -15,6 +15,8 @@ import '../../features/onboarding/onboarding_page.dart';
 import '../../features/recurring/recurring_page.dart';
 import '../../features/reports/reports_page.dart';
 import '../../features/savings/savings_page.dart';
+import '../../features/settings/data_health_page.dart';
+import '../../features/settings/fx_rates_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/transactions/history_page.dart';
 import '../../features/transactions/add_sheet.dart';
@@ -141,6 +143,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (c, s) => const SavingsPage(),
       ),
       GoRoute(path: '/settings/debts', builder: (c, s) => const DebtsPage()),
+      GoRoute(
+        path: '/settings/data-health',
+        builder: (c, s) => const DataHealthPage(),
+      ),
+      GoRoute(
+        path: '/settings/fx-rates',
+        builder: (c, s) => const FxRatesPage(),
+      ),
       // Legacy history page kept importable (filters shared with the new
       // Transactions page); route itself redirects to '/'.
       GoRoute(path: '/legacy-history', builder: (c, s) => const HistoryPage()),

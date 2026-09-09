@@ -7,6 +7,7 @@ import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../app/providers.dart';
 import '../../core/analytics/summary.dart';
+import '../../core/budgets/budget_intel.dart';
 import '../../core/config/brand.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
@@ -171,6 +172,11 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
                     ],
                   ),
                 ),
+              _IntelCard(
+                budgetMillimes: budget?.amountMillimes,
+                spentMillimes: status.spent,
+                now: now,
+              ),
               SectionHeader(
                 title: Strings.get(lang, 'categoryBudgets'),
                 actionLabel: '+ ${Strings.get(lang, 'newCatBudget')}',
@@ -483,6 +489,86 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Budget-intelligence card (Track 6, no schema):
+/// projection pace (partialMonth run-rate), rollover opt-in toggle
+/// (display-only), copy-last-month button (idempotent).
+class _IntelCard extends ConsumerWidget {
+  final int? budgetMillimes;
+  final int spentMillimes;
+  final DateTime now;
+  const _IntelCard({
+    required this.budgetMillimes,
+    required this.spentMillimes,
+    required this.now,
+  });
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageProvider);
+    final rollover = ref.watch(rolloverProvider);
+    final projected = budgetMillimes == null
+        ? null
+        : BudgetIntel.projectionAlert(
+            spentSoFar: spentMillimes,
+            now: now,
+            budgetMillimes: budgetMillimes!,
+          );
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (projected != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                '${Strings.get(lang, 'projectionAlert')}: '
+                '${Strings.tpl(lang, 'projectionBody', {
+                  'v': Money.inline(projected, lang: lang),
+                })}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: Text(Strings.get(lang, 'rollover')),
+            value: rollover,
+            onChanged: (v) async {
+              await ref.read(settingsRepoProvider).setRolloverEnabled(v);
+              ref.read(rolloverProvider.notifier).state = v;
+            },
+          ),
+          OutlinedButton(
+            onPressed: () async {
+              final y = now.year;
+              final m = now.month;
+              final b = await ref
+                  .read(budgetsRepoProvider)
+                  .copyFromPrev(y, m);
+              final c = await ref
+                  .read(categoryBudgetsRepoProvider)
+                  .copyFromPrev(y, m);
+              bumpRefresh(ref);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      b || c > 0
+                          ? Strings.get(lang, 'copiedBudgets')
+                          : Strings.get(lang, 'dataHealthOk'),
+                    ),
+                  ),
+                );
+              }
+            },
+            child: Text(Strings.get(lang, 'copyLastBudgets')),
+          ),
+        ],
       ),
     );
   }

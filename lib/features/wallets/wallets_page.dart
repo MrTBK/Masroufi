@@ -7,6 +7,7 @@ import '../../core/config/brand.dart';
 import '../../core/icons/category_icons.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
+import '../../core/security/hidden_gate.dart';
 import '../../core/theme/wallet_styles.dart';
 import '../../core/widgets/design.dart';
 import '../../core/widgets/masroufi_nav.dart';
@@ -89,6 +90,17 @@ class WalletsPage extends ConsumerWidget {
                             : Brand.nameFor(lang),
                         onTap: () => _walletDialog(context, ref, w),
                         onToggleHidden: (v) async {
+                          // Track 8 per-action gate: revealing a hidden
+                          // balance challenges via the lock stack.
+                          if (!v) {
+                            final ok =
+                                await HiddenGate.ensureUnlocked(
+                                  context,
+                                  ref,
+                                  revealsHidden: true,
+                                );
+                            if (!ok) return;
+                          }
                           await repo.setBalanceHidden(w.id, v);
                           bumpRefresh(ref);
                         },

@@ -29,9 +29,9 @@ void main() {
       expect(BackupCodec.tryDecode(BackupCodec.encode(bad)), isNull);
     });
 
-    test('v7 round-trip includes v2+v3 tables', () {
+    test('v8 round-trip includes v2+v3+v4 tables', () {
       final decoded = BackupCodec.tryDecode(BackupCodec.encode(sample()))!;
-      expect(decoded['version'], 7);
+      expect(decoded['version'], 8);
       for (final k in [
         'recurring_rules',
         'category_budgets',
@@ -40,12 +40,13 @@ void main() {
         'debts',
         'debt_payments',
         'txn_templates',
+        'txn_splits',
       ]) {
         expect(decoded[k], isList);
       }
     });
 
-    test('old v6 backup upgrades to v7 with empty templates', () {
+    test('old v6 backup upgrades to v8 with empty templates', () {
       final v6 = {
         'version': 6,
         'exportedAt': '2026-01-01T00:00:00',
@@ -62,8 +63,9 @@ void main() {
         'debt_payments': [],
       };
       final decoded = BackupCodec.tryDecode(BackupCodec.encode(v6))!;
-      expect(decoded['version'], 7);
+      expect(decoded['version'], 8);
       expect(decoded['txn_templates'], isEmpty);
+      expect(decoded['txn_splits'], isEmpty);
     });
 
     test('old v1 backup restores with empty v2 tables', () {
@@ -77,12 +79,12 @@ void main() {
         'settings': [],
       };
       final decoded = BackupCodec.tryDecode(BackupCodec.encode(v1))!;
-      expect(decoded['version'], 7);
+      expect(decoded['version'], 8);
       expect(decoded['debts'], isEmpty);
       expect(decoded['recurring_rules'], isEmpty);
     });
 
-    test('old v4 backup upgrades to v7', () {
+    test('old v4 backup upgrades to v8', () {
       final v4 = {
         'version': 4,
         'exportedAt': '2026-01-01T00:00:00',
@@ -101,13 +103,13 @@ void main() {
         'debt_payments': [],
       };
       final decoded = BackupCodec.tryDecode(BackupCodec.encode(v4))!;
-      expect(decoded['version'], 7);
+      expect(decoded['version'], 8);
       // v4 rows carry no parentId: restore treats them as top-level.
       final cats = decoded['categories'] as List;
       expect((cats.single as Map)['parentId'], isNull);
     });
 
-    test('old v3 backup upgrades to v7', () {
+    test('old v3 backup upgrades to v8', () {
       final v3 = {
         'version': 3,
         'exportedAt': '2026-01-01T00:00:00',
@@ -124,11 +126,11 @@ void main() {
         'debt_payments': [],
       };
       final decoded = BackupCodec.tryDecode(BackupCodec.encode(v3))!;
-      expect(decoded['version'], 7);
+      expect(decoded['version'], 8);
       expect(decoded['wallets'], isEmpty);
     });
 
-    test('old v2 backup upgrades to v7', () {
+    test('old v2 backup upgrades to v8', () {
       final v2 = {
         'version': 2,
         'exportedAt': '2026-01-01T00:00:00',
@@ -145,7 +147,7 @@ void main() {
         'debt_payments': [],
       };
       final decoded = BackupCodec.tryDecode(BackupCodec.encode(v2))!;
-      expect(decoded['version'], 7);
+      expect(decoded['version'], 8);
       expect(decoded['wallets'], isEmpty);
     });
 
@@ -159,7 +161,7 @@ void main() {
       expect(BackupCodec.tryDecode('[]'), isNull);
     });
 
-    test('old v5 backup upgrades to v7 with wallet style defaults', () {
+    test('old v5 backup upgrades to v8 with wallet style defaults', () {
       final v5 = {
         'version': 5,
         'exportedAt': '2026-01-01T00:00:00',
@@ -178,7 +180,7 @@ void main() {
         'debt_payments': [],
       };
       final decoded = BackupCodec.tryDecode(BackupCodec.encode(v5))!;
-      expect(decoded['version'], 7);
+      expect(decoded['version'], 8);
       // Per-row wallet styling defaults on restore (backup_page).
       final wallets = decoded['wallets'] as List;
       expect((wallets.single as Map)['colorKey'], isNull);

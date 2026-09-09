@@ -169,10 +169,13 @@ final _dashProvider = FutureProvider<_DashData>((ref) async {
     daysLeft: (daysInMonth - now.day + 1).clamp(1, daysInMonth),
     lang: lang,
   );
-  final calMonth = DateTime(now.year, now.month, 1);
-  final calNext = now.month == 12
-      ? DateTime(now.year + 1, 1, 1)
-      : DateTime(now.year, now.month + 1, 1);
+  // Track 3 pager: calendar follows calMonthProvider (chevrons),
+  // defaulting to the current month. Clamped to a sane window.
+  var calMonth = ref.watch(calMonthProvider);
+  calMonth = DateTime(calMonth.year, calMonth.month, 1);
+  final calNext = calMonth.month == 12
+      ? DateTime(calMonth.year + 1, 1, 1)
+      : DateTime(calMonth.year, calMonth.month + 1, 1);
   final calendarDays = await analytics.dailyExpenseTotals(calMonth, calNext);
   return _DashData(
     total: total,
@@ -931,8 +934,38 @@ class DashboardPage extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SectionHeader(
-          title: '${Strings.get(lang, 'calendar')} • ${monthTitle()}',
+        Row(
+          children: [
+            Expanded(
+              child: SectionHeader(
+                title: '${Strings.get(lang, 'calendar')} • ${monthTitle()}',
+              ),
+            ),
+            IconButton(
+              tooltip: Strings.get(lang, 'calPrev'),
+              icon: const Icon(Icons.chevron_left),
+              onPressed: () {
+                final m = ref.read(calMonthProvider);
+                ref.read(calMonthProvider.notifier).state = DateTime(
+                  m.month == 1 ? m.year - 1 : m.year,
+                  m.month == 1 ? 12 : m.month - 1,
+                  1,
+                );
+              },
+            ),
+            IconButton(
+              tooltip: Strings.get(lang, 'calNext'),
+              icon: const Icon(Icons.chevron_right),
+              onPressed: () {
+                final m = ref.read(calMonthProvider);
+                ref.read(calMonthProvider.notifier).state = DateTime(
+                  m.month == 12 ? m.year + 1 : m.year,
+                  m.month == 12 ? 1 : m.month + 1,
+                  1,
+                );
+              },
+            ),
+          ],
         ),
         Row(
           children: [

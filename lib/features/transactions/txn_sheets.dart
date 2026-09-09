@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../core/fx/fx.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
 import '../../core/theme/app_theme.dart';
@@ -168,6 +169,12 @@ Future<void> showTxnDetail(
               ),
             if (t.note.isNotEmpty)
               _kv(c, Strings.get(lang, 'note'), t.note),
+            // v8 original (display-only) + stale-rate badge. Scope-safe:
+            // sheets in scope-free tests omit the row instead of throwing.
+            if (t.origMinor != null && t.origCurrency != null)
+              _MaybeFxRow(t: t, lang: lang, ref: ref),
+            // v8 splits (parent untouched; sum == parent enforced).
+            _MaybeSplits(txn: t, lang: lang, cats: cats, ref: ref),
             const SizedBox(height: 16),
             Row(
               children: [
@@ -313,6 +320,272 @@ Future<void> showTxnMenu(
       ),
     ),
   );
+}
+
+/// Scope-safe wrappers: the detail sheet is also pumped in scope-free
+/// widget tests; missing providers omit the v8 rows instead of throwing.
+/// In the real app a scope always exists, so rows always render.
+class _MaybeFxRow extends StatelessWidget {
+  final Transaction t;
+  final String lang;
+  final WidgetRef ref;
+  const _MaybeFxRow({required this.t, required this.lang, required this.ref});
+  @override
+  Widget build(BuildContext context) {
+    try {
+      final settings = ref.read(settingsRepoProvider);
+      return _FxRow(t: t, lang: lang, settings: settings);
+    } catch (_) {
+      return const SizedBox.shrink();
+    }
+  }
+}
+
+class _MaybeSplits extends StatelessWidget {
+  final Transaction txn;
+  final String lang;
+  final List<Category> cats;
+  final WidgetRef ref;
+  const _MaybeSplits({
+    required this.txn,
+    required this.lang,
+    required this.cats,
+    required this.ref,
+  });
+  @override
+  Widget build(BuildContext context) {
+    try {
+      final splits = ref.read(splitsRepoProvider);
+      return _SplitsSection(txn: txn, lang: lang, cats: cats, splits: splits);
+    } catch (_) {
+      return const SizedBox.shrink();
+    }
+  }
+}
+
+/// v8 original row (display-only): foreign original + TND ledger amount
+/// + stale-rate badge when the manual rate is older than 30 days.
+/// Plain widget (no provider lookup) so detail sheets stay testable
+/// without a scope; repos are passed in from the sheet entry.
+class _FxRow extends StatelessWidget {
+  final Transaction t;
+  final String lang;
+  final dynamic settings;
+  const _FxRow({required this.t, required this.lang, required this.settings});
+  @override
+  Widget build(BuildContext context) {
+    final code = t.origCurrency!;
+    final minor = t.origMinor!;
+    return FutureBuilder(
+      future: Future.wait([
+        settings.get(Fx.rateKey(code)) as Future<String?>,
+        settings.get(Fx.rateAtKey(code)) as Future<String?>,
+      ]),
+      builder: (context, snap) {
+        final at = Fx.parseAt(snap.data?[1]);
+        final stale = Fx.isStale(updatedAt: at, now: DateTime.now());
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  Strings.get(lang, 'originalAmount'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              Flexible(
+                child: Text(
+                  '${Fx.formatOriginal(minor, code)}${stale ? ' • ${Strings.get(lang, 'staleRate')}' : ''}',
+                  textAlign: TextAlign.end,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// v8 splits section: lists lines, adds via amount+category dialog,
+/// enforces sum == parent (repo throws, shown inline). Parent untouched.
+/// Plain widget (repos passed in) so sheets stay scope-free in tests.
+class _SplitsSection extends StatelessWidget {
+  final Transaction txn;
+  final String lang;
+  final List<Category> cats;
+  final dynamic splits;
+  const _SplitsSection({
+    required this.txn,
+    required this.lang,
+    required this.cats,
+    required this.splits,
+  });
+  @override
+  Widget build(BuildContext context) {
+    // Transfers never split (two-wallet row already).
+    if (txn.type == 'transfer') return const SizedBox.shrink();
+    return StreamBuilder(
+      stream: splits.watchTxn(txn.id) as Stream<List<TxnSplit>>,
+      builder: (context, snap) {
+        final lines = snap.data ?? const <TxnSplit>[];
+        final byId = {for (final c in cats) c.id: c};
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(child: Text(Strings.get(lang, 'splitWith'))),
+                TextButton(
+                  onPressed: () => _addDialog(context),
+                  child: Text(Strings.get(lang, 'addSplit')),
+                ),
+              ],
+            ),
+            for (final s in lines)
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      s.categoryId == null
+                          ? Strings.get(lang, 'uncategorized')
+                          : Strings.categoryName(
+                              lang,
+                              byId[s.categoryId]?.nameKey,
+                              byId[s.categoryId]?.customName,
+                            ),
+                    ),
+                  ),
+                  MoneyText(
+                    millimes: s.amountMillimes,
+                    lang: lang,
+                    type: 'neutral',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, size: 20),
+                    onPressed: () async {
+                      final rest = lines
+                          .where((x) => x.id != s.id)
+                          .map(
+                            (x) => (
+                              categoryId: x.categoryId,
+                              amountMillimes: x.amountMillimes,
+                              note: x.note,
+                            ),
+                          )
+                          .toList();
+                      try {
+                        if (rest.isEmpty) {
+                          await (splits.clearTxn(txn.id) as Future<void>);
+                        } else {
+                          await (splits.setSplits(txn.id, rest)
+                              as Future<void>);
+                        }
+                      } catch (_) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                Strings.get(lang, 'splitTotal'),
+                              ),
+                            ),
+                          );
+                        }
+                      }
+                    },
+                  ),
+                ],
+              ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _addDialog(BuildContext context) async {
+    final amtCtl = TextEditingController();
+    String? catId;
+    final existing =
+        await (splits.forTxn(txn.id) as Future<List<TxnSplit>>);
+    if (!context.mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (d) => AlertDialog(
+        title: Text(Strings.get(lang, 'addSplit')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: amtCtl,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: InputDecoration(
+                hintText: Strings.get(lang, 'amountHint'),
+              ),
+            ),
+            DropdownButtonFormField<String?>(
+              initialValue: catId,
+              decoration: InputDecoration(
+                labelText: Strings.get(lang, 'category'),
+              ),
+              items: [
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(Strings.get(lang, 'uncategorized')),
+                ),
+                for (final c in cats)
+                  DropdownMenuItem(
+                    value: c.id,
+                    child: Text(
+                      Strings.categoryName(lang, c.nameKey, c.customName),
+                    ),
+                  ),
+              ],
+              onChanged: (v) => catId = v,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(d, false),
+            child: Text(Strings.get(lang, 'cancel')),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(d, true),
+            child: Text(Strings.get(lang, 'save')),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      final amt = Money.parse(amtCtl.text);
+      final lines = [
+        for (final s in existing)
+          (
+            categoryId: s.categoryId,
+            amountMillimes: s.amountMillimes,
+            note: s.note,
+          ),
+        (categoryId: catId, amountMillimes: amt, note: ''),
+      ];
+      await (splits.setSplits(txn.id, lines) as Future<void>);
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(Strings.get(lang, 'splitTotal'))),
+        );
+      }
+    }
+  }
 }
 
 /// Creates a template from a transaction (name = note, else category,

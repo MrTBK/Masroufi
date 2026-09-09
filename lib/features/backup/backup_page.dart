@@ -60,6 +60,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     'toWalletId': t.toWalletId,
     'categoryId': t.categoryId,
     'recurringRuleId': t.recurringRuleId,
+    // v8 multi-currency (null = plain TND).
+    'origMinor': t.origMinor,
+    'origCurrency': t.origCurrency,
     'occurredAt': t.occurredAt.toIso8601String(),
     'note': t.note,
     'createdAt': t.createdAt.toIso8601String(),
@@ -185,6 +188,18 @@ class _BackupPageState extends ConsumerState<BackupPage> {
               'createdAt': t.createdAt.toIso8601String(),
             },
         ],
+        // v8 splits (empty for older clients; tryDecode normalizes).
+        'txn_splits': [
+          for (final s in await db.select(db.txnSplits).get())
+            {
+              'id': s.id,
+              'txnId': s.txnId,
+              'categoryId': s.categoryId,
+              'amountMillimes': s.amountMillimes,
+              'note': s.note,
+              'createdAt': s.createdAt.toIso8601String(),
+            },
+        ],
       });
       final dir = await getApplicationDocumentsDirectory();
       final name =
@@ -238,6 +253,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     setState(() => busy = true);
     try {
       await db.transaction(() async {
+        await db.delete(db.txnSplits).go();
         await db.delete(db.transactions).go();
         await db.delete(db.budgets).go();
         await db.delete(db.wallets).go();
@@ -308,6 +324,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   toWalletId: Value(t['toWalletId'] as String?),
                   categoryId: Value(t['categoryId'] as String?),
                   recurringRuleId: Value(t['recurringRuleId'] as String?),
+                  // v1-v7 backups carry no originals → plain TND nulls.
+                  origMinor: Value((t['origMinor'] as num?)?.toInt()),
+                  origCurrency: Value(t['origCurrency'] as String?),
                   occurredAt: Value(DateTime.parse(t['occurredAt'] as String)),
                   note: Value((t['note'] as String?) ?? ''),
                   createdAt: Value(DateTime.parse(t['createdAt'] as String)),
@@ -472,6 +491,23 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 ),
               );
         }
+        // v1-v7 backups carry no splits → empty list (normalized).
+        for (final s in (decoded['txn_splits'] as List? ?? [])) {
+          await db
+              .into(db.txnSplits)
+              .insert(
+                TxnSplitsCompanion(
+                  id: Value(s['id'] as String),
+                  txnId: Value(s['txnId'] as String),
+                  categoryId: Value(s['categoryId'] as String?),
+                  amountMillimes: Value((s['amountMillimes'] as num).toInt()),
+                  note: Value((s['note'] as String?) ?? ''),
+                  createdAt: Value(
+                    DateTime.parse(s['createdAt'] as String),
+                  ),
+                ),
+              );
+        }
       });
       // Refresh in-memory settings state.
       final settings = ref.read(settingsRepoProvider);
@@ -556,6 +592,13 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             shrinkWrap: true,
             children: [
               Text(
+                Strings.get(lang, 'csvBackupFirst'),
+                style: Theme.of(c).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(c).colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
                 Strings.tpl(lang, 'csvSummary', {
                   'ok': '${preview.rows.length}',
                   'bad': '${preview.errors.length}',
@@ -618,6 +661,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       final txns = ref.read(transactionsRepoProvider);
       var done = 0;
       var skipped = 0;
+      // Session restore point (Track 3): every inserted row id is kept so
+      // the whole import can be undone once. Backup-first is advised in
+      // the preview dialog; undo is best-effort for this session only.
+      final insertedIds = <String>[];
       for (final r in preview.rows) {
         final from = walletId(r.walletName);
         final to = r.toWalletName == null ? null : walletId(r.toWalletName!);
@@ -626,35 +673,35 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           continue;
         }
         try {
-          if (r.type == 'transfer') {
-            if (from == to) {
-              skipped++;
-              continue;
+          final id = await (() async {
+            if (r.type == 'transfer') {
+              if (from == to) throw StateError('self-transfer');
+              return txns.addTransfer(
+                amountMillimes: r.amountMillimes,
+                fromWalletId: from,
+                toWalletId: to!,
+                when: r.occurredAt,
+                note: r.note,
+              );
+            } else if (r.type == 'income') {
+              return txns.addIncome(
+                amountMillimes: r.amountMillimes,
+                walletId: from,
+                categoryId: catId(r.categoryName),
+                when: r.occurredAt,
+                note: r.note,
+              );
+            } else {
+              return txns.addExpense(
+                amountMillimes: r.amountMillimes,
+                walletId: from,
+                categoryId: catId(r.categoryName),
+                when: r.occurredAt,
+                note: r.note,
+              );
             }
-            await txns.addTransfer(
-              amountMillimes: r.amountMillimes,
-              fromWalletId: from,
-              toWalletId: to!,
-              when: r.occurredAt,
-              note: r.note,
-            );
-          } else if (r.type == 'income') {
-            await txns.addIncome(
-              amountMillimes: r.amountMillimes,
-              walletId: from,
-              categoryId: catId(r.categoryName),
-              when: r.occurredAt,
-              note: r.note,
-            );
-          } else {
-            await txns.addExpense(
-              amountMillimes: r.amountMillimes,
-              walletId: from,
-              categoryId: catId(r.categoryName),
-              when: r.occurredAt,
-              note: r.note,
-            );
-          }
+          })();
+          insertedIds.add(id);
           done++;
         } catch (_) {
           skipped++;
@@ -667,6 +714,36 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           'bad': '${skipped + preview.errors.length}',
         }),
       );
+      if (insertedIds.isNotEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              Strings.tpl(lang, 'csvImported', {
+                'ok': '$done',
+                'bad': '${skipped + preview.errors.length}',
+              }),
+            ),
+            action: SnackBarAction(
+              label: Strings.get(lang, 'csvUndo'),
+              onPressed: () async {
+                for (final id in insertedIds) {
+                  try {
+                    await ref.read(transactionsRepoProvider).delete(id);
+                  } catch (_) {}
+                }
+                bumpRefresh(ref);
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(Strings.get(lang, 'csvUndone')),
+                  ),
+                );
+              },
+            ),
+            duration: const Duration(seconds: 10),
+          ),
+        );
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -680,6 +757,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          _BackupNag(
+            onBackup: createBackup,
+          ),
           FutureBuilder(
             future: ref.watch(settingsRepoProvider).lastBackupAt(),
             builder: (context, snap) {
@@ -729,6 +809,80 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// Backup-health nag (Track 5): shows when the last backup is 14+ days
+/// old (or never), dismissible via `backup_nag_dismissed_at` KV. Never
+/// blocks; Backup Now jumps straight to a manual backup.
+class _BackupNag extends ConsumerWidget {
+  final Future<void> Function() onBackup;
+  const _BackupNag({required this.onBackup});
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageProvider);
+    return FutureBuilder(
+      future: Future.wait([
+        ref.watch(settingsRepoProvider).lastBackupAt(),
+        ref.watch(settingsRepoProvider).get('backup_nag_dismissed_at'),
+      ]),
+      builder: (context, snap) {
+        if (!snap.hasData) return const SizedBox.shrink();
+        final at = snap.data![0] as DateTime?;
+        final dismissedRaw = snap.data![1] as String?;
+        DateTime? dismissed;
+        try {
+          dismissed = dismissedRaw == null
+              ? null
+              : DateTime.parse(dismissedRaw);
+        } catch (_) {
+          dismissed = null;
+        }
+        final now = DateTime.now();
+        final stale = at == null || now.difference(at) >= const Duration(days: 14);
+        if (!stale) return const SizedBox.shrink();
+        if (dismissed != null &&
+            at != null &&
+            !dismissed.isBefore(at)) {
+          return const SizedBox.shrink();
+        }
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(Strings.get(lang, 'backupStale')),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    TextButton(
+                      onPressed: () async {
+                        await ref
+                            .read(settingsRepoProvider)
+                            .set(
+                              'backup_nag_dismissed_at',
+                              now.toUtc().toIso8601String(),
+                            );
+                        if (context.mounted) {
+                          (context as Element).markNeedsBuild();
+                        }
+                      },
+                      child: Text(Strings.get(lang, 'dismiss')),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: onBackup,
+                      child: Text(Strings.get(lang, 'backupNow')),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

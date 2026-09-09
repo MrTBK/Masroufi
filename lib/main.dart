@@ -3,8 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
+import 'package:path_provider/path_provider.dart';
+
 import 'app/app.dart';
 import 'app/providers.dart';
+import 'core/backup/auto_backup.dart';
 import 'core/security/app_lock.dart';
 import 'data/database/app_db.dart';
 import 'features/lock/lock_page.dart';
@@ -31,6 +34,10 @@ Future<void> main() async {
   final done = await container.read(settingsRepoProvider).onboardingDone();
   final hide = await container.read(settingsRepoProvider).hideBalances();
   final weekStart = await container.read(settingsRepoProvider).weekStart();
+  bool rollover = false;
+  try {
+    rollover = await container.read(settingsRepoProvider).rolloverEnabled();
+  } catch (_) {}
   // App lock: a stored PIN means the vault starts locked. Secure-storage
   // failures fail CLOSED only when a PIN was previously known... we cannot
   // know that without reading, so a read failure starts unlocked (same as
@@ -45,6 +52,12 @@ Future<void> main() async {
   } catch (_) {
     // Offline-first: a failed generation must never block startup.
   }
+  // Weekly auto-backup (Track 5): filename-rotated, keep last 4.
+  // Best-effort: any failure is swallowed, startup never blocks.
+  try {
+    final dir = await getApplicationDocumentsDirectory();
+    await AutoBackup.runIfStale(db, dir);
+  } catch (_) {}
   runApp(
     UncontrolledProviderScope(
       container: container
@@ -53,6 +66,7 @@ Future<void> main() async {
         ..read(onboardingDoneProvider.notifier).state = done
         ..read(hideBalancesProvider.notifier).state = hide
         ..read(weekStartProvider.notifier).state = weekStart
+        ..read(rolloverProvider.notifier).state = rollover
         ..read(lockEnabledProvider.notifier).state = hasPin
         ..read(lockedProvider.notifier).state = hasPin,
       child: const AppLockScope(child: MasroufiApp()),

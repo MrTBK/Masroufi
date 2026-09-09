@@ -143,6 +143,11 @@ class AppNotifier {
         dueTomorrow: due,
         todaySpentMillimes: todaySpent,
         dailyAverageMillimes: monthSpent ~/ elapsed,
+        // Track 6: projection reuses the partialMonth run-rate.
+        projectionSpent: monthSpent,
+        projectionBudget: budget?.amountMillimes,
+        projectionElapsed: elapsed,
+        projectionDays: Periods.daysInMonth(now.year, now.month),
       );
       await plugin.cancelAll();
       for (final n in plan) {

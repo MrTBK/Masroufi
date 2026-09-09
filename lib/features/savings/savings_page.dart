@@ -32,14 +32,37 @@ class SavingsPage extends ConsumerWidget {
         builder: (context, snap) {
           if (!snap.hasData) return const LoadingView();
           final goals = snap.data!;
+          // Track 3 decision (documented as designed): savings stay a
+          // separate ledger, default unlinked — contributing never moves
+          // wallet money. Shown inline so the choice is explicit.
+          final note = Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: Text(
+              Strings.get(lang, 'savingsSeparate'),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          );
           if (goals.isEmpty) {
-            return EmptyState(
-              title: Strings.get(lang, 'savingsGoals'),
-              body: Strings.get(lang, 'newGoal'),
-              icon: Icons.savings,
+            return Column(
+              children: [
+                note,
+                Expanded(
+                  child: EmptyState(
+                    title: Strings.get(lang, 'savingsGoals'),
+                    body: Strings.get(lang, 'newGoal'),
+                    icon: Icons.savings,
+                  ),
+                ),
+              ],
             );
           }
-          return ListView.builder(
+          return Column(
+            children: [
+              note,
+              Expanded(
+                child: ListView.builder(
             padding: const EdgeInsets.all(AppSpacing.md),
             itemCount: goals.length,
             itemBuilder: (context, i) {
@@ -102,6 +125,9 @@ class SavingsPage extends ConsumerWidget {
                 },
               );
             },
+                ),
+              ),
+            ],
           );
         },
       ),

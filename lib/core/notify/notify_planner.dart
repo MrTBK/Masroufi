@@ -1,3 +1,4 @@
+import '../analytics/stats.dart';
 import '../l10n/strings.dart';
 import '../money/money.dart';
 
@@ -53,6 +54,13 @@ abstract final class NotificationPlanner {
     List<RecurringInput> dueTomorrow = const [],
     required int todaySpentMillimes,
     required int dailyAverageMillimes,
+    // Track 6 projection: run-rate alert reusing partialMonth math.
+    // When [projectionSpent]/[projectionBudget] are set and the projected
+    // month-end exceeds the budget, a pace alert is added (id 150).
+    int? projectionSpent,
+    int? projectionBudget,
+    int? projectionElapsed,
+    int? projectionDays,
   }) {
     final out = <PlannedNotification>[];
     // Next 20:00 local digest slot (today if still ahead, else tomorrow).
@@ -124,6 +132,30 @@ abstract final class NotificationPlanner {
           when: slot,
         ),
       );
+    }
+    // Projection pace alert (Track 6): reuses partialMonth run-rate.
+    if (projectionSpent != null &&
+        projectionBudget != null &&
+        projectionElapsed != null &&
+        projectionDays != null &&
+        projectionBudget > 0) {
+      final partial = AnalyticsStats.partialMonth(
+        spentSoFar: projectionSpent,
+        elapsedDays: projectionElapsed,
+        daysInMonth: projectionDays,
+      );
+      if (partial != null && partial.projected > projectionBudget) {
+        out.add(
+          PlannedNotification(
+            id: 150,
+            title: Strings.get(lang, 'projectionAlert'),
+            body: Strings.tpl(lang, 'projectionBody', {
+              'v': Money.inline(partial.projected, lang: lang),
+            }),
+            when: slot,
+          ),
+        );
+      }
     }
     return out;
   }

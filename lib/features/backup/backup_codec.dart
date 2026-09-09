@@ -19,9 +19,12 @@ import '../../core/money/money.dart';
 /// backups restore with teal/classic defaults.
 /// v7 adds: txn_templates table (transaction templates). Older backups
 /// restore with an empty template list.
+/// v8 adds: txn_splits table + transactions gain origMinor/origCurrency
+/// (multi-currency display-only). Older backups restore with empty splits
+/// and null originals (plain TND).
 /// Every row a JSON map with ISO dates.
 abstract final class BackupCodec {
-  static const int currentVersion = 7;
+  static const int currentVersion = 8;
   static const int minSupportedVersion = 1;
 
   static const List<String> requiredKeysV1 = [
@@ -43,18 +46,25 @@ abstract final class BackupCodec {
 
   static const List<String> requiredKeysV3 = ['txn_templates'];
 
+  static const List<String> requiredKeysV4 = ['txn_splits'];
+
   static Map<String, dynamic> build(
     Map<String, List<Map<String, dynamic>>> tables,
   ) => {
     'version': currentVersion,
     'exportedAt': DateTime.now().toIso8601String(),
-    for (final k in [...requiredKeysV1, ...requiredKeysV2, ...requiredKeysV3])
+    for (final k in [
+      ...requiredKeysV1,
+      ...requiredKeysV2,
+      ...requiredKeysV3,
+      ...requiredKeysV4,
+    ])
       k: tables[k] ?? [],
   };
 
   static String encode(Map<String, dynamic> backup) => jsonEncode(backup);
 
-  /// Returns null when valid, else an error code. v1-v6 accepted (upgraded).
+  /// Returns null when valid, else an error code. v1-v7 accepted (upgraded).
   static String? validate(dynamic decoded) {
     if (decoded is! Map<String, dynamic>) return 'not-an-object';
     final v = decoded['version'];
@@ -64,6 +74,7 @@ abstract final class BackupCodec {
         v != 4 &&
         v != 5 &&
         v != 6 &&
+        v != 7 &&
         v != currentVersion) {
       return 'unsupported-version';
     }
@@ -71,7 +82,11 @@ abstract final class BackupCodec {
       if (decoded[k] is! List) return 'missing-$k';
     }
     if (v == currentVersion) {
-      for (final k in [...requiredKeysV2, ...requiredKeysV3]) {
+      for (final k in [
+        ...requiredKeysV2,
+        ...requiredKeysV3,
+        ...requiredKeysV4,
+      ]) {
         if (decoded[k] is! List) return 'missing-$k';
       }
     }
@@ -79,7 +94,7 @@ abstract final class BackupCodec {
   }
 
   /// Decode + normalize: old backups gain empty newer tables; anything
-  /// below v7 is stamped current (per-row new fields default on restore).
+  /// below v8 is stamped current (per-row new fields default on restore).
   static Map<String, dynamic>? tryDecode(String raw) {
     try {
       final d = jsonDecode(raw);
@@ -89,7 +104,11 @@ abstract final class BackupCodec {
         return {
           ...m,
           'version': currentVersion,
-          for (final k in [...requiredKeysV2, ...requiredKeysV3])
+          for (final k in [
+            ...requiredKeysV2,
+            ...requiredKeysV3,
+            ...requiredKeysV4,
+          ])
             if (m[k] == null) k: [],
         };
       }

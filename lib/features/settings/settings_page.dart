@@ -109,6 +109,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   title: Strings.get(lang, 'backup'),
                   route: '/settings/backup',
                 ),
+                _tile(
+                  context,
+                  lang,
+                  icon: Icons.health_and_safety,
+                  title: Strings.get(lang, 'dataHealth'),
+                  route: '/settings/data-health',
+                ),
+                _tile(
+                  context,
+                  lang,
+                  icon: Icons.currency_exchange,
+                  title: Strings.get(lang, 'fxRate'),
+                  route: '/settings/fx-rates',
+                ),
                 FutureBuilder(
                   future: ref
                       .watch(settingsRepoProvider)
@@ -117,6 +131,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     contentPadding: EdgeInsets.zero,
                     secondary: const Icon(Icons.notifications),
                     title: Text(Strings.get(lang, 'notifications')),
+                    // Track 3: exact alarms + boot restore stay OFF by
+                    // design (inexact digest only, best-effort). Documented
+                    // in the planner; no permission dance unless enabled.
+                    subtitle: Text(Strings.get(lang, 'exactAlarmNote')),
                     value: snap.data ?? false,
                     onChanged: (v) async {
                       if (v) {
@@ -176,7 +194,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   leading: const Icon(Icons.info),
                   title: Text(Strings.get(lang, 'aboutMasroufi')),
                   subtitle: Text(
-                    '${Strings.get(lang, 'appVersion')}: 1.0.0+1 • ${Brand.applicationId}',
+                    '${Strings.get(lang, 'appVersion')}: 1.1.0+2 • ${Brand.applicationId}',
                   ),
                 ),
                 ListTile(
