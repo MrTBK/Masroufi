@@ -64,6 +64,7 @@ typedef BiSnapshot = ({
   ({int diff, int pct})? growth,
   int? yoyExpense,
   Map<String?, int> byCategory,
+  Map<String?, int> prevByCat,
   Map<String?, int> incomeByCat,
   Map<String, int> byPriority,
   Map<String, int> byWallet,
@@ -146,6 +147,11 @@ class FilteredAnalytics {
     final prevEnd = f.from;
     final prevStart = f.from.subtract(span);
     final prevExpense = await analytics.expenseTotalW(wids, prevStart, prevEnd);
+    final prevByCat = await analytics.expenseByCategory(
+      prevStart,
+      prevEnd,
+      walletIds: wids,
+    );
 
     // YoY only when the scope is exactly one calendar month.
     int? yoy;
@@ -241,6 +247,7 @@ class FilteredAnalytics {
       growth: Kpi.expenseGrowth(current: expense, previous: prevExpense),
       yoyExpense: yoy,
       byCategory: byCat,
+      prevByCat: prevByCat,
       incomeByCat: incomeByCat,
       byPriority: results[5] as Map<String, int>,
       byWallet: byWallet,

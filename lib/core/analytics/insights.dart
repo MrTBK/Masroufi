@@ -54,6 +54,42 @@ abstract final class Insights {
     return out;
   }
 
+  /// Per-category movers: largest absolute whole-percent changes between
+  /// two equal ranges, most extreme first, capped at [limit]. Only
+  /// categories with a positive previous total qualify (never divide by
+  /// zero); zero-change rows are skipped. Names arrive resolved (the
+  /// engine stays locale-free); each line carries warn when spending
+  /// grew. Pure BI facts for the AI layer to explain later.
+  static List<({String text, bool warn})> buildMovers({
+    required Map<String?, int> current,
+    required Map<String?, int> previous,
+    required Map<String?, String> names,
+    required String lang,
+    int limit = 3,
+  }) {
+    final rows = <({String? id, int pct})>[];
+    for (final e in current.entries) {
+      final prev = previous[e.key] ?? 0;
+      if (e.value <= 0 || prev <= 0) continue;
+      final diff = e.value - prev;
+      if (diff == 0) continue;
+      var pct = ((diff * 100).abs() + prev ~/ 2) ~/ prev;
+      if (diff < 0) pct = -pct;
+      rows.add((id: e.key, pct: pct));
+    }
+    rows.sort((a, b) => b.pct.abs().compareTo(a.pct.abs()));
+    return [
+      for (final r in rows.take(limit))
+        (
+          text: Strings.tpl(lang, 'insCatGrowth', {
+            'cat': names[r.id] ?? '—',
+            'v': '${r.pct > 0 ? '+' : ''}${r.pct}%',
+          }),
+          warn: r.pct > 0,
+        ),
+    ];
+  }
+
   /// Factual financial-health lines (brief §35): only data-derived facts,
   /// never an invented score. Each line carries its severity for the UI
   /// icon (check vs warning). Empty when there is nothing factual to say.

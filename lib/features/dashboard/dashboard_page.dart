@@ -373,6 +373,7 @@ class DashboardPage extends ConsumerWidget {
                       _HealthSection(lang: lang, s: s),
                       const SizedBox(height: AppSpacing.lg),
                       _insights(context, lang, d),
+                      _Movers(lang: lang, s: s),
                       const SizedBox(height: AppSpacing.lg),
                       _upcoming(context, lang, d),
                       const SizedBox(height: AppSpacing.lg),
@@ -1637,6 +1638,62 @@ class _DrillTreeState extends ConsumerState<_DrillTree> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Biggest category movers vs the previous equal range, most extreme
+/// first. Same check/warn icon language as health facts; hidden when
+/// no category moved on a positive baseline.
+class _Movers extends StatelessWidget {
+  final String lang;
+  final BiSnapshot s;
+  const _Movers({required this.lang, required this.s});
+
+  @override
+  Widget build(BuildContext context) {
+    final byId = {for (final c in s.cats) c.id: c};
+    final names = {
+      for (final id in {...s.byCategory.keys, ...s.prevByCat.keys})
+        id: id == null
+            ? Strings.get(lang, 'uncategorized')
+            : byId[id] == null
+            ? '—'
+            : CategoryHierarchy.displayName(lang, byId[id]!, byId),
+    };
+    final movers = Insights.buildMovers(
+      current: s.byCategory,
+      previous: s.prevByCat,
+      names: names,
+      lang: lang,
+    );
+    if (movers.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final m in movers)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  child: Icon(
+                    m.warn ? Icons.trending_up : Icons.trending_down,
+                    size: 18,
+                    color: m.warn
+                        ? Theme.of(context).colorScheme.error
+                        : AppColors.income,
+                    semanticLabel: m.text,
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md2),
+                Expanded(child: Text(m.text)),
+              ],
+            ),
+          ),
+      ],
     );
   }
 }

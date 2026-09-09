@@ -80,6 +80,8 @@ void main() {
       expect(s.trend, hasLength(6));
       expect(s.trend.last.expense, 300000);
       expect(s.incomeByCat.values.fold(0, (a, b) => a + b), 1000000);
+      // August baseline visible to movers.
+      expect(s.prevByCat.values.fold(0, (a, b) => a + b), 100000);
       expect(s.byWallet.values.fold(0, (a, b) => a + b), 300000);
     });
 

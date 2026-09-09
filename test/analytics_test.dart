@@ -217,6 +217,53 @@ void main() {
     });
   });
 
+  group('Insights.buildMovers', () {
+    test('ranks by absolute change, caps, skips noise', () {
+      const names = {'food': 'Food', 'taxi': 'Taxi', 'new': 'New'};
+      final movers = Insights.buildMovers(
+        current: const {'food': 124000, 'taxi': 90000, 'new': 5000},
+        previous: const {'food': 100000, 'taxi': 100000, 'new': 0},
+        names: names,
+        lang: 'en',
+      );
+      // food +24% warn, taxi -10% info; 'new' has no baseline: skipped.
+      expect(movers, hasLength(2));
+      expect(movers[0].text, 'Food +24% vs previous period');
+      expect(movers[0].warn, isTrue);
+      expect(movers[1].text, 'Taxi -10% vs previous period');
+      expect(movers[1].warn, isFalse);
+    });
+
+    test('limit and locale templates', () {
+      final many = Insights.buildMovers(
+        current: const {'a': 200, 'b': 300, 'c': 10, 'd': 10},
+        previous: const {'a': 100, 'b': 100, 'c': 100, 'd': 100},
+        names: const {'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D'},
+        lang: 'en',
+        limit: 2,
+      );
+      expect(many, hasLength(2));
+      final fr = Insights.buildMovers(
+        current: const {'food': 124000},
+        previous: const {'food': 100000},
+        names: const {'food': 'Alimentation'},
+        lang: 'fr',
+      );
+      expect(
+        fr.single.text,
+        'Alimentation : +24% par rapport à la période précédente',
+      );
+      final ar = Insights.buildMovers(
+        current: const {'food': 124000},
+        previous: const {'food': 100000},
+        names: const {'food': 'طعام'},
+        lang: 'ar',
+      );
+      expect(ar.single.text, contains('+24%'));
+      expect(ar.single.text, contains('طعام'));
+    });
+  });
+
   group('Insights.buildHealth', () {
     test('within/over budget facts with severity', () {
       final ok = Insights.buildHealth(
