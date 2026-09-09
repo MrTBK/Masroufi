@@ -67,6 +67,24 @@ class CategoryBudgetsRepo {
     }
   }
 
+  /// Copy last month's per-category budgets into [year]/[month].
+  /// Idempotent batch upsert: only missing (category, month) cells are
+  /// inserted; existing targets are never overwritten. Returns the number
+  /// of rows copied. Month-boundary safe (Jan → Dec prior year).
+  Future<int> copyFromPrev(int year, int month) async {
+    final py = month == 1 ? year - 1 : year;
+    final pm = month == 1 ? 12 : month - 1;
+    final prev = await forMonth(py, pm);
+    var copied = 0;
+    for (final b in prev) {
+      if (await get(b.categoryId, year, month) == null) {
+        await upsert(b.categoryId, year, month, b.amountMillimes);
+        copied++;
+      }
+    }
+    return copied;
+  }
+
   /// Spent for a category in a month. Parent budgets roll up children:
   /// transactions on the parent itself plus all direct children count.
   Future<int> spent(String categoryId, int year, int month) async {

@@ -21,6 +21,7 @@ part 'app_db.g.dart';
     Debts,
     DebtPayments,
     TxnTemplates,
+    TxnSplits,
   ],
 )
 class AppDb extends _$AppDb {
@@ -28,7 +29,7 @@ class AppDb extends _$AppDb {
   AppDb.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 7;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -72,6 +73,14 @@ class AppDb extends _$AppDb {
         // Transaction templates: brand-new table, empty for existing
         // users. No backfill, no data touched.
         await m.createTable(txnTemplates);
+      }
+      if (from < 8) {
+        // Everyday power (Track 8): split lines (new table, empty) +
+        // nullable per-txn original amount/currency (display-only; existing
+        // rows stay plain-TND nulls). Parent rows untouched.
+        await m.createTable(txnSplits);
+        await m.addColumn(transactions, transactions.origMinor);
+        await m.addColumn(transactions, transactions.origCurrency);
       }
     },
     beforeOpen: (details) async {

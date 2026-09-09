@@ -5,11 +5,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:masroufi/data/database/app_db.dart';
 import 'package:sqlite3/sqlite3.dart' as raw;
 
-/// v1 -> v7 migration via the REAL automatic path: a v1-shaped file with
+/// v1 -> v8 migration via the REAL automatic path: a v1-shaped file with
 /// user_version=1 is opened by AppDb, whose beforeOpen must upgrade it.
 /// Proves all user data survives.
 void main() {
-  test('v1 file upgrades to v7 with data intact', () async {
+  test('v1 file upgrades to v8 with data intact', () async {
     final dir = await Directory.systemTemp.createTemp('masroufi_mig');
     final file = File('${dir.path}/v1.sqlite');
     final v1 = raw.sqlite3.open(file.path);
@@ -77,6 +77,9 @@ void main() {
     final txns = await db.select(db.transactions).get();
     expect(txns.single.amountMillimes, 12500);
     expect(txns.single.recurringRuleId, isNull);
+    // v8 multi-currency columns default to plain-TND nulls.
+    expect(txns.single.origMinor, isNull);
+    expect(txns.single.origCurrency, isNull);
     final settings = await (db.select(db.appSettings)).getSingle();
     expect(settings.value, 'ar');
     // New tables usable.
@@ -108,6 +111,18 @@ void main() {
         );
     final templates = await db.select(db.txnTemplates).get();
     expect(templates.single.name, 'Morning coffee');
+    // v8 splits table exists and starts empty for upgraded users.
+    expect(await db.select(db.txnSplits).get(), isEmpty);
+    await db
+        .into(db.txnSplits)
+        .insert(
+          TxnSplitsCompanion.insert(
+            id: 's1',
+            txnId: 't1',
+            amountMillimes: 12500,
+          ),
+        );
+    expect(await db.select(db.txnSplits).get(), hasLength(1));
     await db.close();
     await dir.delete(recursive: true);
   });

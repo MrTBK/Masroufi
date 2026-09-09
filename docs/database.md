@@ -22,9 +22,14 @@ Drift + SQLite, MVP tables only.
   reorder (`CategoriesRepo.move`).
 - `transactions(id TEXT pk, type TEXT [expense|income|transfer], amount_millimes INT,
   wallet_id FK, to_wallet_id NULLABLE (transfer dest), category_id NULLABLE FK,
+  recurring_rule_id NULLABLE, orig_minor NULLABLE, orig_currency NULLABLE,
   occurred_at, note, created_at, updated_at)`
   Transfers: one logical transfer = single row with `wallet_id` (from) +
   `to_wallet_id`; counted in NEITHER income NOR expense aggregates.
+  `orig_minor`/`orig_currency` (v8) carry the foreign original for
+  display-only conversion; the ledger amount stays TND millimes.
+- `txn_splits(id TEXT pk, txn_id, category_id NULLABLE, amount_millimes INT,
+  note)` (v8): child lines; parent row untouched, SUM == parent enforced.
 - `budgets(id TEXT pk, year INT, month INT, amount_millimes INT, created_at, updated_at)`
   One overall monthly budget (MVP). Unique index on (year, month).
 - `app_settings(key TEXT pk, value TEXT)` — language, theme, onboarding_done, name.
@@ -39,7 +44,7 @@ All money columns are `INTEGER` millimes. No REAL columns for money.
 
 ## Migrations
 
-Drift `schemaVersion = 7`:
+Drift `schemaVersion = 8`:
 - v2: recurring, category budgets, savings, debts tables +
   `transactions.recurring_rule_id`.
 - v3: `wallets.is_balance_hidden` + `categories.kind` (expense|income).
@@ -55,3 +60,8 @@ Drift `schemaVersion = 7`:
   category refs as plain text, note, sortOrder). No backfill, no data
   touched; old backups restore with an empty template list. Backup
   codec v7 accepts v1-v6.
+- v8: `txn_splits` table (id, txnId, categoryId?, amount, note) + 
+  `transactions.orig_minor`/`orig_currency` (nullable display-only
+  foreign originals). Parent rows untouched; splits enforce
+  SUM == parent in `SplitsRepo`. Old backups restore with empty splits
+  and null originals. Backup codec v8 accepts v1-v7.

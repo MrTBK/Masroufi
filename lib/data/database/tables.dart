@@ -48,6 +48,8 @@ class Categories extends Table {
 /// Transactions. Transfer = one row with [toWalletId] set; never income/expense.
 /// Plain text refs (no FK constraints) so archived categories stay valid.
 /// [recurringRuleId] links auto-generated occurrences (v2+); ordinary txns null.
+/// v8 adds nullable original-amount/currency (multi-currency, display-only):
+/// [origMinor] + [origCurrency]; the ledger amount stays TND millimes.
 class Transactions extends Table {
   TextColumn get id => text()();
   // expense | income | transfer
@@ -57,6 +59,11 @@ class Transactions extends Table {
   TextColumn get toWalletId => text().nullable()();
   TextColumn get categoryId => text().nullable()();
   TextColumn get recurringRuleId => text().nullable()();
+  // v8 multi-currency (display-only conversion; ledger stays TND millimes).
+  // Original amount in the foreign currency's minor units (e.g. cents for
+  // EUR/USD, 2 decimals) + ISO code (e.g. 'EUR'). Null = plain TND row.
+  IntColumn get origMinor => integer().nullable()();
+  TextColumn get origCurrency => text().nullable()();
   DateTimeColumn get occurredAt => dateTime()();
   TextColumn get note => text().withDefault(const Constant(''))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
@@ -198,6 +205,21 @@ class TxnTemplates extends Table {
   TextColumn get categoryId => text().nullable()();
   TextColumn get note => text().withDefault(const Constant(''))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// Split-transaction lines (v8). The parent [Transactions] row is
+/// untouched (amount stays the source of truth); splits break it down
+/// for display/analytics. Plain-text refs, no FK. Invariant (enforced in
+/// `SplitsRepo` + tests): SUM(splits.amountMillimes) == parent.amount.
+class TxnSplits extends Table {
+  TextColumn get id => text()();
+  TextColumn get txnId => text()();
+  TextColumn get categoryId => text().nullable()();
+  IntColumn get amountMillimes => integer()();
+  TextColumn get note => text().withDefault(const Constant(''))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   @override
   Set<Column> get primaryKey => {id};

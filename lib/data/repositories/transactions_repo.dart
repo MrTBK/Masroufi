@@ -108,7 +108,8 @@ class TransactionsRepo {
 
   /// Exact restore for undo: reinserts [t] with its ORIGINAL id and
   /// timestamps (upsert so a double-undo can never duplicate).
-  /// The ledger is byte-identical to before the delete.
+  /// The ledger is byte-identical to before the delete (incl. v8
+  /// original-amount/currency).
   Future<void> restore(Transaction t) => db
       .into(db.transactions)
       .insertOnConflictUpdate(
@@ -120,6 +121,8 @@ class TransactionsRepo {
           toWalletId: Value(t.toWalletId),
           categoryId: Value(t.categoryId),
           recurringRuleId: Value(t.recurringRuleId),
+          origMinor: Value(t.origMinor),
+          origCurrency: Value(t.origCurrency),
           occurredAt: Value(t.occurredAt),
           note: Value(t.note),
           createdAt: Value(t.createdAt),
@@ -133,6 +136,8 @@ class TransactionsRepo {
     String? categoryId,
     DateTime? when,
     String note = '',
+    int? origMinor,
+    String? origCurrency,
   }) => _insert(
     'expense',
     amountMillimes,
@@ -141,6 +146,8 @@ class TransactionsRepo {
     categoryId,
     when,
     note,
+    origMinor: origMinor,
+    origCurrency: origCurrency,
   );
 
   Future<String> addIncome({
@@ -149,8 +156,19 @@ class TransactionsRepo {
     String? categoryId,
     DateTime? when,
     String note = '',
-  }) =>
-      _insert('income', amountMillimes, walletId, null, categoryId, when, note);
+    int? origMinor,
+    String? origCurrency,
+  }) => _insert(
+    'income',
+    amountMillimes,
+    walletId,
+    null,
+    categoryId,
+    when,
+    note,
+    origMinor: origMinor,
+    origCurrency: origCurrency,
+  );
 
   /// Single atomic row; counted in neither income nor expense.
   Future<String> addTransfer({
@@ -159,6 +177,8 @@ class TransactionsRepo {
     required String toWalletId,
     DateTime? when,
     String note = '',
+    int? origMinor,
+    String? origCurrency,
   }) {
     assert(fromWalletId != toWalletId);
     return _insert(
@@ -169,6 +189,8 @@ class TransactionsRepo {
       null,
       when,
       note,
+      origMinor: origMinor,
+      origCurrency: origCurrency,
     );
   }
 
@@ -179,9 +201,17 @@ class TransactionsRepo {
     String? toWalletId,
     String? categoryId,
     DateTime? when,
-    String note,
-  ) async {
+    String note, {
+    int? origMinor,
+    String? origCurrency,
+  }) async {
     if (amount <= 0) throw ArgumentError('amount must be positive');
+    if ((origMinor == null) != (origCurrency == null)) {
+      throw ArgumentError('origMinor + origCurrency travel together');
+    }
+    if (origMinor != null && origMinor <= 0) {
+      throw ArgumentError('orig amount must be positive');
+    }
     final id = newId();
     final now = DateTime.now();
     await db
@@ -194,6 +224,8 @@ class TransactionsRepo {
             walletId: Value(walletId),
             toWalletId: Value(toWalletId),
             categoryId: Value(categoryId),
+            origMinor: Value(origMinor),
+            origCurrency: Value(origCurrency?.toUpperCase()),
             occurredAt: Value(when ?? now),
             note: Value(note.trim()),
             createdAt: Value(now),
@@ -211,6 +243,9 @@ class TransactionsRepo {
     String? categoryId,
     DateTime? when,
     String? note,
+    int? origMinor,
+    String? origCurrency,
+    bool clearOrig = false,
   }) => (db.update(db.transactions)..where((t) => t.id.equals(id))).write(
     TransactionsCompanion(
       amountMillimes: amountMillimes == null
@@ -219,6 +254,16 @@ class TransactionsRepo {
       walletId: walletId == null ? const Value.absent() : Value(walletId),
       toWalletId: toWalletId == null ? const Value.absent() : Value(toWalletId),
       categoryId: categoryId == null ? const Value.absent() : Value(categoryId),
+      origMinor: clearOrig
+          ? const Value(null)
+          : (origMinor == null
+                ? const Value.absent()
+                : Value(origMinor)),
+      origCurrency: clearOrig
+          ? const Value(null)
+          : (origCurrency == null
+                ? const Value.absent()
+                : Value(origCurrency.toUpperCase())),
       occurredAt: when == null ? const Value.absent() : Value(when),
       note: note == null ? const Value.absent() : Value(note.trim()),
       updatedAt: Value(DateTime.now()),

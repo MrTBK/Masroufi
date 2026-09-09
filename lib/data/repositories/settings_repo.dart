@@ -83,4 +83,12 @@ class SettingsRepo {
     }
     await set('lock_timeout', '$seconds');
   }
+
+  /// Rollover opt-in (Track 6, display-level only): when true, unused
+  /// previous-month budget adds to the current budget display. Ledger
+  /// untouched; defaults off.
+  Future<bool> rolloverEnabled() async =>
+      await get('rollover_enabled') == '1';
+  Future<void> setRolloverEnabled(bool v) =>
+      set('rollover_enabled', v ? '1' : '0');
 }

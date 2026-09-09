@@ -1333,6 +1333,28 @@ class $TransactionsTable extends Transactions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _origMinorMeta = const VerificationMeta(
+    'origMinor',
+  );
+  @override
+  late final GeneratedColumn<int> origMinor = GeneratedColumn<int>(
+    'orig_minor',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _origCurrencyMeta = const VerificationMeta(
+    'origCurrency',
+  );
+  @override
+  late final GeneratedColumn<String> origCurrency = GeneratedColumn<String>(
+    'orig_currency',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _occurredAtMeta = const VerificationMeta(
     'occurredAt',
   );
@@ -1387,6 +1409,8 @@ class $TransactionsTable extends Transactions
     toWalletId,
     categoryId,
     recurringRuleId,
+    origMinor,
+    origCurrency,
     occurredAt,
     note,
     createdAt,
@@ -1460,6 +1484,21 @@ class $TransactionsTable extends Transactions
         ),
       );
     }
+    if (data.containsKey('orig_minor')) {
+      context.handle(
+        _origMinorMeta,
+        origMinor.isAcceptableOrUnknown(data['orig_minor']!, _origMinorMeta),
+      );
+    }
+    if (data.containsKey('orig_currency')) {
+      context.handle(
+        _origCurrencyMeta,
+        origCurrency.isAcceptableOrUnknown(
+          data['orig_currency']!,
+          _origCurrencyMeta,
+        ),
+      );
+    }
     if (data.containsKey('occurred_at')) {
       context.handle(
         _occurredAtMeta,
@@ -1523,6 +1562,14 @@ class $TransactionsTable extends Transactions
         DriftSqlType.string,
         data['${effectivePrefix}recurring_rule_id'],
       ),
+      origMinor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}orig_minor'],
+      ),
+      origCurrency: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}orig_currency'],
+      ),
       occurredAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}occurred_at'],
@@ -1556,6 +1603,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
   final String? toWalletId;
   final String? categoryId;
   final String? recurringRuleId;
+  final int? origMinor;
+  final String? origCurrency;
   final DateTime occurredAt;
   final String note;
   final DateTime createdAt;
@@ -1568,6 +1617,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     this.toWalletId,
     this.categoryId,
     this.recurringRuleId,
+    this.origMinor,
+    this.origCurrency,
     required this.occurredAt,
     required this.note,
     required this.createdAt,
@@ -1588,6 +1639,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     }
     if (!nullToAbsent || recurringRuleId != null) {
       map['recurring_rule_id'] = Variable<String>(recurringRuleId);
+    }
+    if (!nullToAbsent || origMinor != null) {
+      map['orig_minor'] = Variable<int>(origMinor);
+    }
+    if (!nullToAbsent || origCurrency != null) {
+      map['orig_currency'] = Variable<String>(origCurrency);
     }
     map['occurred_at'] = Variable<DateTime>(occurredAt);
     map['note'] = Variable<String>(note);
@@ -1611,6 +1668,12 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       recurringRuleId: recurringRuleId == null && nullToAbsent
           ? const Value.absent()
           : Value(recurringRuleId),
+      origMinor: origMinor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(origMinor),
+      origCurrency: origCurrency == null && nullToAbsent
+          ? const Value.absent()
+          : Value(origCurrency),
       occurredAt: Value(occurredAt),
       note: Value(note),
       createdAt: Value(createdAt),
@@ -1631,6 +1694,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       toWalletId: serializer.fromJson<String?>(json['toWalletId']),
       categoryId: serializer.fromJson<String?>(json['categoryId']),
       recurringRuleId: serializer.fromJson<String?>(json['recurringRuleId']),
+      origMinor: serializer.fromJson<int?>(json['origMinor']),
+      origCurrency: serializer.fromJson<String?>(json['origCurrency']),
       occurredAt: serializer.fromJson<DateTime>(json['occurredAt']),
       note: serializer.fromJson<String>(json['note']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
@@ -1648,6 +1713,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       'toWalletId': serializer.toJson<String?>(toWalletId),
       'categoryId': serializer.toJson<String?>(categoryId),
       'recurringRuleId': serializer.toJson<String?>(recurringRuleId),
+      'origMinor': serializer.toJson<int?>(origMinor),
+      'origCurrency': serializer.toJson<String?>(origCurrency),
       'occurredAt': serializer.toJson<DateTime>(occurredAt),
       'note': serializer.toJson<String>(note),
       'createdAt': serializer.toJson<DateTime>(createdAt),
@@ -1663,6 +1730,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     Value<String?> toWalletId = const Value.absent(),
     Value<String?> categoryId = const Value.absent(),
     Value<String?> recurringRuleId = const Value.absent(),
+    Value<int?> origMinor = const Value.absent(),
+    Value<String?> origCurrency = const Value.absent(),
     DateTime? occurredAt,
     String? note,
     DateTime? createdAt,
@@ -1677,6 +1746,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     recurringRuleId: recurringRuleId.present
         ? recurringRuleId.value
         : this.recurringRuleId,
+    origMinor: origMinor.present ? origMinor.value : this.origMinor,
+    origCurrency: origCurrency.present ? origCurrency.value : this.origCurrency,
     occurredAt: occurredAt ?? this.occurredAt,
     note: note ?? this.note,
     createdAt: createdAt ?? this.createdAt,
@@ -1699,6 +1770,10 @@ class Transaction extends DataClass implements Insertable<Transaction> {
       recurringRuleId: data.recurringRuleId.present
           ? data.recurringRuleId.value
           : this.recurringRuleId,
+      origMinor: data.origMinor.present ? data.origMinor.value : this.origMinor,
+      origCurrency: data.origCurrency.present
+          ? data.origCurrency.value
+          : this.origCurrency,
       occurredAt: data.occurredAt.present
           ? data.occurredAt.value
           : this.occurredAt,
@@ -1718,6 +1793,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           ..write('toWalletId: $toWalletId, ')
           ..write('categoryId: $categoryId, ')
           ..write('recurringRuleId: $recurringRuleId, ')
+          ..write('origMinor: $origMinor, ')
+          ..write('origCurrency: $origCurrency, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('note: $note, ')
           ..write('createdAt: $createdAt, ')
@@ -1735,6 +1812,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
     toWalletId,
     categoryId,
     recurringRuleId,
+    origMinor,
+    origCurrency,
     occurredAt,
     note,
     createdAt,
@@ -1751,6 +1830,8 @@ class Transaction extends DataClass implements Insertable<Transaction> {
           other.toWalletId == this.toWalletId &&
           other.categoryId == this.categoryId &&
           other.recurringRuleId == this.recurringRuleId &&
+          other.origMinor == this.origMinor &&
+          other.origCurrency == this.origCurrency &&
           other.occurredAt == this.occurredAt &&
           other.note == this.note &&
           other.createdAt == this.createdAt &&
@@ -1765,6 +1846,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
   final Value<String?> toWalletId;
   final Value<String?> categoryId;
   final Value<String?> recurringRuleId;
+  final Value<int?> origMinor;
+  final Value<String?> origCurrency;
   final Value<DateTime> occurredAt;
   final Value<String> note;
   final Value<DateTime> createdAt;
@@ -1778,6 +1861,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.toWalletId = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.recurringRuleId = const Value.absent(),
+    this.origMinor = const Value.absent(),
+    this.origCurrency = const Value.absent(),
     this.occurredAt = const Value.absent(),
     this.note = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1792,6 +1877,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     this.toWalletId = const Value.absent(),
     this.categoryId = const Value.absent(),
     this.recurringRuleId = const Value.absent(),
+    this.origMinor = const Value.absent(),
+    this.origCurrency = const Value.absent(),
     required DateTime occurredAt,
     this.note = const Value.absent(),
     this.createdAt = const Value.absent(),
@@ -1810,6 +1897,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Expression<String>? toWalletId,
     Expression<String>? categoryId,
     Expression<String>? recurringRuleId,
+    Expression<int>? origMinor,
+    Expression<String>? origCurrency,
     Expression<DateTime>? occurredAt,
     Expression<String>? note,
     Expression<DateTime>? createdAt,
@@ -1824,6 +1913,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       if (toWalletId != null) 'to_wallet_id': toWalletId,
       if (categoryId != null) 'category_id': categoryId,
       if (recurringRuleId != null) 'recurring_rule_id': recurringRuleId,
+      if (origMinor != null) 'orig_minor': origMinor,
+      if (origCurrency != null) 'orig_currency': origCurrency,
       if (occurredAt != null) 'occurred_at': occurredAt,
       if (note != null) 'note': note,
       if (createdAt != null) 'created_at': createdAt,
@@ -1840,6 +1931,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     Value<String?>? toWalletId,
     Value<String?>? categoryId,
     Value<String?>? recurringRuleId,
+    Value<int?>? origMinor,
+    Value<String?>? origCurrency,
     Value<DateTime>? occurredAt,
     Value<String>? note,
     Value<DateTime>? createdAt,
@@ -1854,6 +1947,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
       toWalletId: toWalletId ?? this.toWalletId,
       categoryId: categoryId ?? this.categoryId,
       recurringRuleId: recurringRuleId ?? this.recurringRuleId,
+      origMinor: origMinor ?? this.origMinor,
+      origCurrency: origCurrency ?? this.origCurrency,
       occurredAt: occurredAt ?? this.occurredAt,
       note: note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
@@ -1886,6 +1981,12 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
     if (recurringRuleId.present) {
       map['recurring_rule_id'] = Variable<String>(recurringRuleId.value);
     }
+    if (origMinor.present) {
+      map['orig_minor'] = Variable<int>(origMinor.value);
+    }
+    if (origCurrency.present) {
+      map['orig_currency'] = Variable<String>(origCurrency.value);
+    }
     if (occurredAt.present) {
       map['occurred_at'] = Variable<DateTime>(occurredAt.value);
     }
@@ -1914,6 +2015,8 @@ class TransactionsCompanion extends UpdateCompanion<Transaction> {
           ..write('toWalletId: $toWalletId, ')
           ..write('categoryId: $categoryId, ')
           ..write('recurringRuleId: $recurringRuleId, ')
+          ..write('origMinor: $origMinor, ')
+          ..write('origCurrency: $origCurrency, ')
           ..write('occurredAt: $occurredAt, ')
           ..write('note: $note, ')
           ..write('createdAt: $createdAt, ')
@@ -6467,6 +6570,416 @@ class TxnTemplatesCompanion extends UpdateCompanion<TxnTemplate> {
   }
 }
 
+class $TxnSplitsTable extends TxnSplits
+    with TableInfo<$TxnSplitsTable, TxnSplit> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TxnSplitsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _txnIdMeta = const VerificationMeta('txnId');
+  @override
+  late final GeneratedColumn<String> txnId = GeneratedColumn<String>(
+    'txn_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoryIdMeta = const VerificationMeta(
+    'categoryId',
+  );
+  @override
+  late final GeneratedColumn<String> categoryId = GeneratedColumn<String>(
+    'category_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amountMillimesMeta = const VerificationMeta(
+    'amountMillimes',
+  );
+  @override
+  late final GeneratedColumn<int> amountMillimes = GeneratedColumn<int>(
+    'amount_millimes',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteMeta = const VerificationMeta('note');
+  @override
+  late final GeneratedColumn<String> note = GeneratedColumn<String>(
+    'note',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    txnId,
+    categoryId,
+    amountMillimes,
+    note,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'txn_splits';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<TxnSplit> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('txn_id')) {
+      context.handle(
+        _txnIdMeta,
+        txnId.isAcceptableOrUnknown(data['txn_id']!, _txnIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_txnIdMeta);
+    }
+    if (data.containsKey('category_id')) {
+      context.handle(
+        _categoryIdMeta,
+        categoryId.isAcceptableOrUnknown(data['category_id']!, _categoryIdMeta),
+      );
+    }
+    if (data.containsKey('amount_millimes')) {
+      context.handle(
+        _amountMillimesMeta,
+        amountMillimes.isAcceptableOrUnknown(
+          data['amount_millimes']!,
+          _amountMillimesMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMillimesMeta);
+    }
+    if (data.containsKey('note')) {
+      context.handle(
+        _noteMeta,
+        note.isAcceptableOrUnknown(data['note']!, _noteMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  TxnSplit map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TxnSplit(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      txnId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}txn_id'],
+      )!,
+      categoryId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category_id'],
+      ),
+      amountMillimes: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}amount_millimes'],
+      )!,
+      note: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $TxnSplitsTable createAlias(String alias) {
+    return $TxnSplitsTable(attachedDatabase, alias);
+  }
+}
+
+class TxnSplit extends DataClass implements Insertable<TxnSplit> {
+  final String id;
+  final String txnId;
+  final String? categoryId;
+  final int amountMillimes;
+  final String note;
+  final DateTime createdAt;
+  const TxnSplit({
+    required this.id,
+    required this.txnId,
+    this.categoryId,
+    required this.amountMillimes,
+    required this.note,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['txn_id'] = Variable<String>(txnId);
+    if (!nullToAbsent || categoryId != null) {
+      map['category_id'] = Variable<String>(categoryId);
+    }
+    map['amount_millimes'] = Variable<int>(amountMillimes);
+    map['note'] = Variable<String>(note);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  TxnSplitsCompanion toCompanion(bool nullToAbsent) {
+    return TxnSplitsCompanion(
+      id: Value(id),
+      txnId: Value(txnId),
+      categoryId: categoryId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(categoryId),
+      amountMillimes: Value(amountMillimes),
+      note: Value(note),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory TxnSplit.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TxnSplit(
+      id: serializer.fromJson<String>(json['id']),
+      txnId: serializer.fromJson<String>(json['txnId']),
+      categoryId: serializer.fromJson<String?>(json['categoryId']),
+      amountMillimes: serializer.fromJson<int>(json['amountMillimes']),
+      note: serializer.fromJson<String>(json['note']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'txnId': serializer.toJson<String>(txnId),
+      'categoryId': serializer.toJson<String?>(categoryId),
+      'amountMillimes': serializer.toJson<int>(amountMillimes),
+      'note': serializer.toJson<String>(note),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  TxnSplit copyWith({
+    String? id,
+    String? txnId,
+    Value<String?> categoryId = const Value.absent(),
+    int? amountMillimes,
+    String? note,
+    DateTime? createdAt,
+  }) => TxnSplit(
+    id: id ?? this.id,
+    txnId: txnId ?? this.txnId,
+    categoryId: categoryId.present ? categoryId.value : this.categoryId,
+    amountMillimes: amountMillimes ?? this.amountMillimes,
+    note: note ?? this.note,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  TxnSplit copyWithCompanion(TxnSplitsCompanion data) {
+    return TxnSplit(
+      id: data.id.present ? data.id.value : this.id,
+      txnId: data.txnId.present ? data.txnId.value : this.txnId,
+      categoryId: data.categoryId.present
+          ? data.categoryId.value
+          : this.categoryId,
+      amountMillimes: data.amountMillimes.present
+          ? data.amountMillimes.value
+          : this.amountMillimes,
+      note: data.note.present ? data.note.value : this.note,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TxnSplit(')
+          ..write('id: $id, ')
+          ..write('txnId: $txnId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('amountMillimes: $amountMillimes, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, txnId, categoryId, amountMillimes, note, createdAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TxnSplit &&
+          other.id == this.id &&
+          other.txnId == this.txnId &&
+          other.categoryId == this.categoryId &&
+          other.amountMillimes == this.amountMillimes &&
+          other.note == this.note &&
+          other.createdAt == this.createdAt);
+}
+
+class TxnSplitsCompanion extends UpdateCompanion<TxnSplit> {
+  final Value<String> id;
+  final Value<String> txnId;
+  final Value<String?> categoryId;
+  final Value<int> amountMillimes;
+  final Value<String> note;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const TxnSplitsCompanion({
+    this.id = const Value.absent(),
+    this.txnId = const Value.absent(),
+    this.categoryId = const Value.absent(),
+    this.amountMillimes = const Value.absent(),
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TxnSplitsCompanion.insert({
+    required String id,
+    required String txnId,
+    this.categoryId = const Value.absent(),
+    required int amountMillimes,
+    this.note = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       txnId = Value(txnId),
+       amountMillimes = Value(amountMillimes);
+  static Insertable<TxnSplit> custom({
+    Expression<String>? id,
+    Expression<String>? txnId,
+    Expression<String>? categoryId,
+    Expression<int>? amountMillimes,
+    Expression<String>? note,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (txnId != null) 'txn_id': txnId,
+      if (categoryId != null) 'category_id': categoryId,
+      if (amountMillimes != null) 'amount_millimes': amountMillimes,
+      if (note != null) 'note': note,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TxnSplitsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? txnId,
+    Value<String?>? categoryId,
+    Value<int>? amountMillimes,
+    Value<String>? note,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return TxnSplitsCompanion(
+      id: id ?? this.id,
+      txnId: txnId ?? this.txnId,
+      categoryId: categoryId ?? this.categoryId,
+      amountMillimes: amountMillimes ?? this.amountMillimes,
+      note: note ?? this.note,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (txnId.present) {
+      map['txn_id'] = Variable<String>(txnId.value);
+    }
+    if (categoryId.present) {
+      map['category_id'] = Variable<String>(categoryId.value);
+    }
+    if (amountMillimes.present) {
+      map['amount_millimes'] = Variable<int>(amountMillimes.value);
+    }
+    if (note.present) {
+      map['note'] = Variable<String>(note.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TxnSplitsCompanion(')
+          ..write('id: $id, ')
+          ..write('txnId: $txnId, ')
+          ..write('categoryId: $categoryId, ')
+          ..write('amountMillimes: $amountMillimes, ')
+          ..write('note: $note, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDb extends GeneratedDatabase {
   _$AppDb(QueryExecutor e) : super(e);
   $AppDbManager get managers => $AppDbManager(this);
@@ -6485,6 +6998,7 @@ abstract class _$AppDb extends GeneratedDatabase {
   late final $DebtsTable debts = $DebtsTable(this);
   late final $DebtPaymentsTable debtPayments = $DebtPaymentsTable(this);
   late final $TxnTemplatesTable txnTemplates = $TxnTemplatesTable(this);
+  late final $TxnSplitsTable txnSplits = $TxnSplitsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6502,6 +7016,7 @@ abstract class _$AppDb extends GeneratedDatabase {
     debts,
     debtPayments,
     txnTemplates,
+    txnSplits,
   ];
 }
 
@@ -7129,6 +7644,8 @@ typedef $$TransactionsTableCreateCompanionBuilder =
       Value<String?> toWalletId,
       Value<String?> categoryId,
       Value<String?> recurringRuleId,
+      Value<int?> origMinor,
+      Value<String?> origCurrency,
       required DateTime occurredAt,
       Value<String> note,
       Value<DateTime> createdAt,
@@ -7144,6 +7661,8 @@ typedef $$TransactionsTableUpdateCompanionBuilder =
       Value<String?> toWalletId,
       Value<String?> categoryId,
       Value<String?> recurringRuleId,
+      Value<int?> origMinor,
+      Value<String?> origCurrency,
       Value<DateTime> occurredAt,
       Value<String> note,
       Value<DateTime> createdAt,
@@ -7192,6 +7711,16 @@ class $$TransactionsTableFilterComposer
 
   ColumnFilters<String> get recurringRuleId => $composableBuilder(
     column: $table.recurringRuleId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get origMinor => $composableBuilder(
+    column: $table.origMinor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get origCurrency => $composableBuilder(
+    column: $table.origCurrency,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7260,6 +7789,16 @@ class $$TransactionsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get origMinor => $composableBuilder(
+    column: $table.origMinor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get origCurrency => $composableBuilder(
+    column: $table.origCurrency,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get occurredAt => $composableBuilder(
     column: $table.occurredAt,
     builder: (column) => ColumnOrderings(column),
@@ -7319,6 +7858,14 @@ class $$TransactionsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get origMinor =>
+      $composableBuilder(column: $table.origMinor, builder: (column) => column);
+
+  GeneratedColumn<String> get origCurrency => $composableBuilder(
+    column: $table.origCurrency,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get occurredAt => $composableBuilder(
     column: $table.occurredAt,
     builder: (column) => column,
@@ -7372,6 +7919,8 @@ class $$TransactionsTableTableManager
                 Value<String?> toWalletId = const Value.absent(),
                 Value<String?> categoryId = const Value.absent(),
                 Value<String?> recurringRuleId = const Value.absent(),
+                Value<int?> origMinor = const Value.absent(),
+                Value<String?> origCurrency = const Value.absent(),
                 Value<DateTime> occurredAt = const Value.absent(),
                 Value<String> note = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -7385,6 +7934,8 @@ class $$TransactionsTableTableManager
                 toWalletId: toWalletId,
                 categoryId: categoryId,
                 recurringRuleId: recurringRuleId,
+                origMinor: origMinor,
+                origCurrency: origCurrency,
                 occurredAt: occurredAt,
                 note: note,
                 createdAt: createdAt,
@@ -7400,6 +7951,8 @@ class $$TransactionsTableTableManager
                 Value<String?> toWalletId = const Value.absent(),
                 Value<String?> categoryId = const Value.absent(),
                 Value<String?> recurringRuleId = const Value.absent(),
+                Value<int?> origMinor = const Value.absent(),
+                Value<String?> origCurrency = const Value.absent(),
                 required DateTime occurredAt,
                 Value<String> note = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
@@ -7413,6 +7966,8 @@ class $$TransactionsTableTableManager
                 toWalletId: toWalletId,
                 categoryId: categoryId,
                 recurringRuleId: recurringRuleId,
+                origMinor: origMinor,
+                origCurrency: origCurrency,
                 occurredAt: occurredAt,
                 note: note,
                 createdAt: createdAt,
@@ -9832,6 +10387,230 @@ typedef $$TxnTemplatesTableProcessedTableManager =
       TxnTemplate,
       PrefetchHooks Function()
     >;
+typedef $$TxnSplitsTableCreateCompanionBuilder = TxnSplitsCompanion Function({
+  required String id,
+  required String txnId,
+  Value<String?> categoryId,
+  required int amountMillimes,
+  Value<String> note,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+typedef $$TxnSplitsTableUpdateCompanionBuilder = TxnSplitsCompanion Function({
+  Value<String> id,
+  Value<String> txnId,
+  Value<String?> categoryId,
+  Value<int> amountMillimes,
+  Value<String> note,
+  Value<DateTime> createdAt,
+  Value<int> rowid,
+});
+
+class $$TxnSplitsTableFilterComposer
+    extends Composer<_$AppDb, $TxnSplitsTable> {
+  $$TxnSplitsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get txnId => $composableBuilder(
+    column: $table.txnId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get amountMillimes => $composableBuilder(
+    column: $table.amountMillimes,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$TxnSplitsTableOrderingComposer
+    extends Composer<_$AppDb, $TxnSplitsTable> {
+  $$TxnSplitsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get txnId => $composableBuilder(
+    column: $table.txnId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get amountMillimes => $composableBuilder(
+    column: $table.amountMillimes,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get note => $composableBuilder(
+    column: $table.note,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$TxnSplitsTableAnnotationComposer
+    extends Composer<_$AppDb, $TxnSplitsTable> {
+  $$TxnSplitsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get txnId =>
+      $composableBuilder(column: $table.txnId, builder: (column) => column);
+
+  GeneratedColumn<String> get categoryId => $composableBuilder(
+    column: $table.categoryId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get amountMillimes => $composableBuilder(
+    column: $table.amountMillimes,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get note =>
+      $composableBuilder(column: $table.note, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$TxnSplitsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDb,
+          $TxnSplitsTable,
+          TxnSplit,
+          $$TxnSplitsTableFilterComposer,
+          $$TxnSplitsTableOrderingComposer,
+          $$TxnSplitsTableAnnotationComposer,
+          $$TxnSplitsTableCreateCompanionBuilder,
+          $$TxnSplitsTableUpdateCompanionBuilder,
+          (TxnSplit, BaseReferences<_$AppDb, $TxnSplitsTable, TxnSplit>),
+          TxnSplit,
+          PrefetchHooks Function()
+        > {
+  $$TxnSplitsTableTableManager(_$AppDb db, $TxnSplitsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TxnSplitsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TxnSplitsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TxnSplitsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> txnId = const Value.absent(),
+                Value<String?> categoryId = const Value.absent(),
+                Value<int> amountMillimes = const Value.absent(),
+                Value<String> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TxnSplitsCompanion(
+                id: id,
+                txnId: txnId,
+                categoryId: categoryId,
+                amountMillimes: amountMillimes,
+                note: note,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String txnId,
+                Value<String?> categoryId = const Value.absent(),
+                required int amountMillimes,
+                Value<String> note = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => TxnSplitsCompanion.insert(
+                id: id,
+                txnId: txnId,
+                categoryId: categoryId,
+                amountMillimes: amountMillimes,
+                note: note,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$TxnSplitsTable, TxnSplit>(table),
+                  BaseReferences<_$AppDb, $TxnSplitsTable, TxnSplit>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$TxnSplitsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDb,
+      $TxnSplitsTable,
+      TxnSplit,
+      $$TxnSplitsTableFilterComposer,
+      $$TxnSplitsTableOrderingComposer,
+      $$TxnSplitsTableAnnotationComposer,
+      $$TxnSplitsTableCreateCompanionBuilder,
+      $$TxnSplitsTableUpdateCompanionBuilder,
+      (TxnSplit, BaseReferences<_$AppDb, $TxnSplitsTable, TxnSplit>),
+      TxnSplit,
+      PrefetchHooks Function()
+    >;
 
 class $AppDbManager {
   final _$AppDb _db;
@@ -9860,4 +10639,6 @@ class $AppDbManager {
       $$DebtPaymentsTableTableManager(_db, _db.debtPayments);
   $$TxnTemplatesTableTableManager get txnTemplates =>
       $$TxnTemplatesTableTableManager(_db, _db.txnTemplates);
+  $$TxnSplitsTableTableManager get txnSplits =>
+      $$TxnSplitsTableTableManager(_db, _db.txnSplits);
 }

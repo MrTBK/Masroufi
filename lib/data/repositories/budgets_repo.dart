@@ -56,6 +56,19 @@ class BudgetsRepo {
     }
   }
 
+  /// Copy last month's overall budget into [year]/[month], idempotent:
+  /// inserts only when the target has no budget, never overwrites.
+  /// Returns true when a copy happened. Month-boundary safe.
+  Future<bool> copyFromPrev(int year, int month) async {
+    if (await getMonth(year, month) != null) return false;
+    final prev = month == 1
+        ? await getMonth(year - 1, 12)
+        : await getMonth(year, month - 1);
+    if (prev == null) return false;
+    await upsert(year, month, prev.amountMillimes);
+    return true;
+  }
+
   /// Spent = expense sums for the month (transfers excluded).
   Future<int> spent(int year, int month) =>
       db.monthSums(year, month).then((s) => s.expense);

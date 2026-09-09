@@ -90,4 +90,30 @@ class TemplatesRepo {
 
   Future<void> remove(String id) =>
       (db.delete(db.txnTemplates)..where((t) => t.id.equals(id))).go();
+
+  /// Move [id] one step in sort order (delta<0 up, >0 down). Swaps
+  /// sortOrder with the neighbour; no-op at edges. Powers template
+  /// reorder UI (Track 3); `rename()` already existed.
+  Future<void> move(String id, int delta) async {
+    if (delta == 0) return;
+    final allCats = await all();
+    final me = allCats.where((t) => t.id == id).firstOrNull;
+    if (me == null) return;
+    final sorted = [...allCats]
+      ..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+    final i = sorted.indexWhere((t) => t.id == id);
+    final j = (i + (delta < 0 ? -1 : 1)).clamp(0, sorted.length - 1);
+    if (i == j) return;
+    final other = sorted[j];
+    await (db.update(
+      db.txnTemplates,
+    )..where((t) => t.id.equals(id))).write(
+      TxnTemplatesCompanion(sortOrder: Value(other.sortOrder)),
+    );
+    await (db.update(
+      db.txnTemplates,
+    )..where((t) => t.id.equals(other.id))).write(
+      TxnTemplatesCompanion(sortOrder: Value(me.sortOrder)),
+    );
+  }
 }
