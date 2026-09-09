@@ -64,7 +64,7 @@ class TransactionsPage extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(7),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: scheme.primaryContainer,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -91,7 +91,12 @@ class TransactionsPage extends ConsumerWidget {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+            padding: const EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.sm,
+            AppSpacing.sm,
+            0,
+          ),
             child: HomeTopSwitch(
               showTransactions: true,
               lang: lang,
@@ -104,7 +109,12 @@ class TransactionsPage extends ConsumerWidget {
             child: RefreshIndicator(
               onRefresh: () async => bumpRefresh(ref),
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+                padding: const EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                0,
+                AppSpacing.md,
+                AppSpacing.xl,
+              ),
                 children: [
                   _TodayHero(lang: lang),
                   const SizedBox(height: AppSpacing.md),
@@ -134,6 +144,35 @@ class _TodayHero extends ConsumerStatefulWidget {
 
   @override
   ConsumerState<_TodayHero> createState() => _TodayHeroState();
+}
+
+/// Layout-matching hero skeleton: label, hero amount, and money lines as
+/// tonal blocks. Static (no shimmer) so reduced-motion stays calm.
+class _HeroSkeleton extends StatelessWidget {
+  const _HeroSkeleton();
+  @override
+  Widget build(BuildContext context) {
+    final fill = Theme.of(context).colorScheme.surfaceContainerHighest;
+    Widget bar(double w, double h) => Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        bar(72, 14),
+        const SizedBox(height: AppSpacing.xs),
+        bar(180, 36),
+        const SizedBox(height: AppSpacing.sm),
+        bar(140, 28),
+        const SizedBox(height: AppSpacing.md),
+      ],
+    );
+  }
 }
 
 class _TodayHeroState extends ConsumerState<_TodayHero> {
@@ -166,11 +205,10 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
         );
       }(),
       builder: (context, snap) {
+        // Skeleton matches the hero layout (never a bare spinner on a
+        // content screen); static blocks respect reduced motion.
         if (!snap.hasData) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator()),
-          );
+          return const _HeroSkeleton();
         }
         final d = snap.data!;
         final hideAll = ref.watch(hideBalancesProvider);
@@ -185,7 +223,7 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               Strings.get(lang, 'spent'),
               style: Theme.of(context).textTheme.bodySmall,
@@ -197,7 +235,7 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
               style: Theme.of(context).textTheme.headlineMedium
                   ?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
                 Expanded(
@@ -207,8 +245,8 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
                   ),
                 ),
                 SizedBox(
-                  width: 40,
-                  height: 40,
+                  width: 48,
+                  height: 48,
                   child: VisibilityToggle(
                     hidden: hideAll,
                     hideLabel: Strings.get(lang, 'hideBalance'),
@@ -240,7 +278,7 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
               borderRadius: BorderRadius.circular(AppRadius.sm),
               onTap: () => setState(() => _expanded = !_expanded),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                 child: Row(
                   children: [
                     Text(
@@ -262,7 +300,7 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
             if (_expanded)
               for (final w in d.wallets)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
                   child: Row(
                     children: [
                       Expanded(
@@ -293,7 +331,7 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
                 ),
             if (d.budget != null && !hideAll)
               _dailyGuidance(context, lang, d.spent, d.budget!, now),
-            const Divider(height: 24),
+            const Divider(height: AppSpacing.lg),
           ],
         );
       },
@@ -318,11 +356,11 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
     final scheme = Theme.of(context).colorScheme;
     if (g.remaining < 0) {
       return Padding(
-        padding: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.only(top: AppSpacing.sm),
         child: Row(
           children: [
             Icon(Icons.warning_amber, size: 18, color: scheme.error),
-            const SizedBox(width: 6),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Text(
                 Strings.get(lang, 'overBudget'),
@@ -350,7 +388,7 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
         : (todaySpent / g.suggested).clamp(0.0, 1.0);
     final over = g.suggested > 0 && todaySpent > g.suggested;
     return Padding(
-      padding: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -362,7 +400,7 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
               color: scheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: AppSpacing.xs),
           ClipRRect(
             borderRadius: BorderRadius.circular(AppRadius.sm),
             child: LinearProgressIndicator(
@@ -400,38 +438,36 @@ class _Comparisons extends ConsumerWidget {
       builder: (context, snap) {
         if (!snap.hasData) return const SizedBox.shrink();
         final values = snap.data!;
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            mainAxisExtent: 56,
+        // Fixed six-cell strip: plain rows, no builder, no shrinkWrap.
+        Widget cell(int i) => Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                Strings.get(lang, _comparePeriods[i]),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              MoneyText(
+                millimes: values[i],
+                lang: lang,
+                type: 'neutral',
+                style: Theme.of(context).textTheme.titleSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
+              ),
+            ],
           ),
-          itemCount: _comparePeriods.length,
-          itemBuilder: (context, i) {
-            final v = values[i];
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  Strings.get(lang, _comparePeriods[i]),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                MoneyText(
-                  millimes: v,
-                  lang: lang,
-                  type: 'neutral',
-                  style: Theme.of(context).textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-              ],
-            );
-          },
+        );
+        return Column(
+          children: [
+            Row(children: [cell(0), cell(1), cell(2)]),
+            const SizedBox(height: AppSpacing.sm),
+            Row(children: [cell(3), cell(4), cell(5)]),
+          ],
         );
       },
     );
@@ -697,7 +733,7 @@ class _Timeline extends ConsumerWidget {
                       ],
                       if (dayExpense > 0)
                         Padding(
-                          padding: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.only(top: AppSpacing.xs),
                           child: Row(
                             children: [
                               Expanded(

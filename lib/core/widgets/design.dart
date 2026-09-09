@@ -96,10 +96,27 @@ class MoneyText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final base = style ?? Theme.of(context).textTheme.bodyLarge;
+    // Semantic colors resolve per brightness (dark companions are
+    // lightened/desaturated; never the light hex on a dark surface).
+    // Glyph plus label keeps meaning off color alone; tabular figures
+    // keep timeline amounts aligned.
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final (glyph, color, value) = switch (type) {
-      'expense' => ('−', AppColors.expense, millimes.abs()),
-      'income' => ('+', AppColors.income, millimes.abs()),
-      'transfer' => ('⇄', AppColors.transfer, millimes.abs()),
+      'expense' => (
+        '−',
+        dark ? AppColors.darkExpense : AppColors.expense,
+        millimes.abs(),
+      ),
+      'income' => (
+        '+',
+        dark ? AppColors.darkIncome : AppColors.income,
+        millimes.abs(),
+      ),
+      'transfer' => (
+        '⇄',
+        dark ? AppColors.darkTransfer : AppColors.transfer,
+        millimes.abs(),
+      ),
       _ => ('', null, millimes),
     };
     final text = glyph.isEmpty
@@ -107,9 +124,12 @@ class MoneyText extends StatelessWidget {
         : '$glyph ${Money.format(value, lang: lang)}';
     // Typed amounts get emphasis; neutral inherits the caller's style
     // untouched (weight included) so totals keep their designed type.
+    final tabular = (base ?? const TextStyle()).copyWith(
+      fontFeatures: const [FontFeature.tabularFigures()],
+    );
     final effective = glyph.isEmpty
-        ? base
-        : base?.copyWith(color: color, fontWeight: FontWeight.w600);
+        ? tabular
+        : tabular.copyWith(color: color, fontWeight: FontWeight.w600);
     return Directionality(
       textDirection: TextDirection.ltr,
       child: Text(
