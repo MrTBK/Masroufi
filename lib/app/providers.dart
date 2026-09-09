@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/analytics/bi_scope.dart';
 import '../data/database/app_db.dart';
 import '../data/repositories/analytics_repo.dart';
 import '../data/repositories/budgets_repo.dart';
@@ -91,3 +92,39 @@ final calMonthProvider = StateProvider<DateTime>(
 
 /// Rollover opt-in (Track 6, display-only). Persisted to settings KV.
 final rolloverProvider = StateProvider<bool>((ref) => false);
+
+/// BI filter bar selection. Defaults to the current calendar month
+/// (half-open [monthStart, nextMonth)); presets rewrite it wholesale.
+BiFilter _defaultBiFilter() {
+  final now = DateTime.now();
+  return BiFilter(
+    from: DateTime(now.year, now.month, 1),
+    to: now.month == 12
+        ? DateTime(now.year + 1, 1, 1)
+        : DateTime(now.year, now.month + 1, 1),
+  );
+}
+
+final biFilterProvider = StateProvider<BiFilter>((ref) => _defaultBiFilter());
+
+/// BI engine assembled from the existing repositories (no new data
+/// layer; see FilteredAnalytics).
+final filteredAnalyticsProvider = Provider<FilteredAnalytics>(
+  (ref) => FilteredAnalytics(
+    analytics: ref.watch(analyticsRepoProvider),
+    wallets: ref.watch(walletsRepoProvider),
+    categories: ref.watch(categoriesRepoProvider),
+    recurring: ref.watch(recurringRepoProvider),
+    debts: ref.watch(debtsRepoProvider),
+    budgets: ref.watch(budgetsRepoProvider),
+    catBudgets: ref.watch(categoryBudgetsRepoProvider),
+  ),
+);
+
+/// The single snapshot every Analytics visualization reads. Reloads on
+/// filter change and on [refreshTickProvider] bumps after mutations.
+final biSnapshotProvider = FutureProvider<BiSnapshot>((ref) async {
+  ref.watch(refreshTickProvider);
+  final filter = ref.watch(biFilterProvider);
+  return ref.watch(filteredAnalyticsProvider).load(filter);
+});
