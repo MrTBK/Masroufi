@@ -1,44 +1,25 @@
 import 'package:flutter/material.dart';
 
+import '../icons/category_icons.dart';
 import '../l10n/strings.dart';
 
-/// Maps stored icon names to Material icons (never mirrored blindly).
-IconData appIcon(String name) => switch (name) {
-  'cash' => Icons.payments,
-  'bank' => Icons.account_balance,
-  'card' => Icons.credit_card,
-  'savings' => Icons.savings,
-  'shopping_cart' => Icons.shopping_cart,
-  'restaurant' => Icons.restaurant,
-  'coffee' => Icons.coffee,
-  'fastfood' => Icons.fastfood,
-  'taxi' => Icons.local_taxi,
-  'bus' => Icons.airport_shuttle,
-  'directions_bus' => Icons.directions_bus,
-  'tram' => Icons.tram,
-  'fuel' => Icons.local_gas_station,
-  'bolt' => Icons.bolt,
-  'water' => Icons.water_drop,
-  'wifi' => Icons.wifi,
-  'phone' => Icons.smartphone,
-  'shirt' => Icons.checkroom,
-  'devices' => Icons.devices,
-  'home' => Icons.home,
-  'health' => Icons.health_and_safety,
-  'entertainment' => Icons.movie,
-  'gym' => Icons.fitness_center,
-  _ => Icons.category,
-};
+/// Legacy alias: use [CategoryIcons.iconFor] in new code.
+/// Kept so existing call sites keep working.
+IconData appIcon(String name) => CategoryIcons.iconFor(name);
 
 class EmptyState extends StatelessWidget {
   final String title;
   final String body;
   final IconData icon;
+  final String? actionLabel;
+  final VoidCallback? onAction;
   const EmptyState({
     super.key,
     required this.title,
     required this.body,
     required this.icon,
+    this.actionLabel,
+    this.onAction,
   });
 
   @override
@@ -67,6 +48,10 @@ class EmptyState extends StatelessWidget {
               style: Theme.of(context).textTheme.bodyMedium,
               textAlign: TextAlign.center,
             ),
+            if (actionLabel != null && onAction != null) ...[
+              const SizedBox(height: 16),
+              FilledButton(onPressed: onAction, child: Text(actionLabel!)),
+            ],
           ],
         ),
       ),

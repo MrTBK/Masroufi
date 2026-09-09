@@ -1,89 +1,326 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+// Hide intl's own TextDirection class (shadows Flutter's enum).
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../app/providers.dart';
-import '../../core/l10n/strings.dart';
+import '../../core/analytics/insights.dart';
+import '../../core/analytics/periods.dart';
+import '../../core/analytics/stats.dart';
+import '../../core/analytics/summary.dart';
 import '../../core/money/money.dart';
+import '../../core/config/brand.dart';
+import '../../core/l10n/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/dates.dart';
+import '../../core/widgets/design.dart';
+import '../../core/widgets/donut_chart.dart';
+import '../../core/widgets/masroufi_nav.dart';
 import '../../core/widgets/widgets.dart';
 import '../../data/database/app_db.dart';
+import '../../data/database/category_hierarchy.dart';
+import '../../data/repositories/analytics_repo.dart';
 import '../../data/repositories/transactions_repo.dart';
+import '../transactions/txn_sheets.dart';
+
+/// Dashboard period ids (min spec: thisWeek|lastWeek|thisMonth|lastMonth,
+/// plus inherited last3Months|year for trend context).
+const dashPeriods = [
+  'thisWeek',
+  'lastWeek',
+  'thisMonth',
+  'lastMonth',
+  'last3Months',
+  'year',
+];
+
+/// Half-open [start, end) range backing a dashboard period id.
+({DateTime start, DateTime end}) dashRangeFor(
+  String period,
+  DateTime now,
+  String weekStart,
+) {
+  final p = normalizedDashPeriod(period);
+  switch (p) {
+    case 'thisWeek':
+      return Periods.week(now, weekStart);
+    case 'lastWeek':
+      return Periods.lastWeek(now, weekStart);
+    case 'lastMonth':
+      return Periods.lastMonth(now);
+    case 'last3Months':
+      return Periods.last3Months(now);
+    case 'year':
+      return Periods.year(now);
+    case 'thisMonth':
+    default:
+      return Periods.month(now);
+  }
+}
+
+/// Localized label key for a dashboard period id.
+String dashPeriodLabelKey(String period) {
+  switch (normalizedDashPeriod(period)) {
+    case 'thisWeek':
+      return 'thisWeek';
+    case 'lastWeek':
+      return 'lastWeek';
+    case 'lastMonth':
+      return 'lastMonth';
+    case 'last3Months':
+      return 'last3Months';
+    case 'year':
+      return 'thisYear';
+    case 'thisMonth':
+    default:
+      return 'thisMonth';
+  }
+}
 
 class _DashData {
   final int total;
   final int income;
   final int expense;
   final List<Wallet> wallets;
-  final Map<String, int> balances;
-  final List<Transaction> recent;
   final Map<String?, int> byCat;
   final List<Category> cats;
-  final Budget? budget;
-  final int budgetSpent;
+  final int dailyAverage;
+  final int elapsedDays;
+  final int monthlyAverage;
+  final bool hasTxns;
+  // Deterministic month-over-month insight lines (current vs previous
+  // calendar month; empty when data is insufficient — never noise).
+  final List<String> insightsLines;
+  // Month-over-month comparison widget inputs (null pct = insufficient).
+  final int curMonthExpense;
+  final int prevMonthExpense;
+  final int? momPct;
+  // Upcoming recurring occurrences (compact strip, at most 3).
+  final List<({RecurringRule rule, DateTime date})> upcoming;
+  // Factual health lines (check vs warning icons, never scores).
+  final List<({String text, bool warn})> healthLines;
+  // Current-month spending calendar inputs.
+  final DateTime calendarMonth;
+  final Map<DateTime, int> calendarDays;
   _DashData({
     required this.total,
     required this.income,
     required this.expense,
+    required this.insightsLines,
+    required this.curMonthExpense,
+    required this.prevMonthExpense,
+    required this.momPct,
+    required this.upcoming,
+    required this.healthLines,
+    required this.calendarMonth,
+    required this.calendarDays,
     required this.wallets,
-    required this.balances,
-    required this.recent,
     required this.byCat,
     required this.cats,
-    required this.budget,
-    required this.budgetSpent,
+    required this.dailyAverage,
+    required this.elapsedDays,
+    required this.monthlyAverage,
+    required this.hasTxns,
   });
 }
 
 final _dashProvider = FutureProvider<_DashData>((ref) async {
   ref.watch(refreshTickProvider);
-  final walletsRepo = ref.watch(walletsRepoProvider);
-  final txns = ref.watch(transactionsRepoProvider);
-  final catsRepo = ref.watch(categoriesRepoProvider);
-  final budgets = ref.watch(budgetsRepoProvider);
+  final period = normalizedDashPeriod(ref.watch(dashPeriodProvider));
+  final weekStart = ref.watch(weekStartProvider);
   final now = DateTime.now();
+  final range = dashRangeFor(period, now, weekStart);
+  final walletsRepo = ref.watch(walletsRepoProvider);
+  final analytics = ref.watch(analyticsRepoProvider);
+  final catsRepo = ref.watch(categoriesRepoProvider);
+  final txns = ref.watch(transactionsRepoProvider);
+  final summary = FinancialSummaryService(
+    analytics: analytics,
+    wallets: walletsRepo,
+  );
+  final total = await summary.totalMoney();
+  final income = await summary.incomeIn(range.start, range.end);
+  final expense = await summary.spentIn(range.start, range.end);
+  final avg = await summary.averageSpending(range.start, range.end, now);
+  final monthly = await summary.monthlyAverage(now);
   final wallets = await walletsRepo.all(includeArchived: false);
-  final balances = <String, int>{};
-  var total = 0;
-  for (final w in wallets) {
-    final b = await walletsRepo.balance(w);
-    balances[w.id] = b;
-    total += b;
-  }
-  final sums = await walletsRepo.db.monthSums(now.year, now.month);
-  final recent = await txns.list(const TxnFilter(limit: 8));
-  final byCat = await walletsRepo.db.expenseByCategory(now.year, now.month);
   final cats = await catsRepo.all();
-  final budget = await budgets.getMonth(now.year, now.month);
-  final spent = await budgets.spent(now.year, now.month);
+  final byCat = await analytics.expenseByCategory(range.start, range.end);
+  final hasTxns = (await txns.list(const TxnFilter(limit: 1))).isNotEmpty;
+  final lang = ref.watch(languageProvider);
+  final analysis = await _monthAnalysis(
+    analytics: analytics,
+    cats: cats,
+    now: now,
+    lang: lang,
+  );
+  final upcoming = await ref
+      .watch(recurringRepoProvider)
+      .upcoming(days: 30, limit: 3);
+  final budget = await ref
+      .watch(budgetsRepoProvider)
+      .getMonth(now.year, now.month);
+  final daysInMonth = Periods.daysInMonth(now.year, now.month);
+  final healthLines = Insights.buildHealth(
+    budgetMillimes: budget?.amountMillimes,
+    monthSpentMillimes: analysis.curExp,
+    secondTopCat: analysis.secondTop,
+    daysLeft: (daysInMonth - now.day + 1).clamp(1, daysInMonth),
+    lang: lang,
+  );
+  final calMonth = DateTime(now.year, now.month, 1);
+  final calNext = now.month == 12
+      ? DateTime(now.year + 1, 1, 1)
+      : DateTime(now.year, now.month + 1, 1);
+  final calendarDays = await analytics.dailyExpenseTotals(calMonth, calNext);
   return _DashData(
     total: total,
-    income: sums.income,
-    expense: sums.expense,
+    income: income,
+    expense: expense,
+    insightsLines: analysis.lines,
+    curMonthExpense: analysis.curExp,
+    prevMonthExpense: analysis.prevExp,
+    momPct: analysis.momPct,
+    upcoming: upcoming,
+    healthLines: healthLines,
+    calendarMonth: calMonth,
+    calendarDays: calendarDays,
     wallets: wallets,
-    balances: balances,
-    recent: recent,
     byCat: byCat,
     cats: cats,
-    budget: budget,
-    budgetSpent: spent,
+    dailyAverage: avg.dailyAverage,
+    elapsedDays: avg.days,
+    monthlyAverage: monthly.monthlyAverage,
+    hasTxns: hasTxns,
   );
 });
 
 String _catName(String lang, List<Category> cats, String? id) {
-  if (id == null) return '—';
+  if (id == null) return Strings.get(lang, 'uncategorized');
   for (final c in cats) {
     if (c.id == id) return Strings.categoryName(lang, c.nameKey, c.customName);
   }
   return '—';
 }
 
-String _walletName(List<Wallet> wallets, String id, String? toId) {
-  String n(String i) =>
-      wallets.where((w) => w.id == i).map((w) => w.name).firstOrNull ?? '—';
-  return toId == null ? n(id) : '${n(id)} → ${n(toId)}';
+String? _catIcon(List<Category> cats, String? id) {
+  if (id == null) return null;
+  for (final c in cats) {
+    if (c.id == id) return c.icon;
+  }
+  return null;
 }
 
+/// Deterministic month analysis: always the current vs previous CALENDAR
+/// month (analysis-stable regardless of the selected dashboard period).
+/// One batched read feeds the insight lines, the MoM widget, the second
+/// rank (health facts) and the calendar-independent totals.
+Future<
+  ({
+    List<String> lines,
+    int curExp,
+    int prevExp,
+    int? momPct,
+    String? secondTop,
+  })
+>
+_monthAnalysis({
+  required AnalyticsRepo analytics,
+  required List<Category> cats,
+  required DateTime now,
+  required String lang,
+}) async {
+  final cur = Periods.month(now);
+  final prev = Periods.lastMonth(now);
+  final results = await Future.wait([
+    analytics.expenseTotal(cur.start, cur.end),
+    analytics.expenseTotal(prev.start, prev.end),
+    analytics.incomeTotal(cur.start, cur.end),
+    analytics.incomeTotal(prev.start, prev.end),
+    analytics.expenseByCategory(cur.start, cur.end),
+    analytics.expenseByPriority(cur.start, cur.end),
+  ]);
+  final curExp = results[0] as int;
+  final prevExp = results[1] as int;
+  final curInc = results[2] as int;
+  final prevInc = results[3] as int;
+  final byCat = results[4] as Map<String?, int>;
+  final byPri = results[5] as Map<String, int>;
+  if (curExp <= 0) {
+    return (
+      lines: const <String>[],
+      curExp: curExp,
+      prevExp: prevExp,
+      momPct: null,
+      secondTop: null,
+    );
+  }
+  final byId = {for (final c in cats) c.id: c};
+  final rolled = CategoryHierarchy.rollUp(byCat, cats);
+  final primaries = rolled.entries
+      .where((e) => e.value > 0)
+      .where((e) => e.key == null || byId[e.key]?.parentId == null)
+      .toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+  final topName = primaries.isEmpty
+      ? null
+      : _catName(lang, cats, primaries.first.key);
+  final secondTop = primaries.length < 2
+      ? null
+      : _catName(lang, cats, primaries[1].key);
+  final mom = AnalyticsStats.monthOverMonth(
+    current: curExp,
+    previous: prevExp,
+  );
+  final elapsed = Periods.elapsedDays(cur.start, cur.end, now);
+  return (
+    lines: Insights.buildInsights(
+      currentExpense: curExp,
+      previousExpense: prevExp,
+      topCatName: topName,
+      funSharePct: AnalyticsStats.sharePct(
+        part: byPri['fun'] ?? 0,
+        total: curExp,
+      ),
+      incomeMoM: AnalyticsStats.monthOverMonth(
+        current: curInc,
+        previous: prevInc,
+      ),
+      dailyAvgFormatted: Money.format(curExp ~/ elapsed, lang: lang),
+      lang: lang,
+    ),
+    curExp: curExp,
+    prevExp: prevExp,
+    momPct: mom?.pct,
+    secondTop: secondTop,
+  );
+}
+
+/// Pure calendar grid for a month: weeks × 7 day cells (null = padding),
+/// weeks starting on [weekStartWeekday] (DateTime.monday..sunday, from
+/// settings). Unit-tested; the widget only renders this structure.
+List<List<DateTime?>> buildCalendarWeeks(
+  DateTime month,
+  int weekStartWeekday,
+) {
+  final first = DateTime(month.year, month.month, 1);
+  final daysInMonth = Periods.daysInMonth(month.year, month.month);
+  final lead = (first.weekday - weekStartWeekday + 7) % 7;
+  final cells = <DateTime?>[
+    for (var i = 0; i < lead; i++) null,
+    for (var d = 1; d <= daysInMonth; d++) DateTime(month.year, month.month, d),
+  ];
+  while (cells.length % 7 != 0) {
+    cells.add(null);
+  }
+  return [
+    for (var w = 0; w < cells.length; w += 7) cells.sublist(w, w + 7),
+  ];
+}
+
+/// Financial-analysis dashboard (spec §8-14): totals → donut →
+/// top categories → averages → money in/out. Not a transaction list.
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
 
@@ -92,7 +329,16 @@ class DashboardPage extends ConsumerWidget {
     final lang = ref.watch(languageProvider);
     final async = ref.watch(_dashProvider);
     return Scaffold(
-      appBar: AppBar(title: Text(Strings.get(lang, 'dashboard'))),
+      appBar: AppBar(
+        title: HomeTitle(text: Brand.nameFor(lang), lang: lang),
+        actions: [
+          IconButton(
+            tooltip: Strings.get(lang, 'settings'),
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.push('/settings'),
+          ),
+        ],
+      ),
       body: async.when(
         loading: () => const LoadingView(),
         error: (e, _) => ErrorView(
@@ -102,67 +348,46 @@ class DashboardPage extends ConsumerWidget {
         data: (d) => RefreshIndicator(
           onRefresh: () async => ref.invalidate(_dashProvider),
           child: ListView(
-            padding: const EdgeInsets.all(AppSpacing.md),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.md,
+              AppSpacing.xl,
+            ),
             children: [
-              _balanceCard(context, lang, d),
-              const SizedBox(height: AppSpacing.md),
-              _quickActions(context, lang),
-              const SizedBox(height: AppSpacing.md),
-              _monthRow(context, lang, d),
-              if (d.budget != null) ...[
-                const SizedBox(height: AppSpacing.md),
-                _budgetCard(context, lang, d),
-              ],
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                Strings.get(lang, 'recent'),
-                style: Theme.of(context).textTheme.titleMedium,
+              HomeTopSwitch(
+                showTransactions: false,
+                lang: lang,
+                onTransactions: () => context.go('/'),
+                onDashboard: () {},
+                onSettings: () => context.push('/settings'),
               ),
-              ...d.recent.map(
-                (t) => ListTile(
-                  leading: Icon(
-                    t.type == 'expense'
-                        ? Icons.remove_circle
-                        : t.type == 'income'
-                        ? Icons.add_circle
-                        : Icons.swap_horiz,
-                    color: t.type == 'expense'
-                        ? AppColors.expense
-                        : t.type == 'income'
-                        ? AppColors.income
-                        : AppColors.transfer,
-                  ),
-                  title: Text(
-                    t.note.isEmpty
-                        ? _catName(lang, d.cats, t.categoryId)
-                        : t.note,
-                  ),
-                  subtitle: Text(
-                    _walletName(d.wallets, t.walletId, t.toWalletId),
-                  ),
-                  trailing: Text(
-                    '${t.type == 'expense'
-                        ? '−'
-                        : t.type == 'income'
-                        ? '+'
-                        : '⇄'} ${Money.format(t.amountMillimes, lang: lang)}',
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                  onTap: () => context.push('/add?edit=${t.id}&type=${t.type}'),
-                ),
-              ),
-              if (d.recent.isEmpty)
+              const SizedBox(height: AppSpacing.sm),
+              _periodSelector(context, ref, lang),
+              const SizedBox(height: AppSpacing.md),
+              _totals(context, ref, lang, d),
+              const SizedBox(height: AppSpacing.lg),
+              if (!d.hasTxns)
                 EmptyState(
-                  title: Strings.get(lang, 'noTransactions'),
-                  body: Strings.get(lang, 'noTransactionsBody'),
-                  icon: Icons.receipt_long,
-                ),
-              const SizedBox(height: AppSpacing.md),
-              Text(
-                Strings.get(lang, 'topCategories'),
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              ..._topCats(lang, d),
+                  title: Strings.get(lang, 'welcomeTitle'),
+                  body: Strings.get(lang, 'welcomeBody'),
+                  icon: Icons.pie_chart,
+                )
+              else ...[
+                _donutSection(context, lang, d),
+                const SizedBox(height: AppSpacing.lg),
+                _topCategories(context, lang, d),
+                const SizedBox(height: AppSpacing.lg),
+                _averages(context, lang, d),
+                const SizedBox(height: AppSpacing.lg),
+                _moneyInOut(context, lang, d),
+                const SizedBox(height: AppSpacing.lg),
+                _insights(context, lang, d),
+                const SizedBox(height: AppSpacing.lg),
+                _upcoming(context, lang, d),
+                const SizedBox(height: AppSpacing.lg),
+                _calendar(context, ref, lang, d),
+              ],
             ],
           ),
         ),
@@ -170,216 +395,735 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _balanceCard(BuildContext context, String lang, _DashData d) {
-    final maxBar =
-        (d.byCat.values.isEmpty
-                ? 0
-                : d.byCat.values.reduce((a, b) => a > b ? a : b))
-            .toDouble();
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              Strings.get(lang, 'totalBalance'),
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            Text(
-              Money.format(d.total, lang: lang),
-              style: Theme.of(context).textTheme.headlineMedium
-                  ?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            if (maxBar <= 0 && d.recent.isEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Text(
-                  Strings.get(lang, 'noTransactionsBody'),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
+  /// Only the global privacy switch masks the total now: per-wallet
+  /// hiding EXCLUDES the wallet from the displayed total (see
+  /// `WalletsRepo.visibleBalance`), so nothing can leak by subtraction.
+  bool _totalMasked(WidgetRef ref) => ref.watch(hideBalancesProvider);
+
+  Widget _periodSelector(BuildContext context, WidgetRef ref, String lang) {
+    final period = normalizedDashPeriod(ref.watch(dashPeriodProvider));
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (var i = 0; i < dashPeriods.length; i++) ...[
+            if (i > 0) const SizedBox(width: AppSpacing.xs),
+            ChoiceChip(
+              label: Text(
+                Strings.get(lang, dashPeriodLabelKey(dashPeriods[i])),
               ),
+              selected: period == dashPeriods[i],
+              onSelected: (_) =>
+                  ref.read(dashPeriodProvider.notifier).state = dashPeriods[i],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
 
-  Widget _quickActions(BuildContext context, String lang) {
-    return Row(
-      children: [
-        Expanded(
-          flex: 3,
-          child: FilledButton.icon(
-            onPressed: () => context.push('/add?type=expense'),
-            icon: const Icon(Icons.remove, size: 28),
-            label: Text(
-              Strings.get(lang, 'expense'),
-              style: const TextStyle(fontSize: 18),
-            ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => context.push('/add?type=income'),
-            child: Text(Strings.get(lang, 'income')),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: OutlinedButton(
-            onPressed: () => context.push('/add?type=transfer'),
-            child: Text(Strings.get(lang, 'transfer')),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _monthRow(BuildContext context, String lang, _DashData d) {
-    return Row(
-      children: [
-        Expanded(
-          child: _stat(
-            context,
-            Strings.get(lang, 'monthIncome'),
-            d.income,
-            lang,
-            AppColors.income,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: _stat(
-            context,
-            Strings.get(lang, 'monthExpenses'),
-            d.expense,
-            lang,
-            AppColors.expense,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: _stat(
-            context,
-            Strings.get(lang, 'remaining'),
-            d.income - d.expense,
-            lang,
-            null,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _stat(
+  /// TOTAL MONEY then TOTAL SPENT — values from existing repos only.
+  Widget _totals(
     BuildContext context,
-    String label,
-    int value,
+    WidgetRef ref,
     String lang,
-    Color? color,
+    _DashData d,
   ) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(label, style: Theme.of(context).textTheme.bodySmall),
-            const SizedBox(height: 4),
-            Text(
-              Money.format(value, lang: lang),
-              style: Theme.of(context).textTheme.titleSmall
-                  ?.copyWith(color: color, fontWeight: FontWeight.bold),
-            ),
-          ],
+    final scheme = Theme.of(context).colorScheme;
+    final masked = _totalMasked(ref);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          Strings.get(lang, 'totalMoney'),
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: scheme.onSurfaceVariant),
         ),
-      ),
+        masked
+            ? HiddenBalance(
+                semanticLabel: Strings.get(lang, 'hiddenBalance'),
+                style: Theme.of(context).textTheme.headlineMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              )
+            : MoneyText(
+                millimes: d.total,
+                lang: lang,
+                type: 'neutral',
+                style: Theme.of(context).textTheme.headlineMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+        const SizedBox(height: 8),
+        Text(
+          Strings.get(lang, 'totalSpent'),
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        MoneyText(
+          millimes: d.expense,
+          lang: lang,
+          type: 'expense',
+          style: Theme.of(context).textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          Strings.get(lang, 'totalIncome'),
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: scheme.onSurfaceVariant),
+        ),
+        MoneyText(
+          millimes: d.income,
+          lang: lang,
+          type: 'income',
+          style: Theme.of(context).textTheme.headlineSmall
+              ?.copyWith(fontWeight: FontWeight.bold),
+        ),
+      ],
     );
   }
 
-  Widget _budgetCard(BuildContext context, String lang, _DashData d) {
-    final b = d.budget!;
-    final pct = b.amountMillimes <= 0
-        ? 0.0
-        : (d.budgetSpent / b.amountMillimes).clamp(0.0, 1.0);
-    final over = d.budgetSpent > b.amountMillimes;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+  Widget _donutSection(BuildContext context, String lang, _DashData d) {
+    final byId = {for (final c in d.cats) c.id: c};
+    final rolled = CategoryHierarchy.rollUp(d.byCat, d.cats);
+    final entries =
+        rolled.entries
+            .where((e) => e.value > 0)
+            .where((e) => e.key == null || byId[e.key]?.parentId == null)
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+    final top = entries.take(5).toList();
+    final slices = [
+      for (var i = 0; i < top.length; i++)
+        DonutSlice(
+          id: top[i].key,
+          label: _catName(lang, d.cats, top[i].key),
+          iconKey: _catIcon(d.cats, top[i].key),
+          value: top[i].value,
+          color: DonutPalette.colors[i % DonutPalette.colors.length],
+        ),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(title: Strings.get(lang, 'spending')),
+        // Compact month comparison (whole-percent, int-only math):
+        // current month vs previous, direction icon + sentence.
+        if (d.momPct != null && d.momPct != 0 && d.curMonthExpense > 0)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
               children: [
+                Icon(
+                  d.momPct! < 0 ? Icons.trending_down : Icons.trending_up,
+                  size: 18,
+                  color: d.momPct! < 0
+                      ? AppColors.income
+                      : AppColors.expense,
+                  semanticLabel: '${d.momPct}%',
+                ),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Text(
-                    Strings.get(lang, 'budget'),
-                    style: Theme.of(context).textTheme.titleSmall,
+                    Strings.tpl(
+                      lang,
+                      d.momPct! < 0 ? 'insMomLess' : 'insMomMore',
+                      {'p': '${d.momPct!.abs()}'},
+                    ),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-                Text(
-                  '${Money.format(d.budgetSpent, lang: lang)} / ${Money.format(b.amountMillimes, lang: lang)}',
-                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: pct,
-              minHeight: 10,
-              color: over ? Theme.of(context).colorScheme.error : null,
+          ),
+        Center(
+          child: DonutChart(
+            slices: slices,
+            totalMillimes: d.expense,
+            lang: lang,
+          ),
+        ),
+        const SizedBox(height: 8),
+        for (final s in slices)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                CategoryAvatar(
+                  iconKey: s.iconKey,
+                  radius: 16,
+                  semanticLabel: s.label,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    s.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                MoneyText(
+                  millimes: s.value,
+                  lang: lang,
+                  type: 'neutral',
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              over
-                  ? '⚠ ${(pct * 100).toStringAsFixed(0)}% ${Strings.get(lang, 'used')}'
-                  : '${(pct * 100).toStringAsFixed(0)}% ${Strings.get(lang, 'used')}',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: over ? Theme.of(context).colorScheme.error : null,
+          ),
+      ],
+    );
+  }
+
+  Widget _topCategories(BuildContext context, String lang, _DashData d) {
+    final byId = {for (final c in d.cats) c.id: c};
+    final rolled = CategoryHierarchy.rollUp(d.byCat, d.cats);
+    final entries =
+        rolled.entries
+            .where((e) => e.value > 0)
+            .where((e) => e.key == null || byId[e.key]?.parentId == null)
+            .toList()
+          ..sort((a, b) => b.value.compareTo(a.value));
+    final top = entries.take(5).toList();
+    if (top.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(title: Strings.get(lang, 'topSpendingCategories')),
+        for (var i = 0; i < top.length; i++) ...[
+          if (i > 0) const Divider(height: 1, indent: 68),
+          Builder(
+            builder: (context) {
+              final e = top[i];
+              final name = _catName(lang, d.cats, e.key);
+              final share = AnalyticsStats.sharePct(
+                part: e.value,
+                total: d.expense,
+              );
+              return InkWell(
+                onTap: e.key == null
+                    ? null
+                    : () => context.push('/dashboard/category/${e.key}'),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${i + 1}.',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      CategoryAvatar(
+                        iconKey: _catIcon(d.cats, e.key),
+                        radius: 18,
+                        semanticLabel: name,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            if (share != null)
+                              Text(
+                                '$share${Strings.get(lang, 'pctOfExpenses')}',
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurfaceVariant,
+                                    ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      MoneyText(
+                        millimes: e.value,
+                        lang: lang,
+                        type: 'neutral',
+                        style: Theme.of(context).textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Daily avg = period total ÷ elapsed days; monthly avg = mean of last
+  /// 3 completed months (current month excluded). Definitions in
+  /// [FinancialSummaryService].
+  Widget _averages(BuildContext context, String lang, _DashData d) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(title: Strings.get(lang, 'avgSpending')),
+        Row(
+          children: [
+            Expanded(
+              child: _avgCard(
+                context,
+                label: Strings.get(lang, 'avgDaily'),
+                millimes: d.dailyAverage,
+                lang: lang,
+                note: Strings.get(lang, 'dailyAvgNote'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: _avgCard(
+                context,
+                label: Strings.get(lang, 'monthlyAverage'),
+                millimes: d.monthlyAverage,
+                lang: lang,
+                note: Strings.get(lang, 'monthlyAvgNote'),
               ),
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  Widget _avgCard(
+    BuildContext context, {
+    required String label,
+    required int millimes,
+    required String lang,
+    required String note,
+  }) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 4),
+          MoneyText(
+            millimes: millimes,
+            lang: lang,
+            type: 'neutral',
+            style: Theme.of(context).textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            note,
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ],
       ),
     );
   }
 
-  List<Widget> _topCats(String lang, _DashData d) {
-    final entries = d.byCat.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final top = entries.take(5).toList();
-    if (top.isEmpty) return [];
-    final maxV = top.first.value.toDouble();
-    return [
-      for (final e in top)
-        Builder(
-          builder: (context) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Column(
+  Widget _moneyInOut(BuildContext context, String lang, _DashData d) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(title: Strings.get(lang, 'moneyInOut')),
+        MoneyInOutBars(
+          incomeMillimes: d.income,
+          expenseMillimes: d.expense,
+          lang: lang,
+        ),
+      ],
+    );
+  }
+
+  /// Deterministic insight + health lines: localized sentences, never
+  /// LLM output, hidden when data is insufficient. Health facts use
+  /// check/warning icons (never an invented score).
+  Widget _insights(BuildContext context, String lang, _DashData d) {
+    if (d.insightsLines.isEmpty && d.healthLines.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final variant = Theme.of(context).colorScheme.onSurfaceVariant;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(title: Strings.get(lang, 'insights')),
+        for (final line in d.insightsLines)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Icon(
+                    Icons.lightbulb_outline,
+                    size: 18,
+                    color: variant,
+                    semanticLabel: line,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: Text(line)),
+              ],
+            ),
+          ),
+        for (final h in d.healthLines)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Icon(
+                    h.warn ? Icons.warning_amber : Icons.check_circle_outline,
+                    size: 18,
+                    color: h.warn
+                        ? Theme.of(context).colorScheme.error
+                        : AppColors.income,
+                    semanticLabel: h.text,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: Text(h.text)),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Upcoming recurring occurrences (compact secondary strip): next 3
+  /// by date with wallet + amount; tap opens the recurring manager.
+  Widget _upcoming(BuildContext context, String lang, _DashData d) {
+    if (d.upcoming.isEmpty) return const SizedBox.shrink();
+    final now = DateTime.now();
+    final byId = {for (final c in d.cats) c.id: c};
+    String walletName(String id) => d.wallets
+        .where((w) => w.id == id)
+        .map((w) => w.name)
+        .firstOrNull ?? '—';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: Strings.get(lang, 'upcoming'),
+          actionLabel: Strings.get(lang, 'recurring'),
+          onAction: () => context.push('/settings/recurring'),
+        ),
+        for (var i = 0; i < d.upcoming.length; i++) ...[
+          if (i > 0) const Divider(height: 1, indent: 68),
+          Builder(
+            builder: (context) {
+              final u = d.upcoming[i];
+              final cat = u.rule.categoryId == null
+                  ? null
+                  : byId[u.rule.categoryId];
+              final title = u.rule.note.isNotEmpty
+                  ? u.rule.note
+                  : cat == null
+                  ? Strings.get(
+                      lang,
+                      u.rule.type == 'income' ? 'income' : 'expense',
+                    )
+                  : Strings.categoryName(lang, cat.nameKey, cat.customName);
+              return TransactionTile(
+                iconKey: cat?.icon,
+                title: title,
+                subtitle:
+                    '${walletName(u.rule.walletId)} · ${_upcomingDay(u.date, now, lang)}',
+                millimes: u.rule.amountMillimes,
+                lang: lang,
+                type: u.rule.type,
+                onTap: () => context.push('/settings/recurring'),
+              );
+            },
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// "Tomorrow" / weekday label for an upcoming date (locale-aware).
+  String _upcomingDay(DateTime date, DateTime now, String lang) {
+    final diff = Periods.dayStart(
+      date,
+    ).difference(Periods.dayStart(now)).inDays;
+    if (diff <= 0) return Strings.get(lang, 'today');
+    if (diff == 1) return Strings.get(lang, 'tomorrow');
+    try {
+      final locale = switch (lang) {
+        'ar' => 'ar',
+        'fr' => 'fr',
+        _ => 'en',
+      };
+      return DateFormat('d MMMM', locale).format(date);
+    } catch (_) {
+      return '${date.month}/${date.day}';
+    }
+  }
+
+  /// Secondary spending calendar (§33): current month grid with subtle
+  /// per-day intensity; tap a day for its transactions. Deliberately
+  /// compact and kept off the Transactions page.
+  Widget _calendar(
+    BuildContext context,
+    WidgetRef ref,
+    String lang,
+    _DashData d,
+  ) {
+    final weekStart = ref.watch(weekStartProvider);
+    final startDay = switch (weekStart) {
+      'sunday' => DateTime.sunday,
+      'saturday' => DateTime.saturday,
+      _ => DateTime.monday,
+    };
+    final weeks = buildCalendarWeeks(d.calendarMonth, startDay);
+    String monthTitle() {
+      try {
+        final locale = switch (lang) {
+          'ar' => 'ar',
+          'fr' => 'fr',
+          _ => 'en',
+        };
+        return DateFormat('MMMM yyyy', locale).format(d.calendarMonth);
+      } catch (_) {
+        return '${d.calendarMonth.month}/${d.calendarMonth.year}';
+      }
+    }
+
+    String weekdayLabel(int column) {
+      // column 0..6 → weekday int honoring the week-start setting.
+      final weekday = ((startDay - 1 + column) % 7) + 1;
+      try {
+        final locale = switch (lang) {
+          'ar' => 'ar',
+          'fr' => 'fr',
+          _ => 'en',
+        };
+        // 2024-01-01 was a Monday: sample any matching weekday.
+        final sample = DateTime(2024, 1, 1).add(Duration(days: weekday - 1));
+        return DateFormat.E(locale).format(sample);
+      } catch (_) {
+        return const ['M', 'T', 'W', 'T', 'F', 'S', 'S'][weekday - 1];
+      }
+    }
+
+    final maxV = d.calendarDays.values.fold(0, (a, b) => a > b ? a : b);
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: '${Strings.get(lang, 'calendar')} • ${monthTitle()}',
+        ),
+        Row(
+          children: [
+            for (var c = 0; c < 7; c++)
+              Expanded(
+                child: Center(
+                  child: Text(
+                    weekdayLabel(c),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: scheme.onSurfaceVariant,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        for (final week in weeks)
+          Row(
+            children: [
+              for (final day in week)
+                Expanded(
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: day == null
+                        ? const SizedBox.shrink()
+                        : Builder(
+                            builder: (context) {
+                              final v = d.calendarDays[Periods.dayStart(day)] ?? 0;
+                              final frac = maxV <= 0
+                                  ? 0.0
+                                  : (v / maxV).clamp(0.0, 1.0);
+                              final isToday =
+                                  Periods.dayStart(day) ==
+                                  Periods.dayStart(DateTime.now());
+                              return InkWell(
+                                borderRadius: BorderRadius.circular(
+                                  AppRadius.sm,
+                                ),
+                                onTap: v <= 0
+                                    ? null
+                                    : () => _daySheet(
+                                        context,
+                                        ref,
+                                        lang,
+                                        d,
+                                        Periods.dayStart(day),
+                                        v,
+                                      ),
+                                child: Container(
+                                  margin: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: v <= 0
+                                        ? Colors.transparent
+                                        : scheme.primaryContainer.withValues(
+                                            alpha: 0.35 + 0.65 * frac,
+                                          ),
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadius.sm,
+                                    ),
+                                    border: isToday
+                                        ? Border.all(color: scheme.primary)
+                                        : null,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${day.day}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium
+                                          ?.copyWith(
+                                            fontWeight: isToday
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
+                                          ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  /// One day's transactions (from the calendar): total + compact rows,
+  /// tap a row for the full detail sheet.
+  Future<void> _daySheet(
+    BuildContext context,
+    WidgetRef ref,
+    String lang,
+    _DashData d,
+    DateTime day,
+    int dayTotal,
+  ) {
+    final txnsRepo = ref.read(transactionsRepoProvider);
+    final byId = {for (final c in d.cats) c.id: c};
+    return showModalBottomSheet(
+      context: context,
+      showDragHandle: true,
+      builder: (c) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+          child: FutureBuilder(
+            future: txnsRepo.list(
+              TxnFilter(
+                from: day,
+                to: day.add(const Duration(days: 1)),
+                limit: 200,
+              ),
+            ),
+            builder: (c, snap) {
+              if (!snap.hasData) {
+                return const Padding(
+                  padding: EdgeInsets.all(32),
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final list = snap.data!;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Expanded(child: Text(_catName(lang, d.cats, e.key))),
-                      Text(
-                        Money.format(e.value, lang: lang),
-                        style: Theme.of(context).textTheme.bodyMedium,
+                      Expanded(
+                        child: Text(
+                          dayGroupHeader(day, DateTime.now(), lang),
+                          style: Theme.of(c).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      MoneyText(
+                        millimes: dayTotal,
+                        lang: lang,
+                        type: 'neutral',
+                        style: Theme.of(c).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  LinearProgressIndicator(
-                    value: maxV <= 0 ? 0 : e.value / maxV,
-                    minHeight: 6,
+                  const SizedBox(height: 8),
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (var i = 0; i < list.length; i++) ...[
+                          if (i > 0) const Divider(height: 1, indent: 68),
+                          Builder(
+                            builder: (c) {
+                              final t = list[i];
+                              return TransactionTile(
+                                iconKey: t.type == 'transfer'
+                                    ? 'transfer'
+                                    : byId[t.categoryId]?.icon,
+                                title: txnTitle(lang, t, d.wallets, byId),
+                                subtitle: txnTime(t.occurredAt),
+                                millimes: t.amountMillimes,
+                                lang: lang,
+                                type: t.type,
+                                onTap: () {
+                                  Navigator.pop(c);
+                                  showTxnDetail(
+                                    context,
+                                    ref,
+                                    t: t,
+                                    wallets: d.wallets,
+                                    cats: d.cats,
+                                    lang: lang,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ],
-              ),
-            );
-          },
+              );
+            },
+          ),
         ),
-    ];
+      ),
+    );
   }
 }

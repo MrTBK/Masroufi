@@ -1,12 +1,27 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'app/app.dart';
 import 'app/providers.dart';
+import 'core/security/app_lock.dart';
 import 'data/database/app_db.dart';
+import 'features/lock/lock_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Locale date symbols for Arabic/French weekday + month names
+  // (timeline headers, Mizania title). Never blocks startup offline.
+  try {
+    await initializeDateFormatting('ar');
+    await initializeDateFormatting('fr');
+  } catch (_) {
+    // Formatters fall back to numeric dates; app stays fully usable.
+  }
+  // Edge-to-edge system bars (Android polish); harmless no-op elsewhere.
+  // Pages already pad with SafeArea where content meets system UI.
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   final db = AppDb();
   final container = ProviderContainer(
     overrides: [appDbProvider.overrideWithValue(db)],
@@ -14,15 +29,33 @@ Future<void> main() async {
   final lang = await container.read(settingsRepoProvider).language();
   final theme = await container.read(settingsRepoProvider).theme();
   final done = await container.read(settingsRepoProvider).onboardingDone();
+  final hide = await container.read(settingsRepoProvider).hideBalances();
+  final weekStart = await container.read(settingsRepoProvider).weekStart();
+  // App lock: a stored PIN means the vault starts locked. Secure-storage
+  // failures fail CLOSED only when a PIN was previously known... we cannot
+  // know that without reading, so a read failure starts unlocked (same as
+  // no PIN) rather than bricking the app; the settings UI shows status.
+  final hasPin = await container.read(pinStoreProvider).hasPin();
   // Seed categories early so first run has Tunisian defaults.
   await container.read(categoriesRepoProvider).seedDefaults();
+  // Materialize due recurring occurrences (user-controlled via active rules).
+  // Safe to rerun: generation is atomic and never duplicates.
+  try {
+    await container.read(recurringRepoProvider).generateDue();
+  } catch (_) {
+    // Offline-first: a failed generation must never block startup.
+  }
   runApp(
     UncontrolledProviderScope(
       container: container
         ..read(languageProvider.notifier).state = lang
         ..read(themeNameProvider.notifier).state = theme
-        ..read(onboardingDoneProvider.notifier).state = done,
-      child: const MasroufiApp(),
+        ..read(onboardingDoneProvider.notifier).state = done
+        ..read(hideBalancesProvider.notifier).state = hide
+        ..read(weekStartProvider.notifier).state = weekStart
+        ..read(lockEnabledProvider.notifier).state = hasPin
+        ..read(lockedProvider.notifier).state = hasPin,
+      child: const AppLockScope(child: MasroufiApp()),
     ),
   );
 }

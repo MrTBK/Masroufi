@@ -6,7 +6,8 @@ import '../../app/providers.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/money/money.dart';
 
-/// 3 steps: language -> first wallet (+balance, optional name) -> theme.
+/// 2 steps: language -> first wallet (+balance, optional name).
+/// Theme stays on 'system' here (changeable later in Settings).
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
   @override
@@ -80,7 +81,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24),
-          child: [_langStep(), _walletStep(), _themeStep()][step],
+          child: [_langStep(), _walletStep()][step],
         ),
       ),
       bottomNavigationBar: SafeArea(
@@ -94,12 +95,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   child: Text(Strings.get(lang, 'cancel')),
                 ),
               const Spacer(),
-              if (step < 2)
+              if (step < 1)
                 FilledButton(
                   onPressed: () => setState(() => step++),
                   child: Text(Strings.get(lang, 'next')),
                 ),
-              if (step == 2)
+              if (step == 1)
                 FilledButton(
                   onPressed: saving ? null : finish,
                   child: Text(Strings.get(lang, 'getStarted')),
@@ -179,36 +180,5 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         ],
       ],
     ),
-  );
-
-  Widget _themeStep() => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      Text(
-        Strings.get(lang, 'onboardingTheme'),
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
-      const SizedBox(height: 16),
-      RadioGroup<String>(
-        groupValue: theme,
-        onChanged: (v) => setState(() => theme = v!),
-        child: Column(
-          children: [
-            for (final t in ['system', 'light', 'dark'])
-              RadioListTile<String>(
-                value: t,
-                title: Text(
-                  Strings.get(
-                    lang,
-                    t == 'system'
-                        ? 'themeSystem'
-                        : 'theme${t[0].toUpperCase()}${t.substring(1)}',
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    ],
   );
 }
