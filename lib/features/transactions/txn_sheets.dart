@@ -108,7 +108,12 @@ Future<void> showTxnDetail(
     showDragHandle: true,
     builder: (c) => SafeArea(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+        padding: const EdgeInsets.fromLTRB(
+            AppSpacing.lg,
+            AppSpacing.sm,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
         // Scrollable: small screens must never clip the sheet (§52).
         child: SingleChildScrollView(
           child: Column(
@@ -122,7 +127,7 @@ Future<void> showTxnDetail(
               radius: 30,
               semanticLabel: title,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md2),
             Text(
               title,
               textAlign: TextAlign.center,
@@ -130,7 +135,7 @@ Future<void> showTxnDetail(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Center(
               child: MoneyText(
                 millimes: t.amountMillimes,
@@ -141,7 +146,7 @@ Future<void> showTxnDetail(
                 ),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '$day · ${txnTime(t.occurredAt)}',
               textAlign: TextAlign.center,
@@ -175,7 +180,7 @@ Future<void> showTxnDetail(
               _MaybeFxRow(t: t, lang: lang, ref: ref),
             // v8 splits (parent untouched; sum == parent enforced).
             _MaybeSplits(txn: t, lang: lang, cats: cats, ref: ref),
-            const SizedBox(height: 16),
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
                 Expanded(
@@ -211,7 +216,7 @@ Future<void> showTxnDetail(
 
 Widget _kv(BuildContext context, String label, String value) {
   return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
+    padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
     child: Row(
       children: [
         Expanded(
@@ -385,7 +390,7 @@ class _FxRow extends StatelessWidget {
         final at = Fx.parseAt(snap.data?[1]);
         final stale = Fx.isStale(updatedAt: at, now: DateTime.now());
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
           child: Row(
             children: [
               Expanded(
@@ -439,7 +444,7 @@ class _SplitsSection extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               children: [
                 Expanded(child: Text(Strings.get(lang, 'splitWith'))),
