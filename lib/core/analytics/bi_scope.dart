@@ -6,7 +6,9 @@ import '../../data/repositories/category_budgets_repo.dart';
 import '../../data/repositories/debts_repo.dart';
 import '../../data/repositories/recurring_repo.dart';
 import '../../data/repositories/wallets_repo.dart';
+import 'forecast_v2.dart';
 import 'kpi.dart';
+import 'seasonality.dart';
 
 /// BI filter bar selection. All id lists are explicit: the UI expands a
 /// chosen parent category to parent-plus-children via [expandCategory]
@@ -29,10 +31,7 @@ class BiFilter {
 
   /// Expand a selected category to itself plus direct children (single
   /// level, matching the schema). Null selection stays null (all).
-  static List<String>? expandCategory(
-    List<Category> all,
-    String? selectedId,
-  ) {
+  static List<String>? expandCategory(List<Category> all, String? selectedId) {
     if (selectedId == null) return null;
     return [
       selectedId,
@@ -48,11 +47,7 @@ class BiFilter {
 /// analytics only; budget rows are month-anchored to the month
 /// containing the last included instant (`to` minus 1ms, so a
 /// [Sept 1, Oct 1) scope anchors to September). All int millimes.
-typedef BiBudgetRow = ({
-  String categoryId,
-  int budget,
-  int spent,
-});
+typedef BiBudgetRow = ({String categoryId, int budget, int spent});
 
 typedef BiSnapshot = ({
   DateTime from,
@@ -80,6 +75,16 @@ typedef BiSnapshot = ({
   List<BiBudgetRow> budgetRows,
   int? overallBudget,
   int overallSpent,
+  // P1 upgrades: per-wallet net flow, YoY for any range, 3m anchor,
+  // recurring-aware forecast. All int millimes, null when no signal.
+  Map<String, int> netByWallet,
+  int? yoyAnyExpense,
+  int? avg3mExpense,
+  int forecastProjected,
+  int forecastLow,
+  int forecastHigh,
+  int? forecastOverrun,
+  int forecastPacePct,
 });
 
 /// Single-batched BI loader over the existing repositories. Query
@@ -160,17 +165,29 @@ class FilteredAnalytics {
         ? DateTime(f.from.year + 1, 1, 1)
         : DateTime(f.from.year, f.from.month + 1, 1);
     if (f.from == monthStart && f.to == nextMonth) {
-      final last = await analytics.sameMonthLastYear(
-        f.from.year,
-        f.from.month,
-      );
+      final last = await analytics.sameMonthLastYear(f.from.year, f.from.month);
       yoy = last.expense;
     }
 
-    // Per-wallet expense (bounded by wallet count).
+    // Per-wallet expense + net flow (bounded by wallet count).
     final byWallet = <String, int>{};
+    final netByWallet = <String, int>{};
     for (final w in allWallets) {
       byWallet[w.id] = await analytics.expenseTotalW([w.id], f.from, f.to);
+      final st = await analytics.walletStats(w.id, f.from, f.to);
+      netByWallet[w.id] = st.income - st.expense + st.tIn - st.tOut;
+    }
+
+    // YoY for ANY range: same [from,to) shifted back 1 year.
+    int? yoyAny;
+    try {
+      final shifted = Seasonality.shiftYearsBack(f.from, f.to);
+      yoyAny = await analytics.expenseTotalW(wids, shifted.start, shifted.end);
+      // Zero means "no prior data" — surface null to avoid noise when
+      // the installation did not exist last year.
+      if (yoyAny == 0) yoyAny = null;
+    } catch (_) {
+      yoyAny = null;
     }
 
     // Filtered 6-month trend ending at the scope's last included month.
@@ -234,6 +251,49 @@ class FilteredAnalytics {
       ));
     }
 
+    // 3-month completed average anchor + recurring-aware forecast.
+    int? avg3m;
+    try {
+      final series = await analytics.monthlySeries(
+        now: DateTime(anchor.year, anchor.month, 1),
+        monthsBack: 3,
+        includeCurrent: false,
+      );
+      final expenses = [for (final s in series) s.expense];
+      avg3m = Seasonality.seasonalAverage(expenses);
+    } catch (_) {
+      avg3m = null;
+    }
+    var remainingRecurring = 0;
+    try {
+      final rules = await recurring.all(activeOnly: true);
+      var monthlyEst = 0;
+      for (final r in rules) {
+        monthlyEst += monthlyRuleEstimate(r);
+      }
+      remainingRecurring = ForecastV2.prorateRemaining(
+        monthlyEstimateMillimes: monthlyEst,
+        now: at,
+      );
+    } catch (_) {
+      remainingRecurring = 0;
+    }
+    final f2 =
+        ForecastV2.project(
+          spentSoFarMillimes: monthSpent,
+          now: at,
+          budgetMillimes: overall?.amountMillimes,
+          remainingRecurringMillimes: remainingRecurring,
+          avg3mMillimes: avg3m,
+        ) ??
+        (
+          projected: monthSpent,
+          low: monthSpent,
+          high: monthSpent,
+          overrun: null,
+          pacePct: 100,
+        );
+
     return (
       from: f.from,
       to: f.to,
@@ -263,6 +323,14 @@ class FilteredAnalytics {
       budgetRows: budgetRows,
       overallBudget: overallB?.amountMillimes,
       overallSpent: overallSpent,
+      netByWallet: netByWallet,
+      yoyAnyExpense: yoyAny,
+      avg3mExpense: avg3m,
+      forecastProjected: f2.projected,
+      forecastLow: f2.low,
+      forecastHigh: f2.high,
+      forecastOverrun: f2.overrun,
+      forecastPacePct: f2.pacePct,
     );
   }
 }

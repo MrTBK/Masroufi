@@ -8,13 +8,14 @@
 ## 1. What this app is
 
 Masroufi is an **offline-first, private personal finance app for
-Tunisia**, in **Arabic (RTL-first), French, and English**. No account,
-no backend, no analytics, no ads: all data lives in an on-device
-SQLite database. The current version is **1.1.0+2**
+Tunisia**, in **Arabic (RTL-first), French, and English**. No account:
+all money lives in an on-device SQLite database. Ads + cloud AI are
+opt-in only (off by default); core finance works in airplane mode.
+The current version is **1.1.0+2**
 (`pubspec.yaml`), DB schema **v8**, backup codec **v8**.
 
 In one line: **personal finance management + embedded business
-intelligence**, with an AI-ready (but AI-free) analytics layer.
+intelligence + opt-in AI explanations + opt-in ads with PRO remove**.
 
 ## 2. What the app does (feature tour)
 

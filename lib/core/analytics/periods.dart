@@ -107,6 +107,34 @@ abstract final class Periods {
     return (start: DateTime(y, m, 1), end: _nextMonth(now));
   }
 
+  /// Last 6 calendar months including the month containing [now].
+  /// Half-open [start, end).
+  static ({DateTime start, DateTime end}) last6Months(DateTime now) {
+    var y = now.year;
+    var m = now.month - 5;
+    while (m < 1) {
+      m += 12;
+      y--;
+    }
+    return (start: DateTime(y, m, 1), end: _nextMonth(now));
+  }
+
+  /// Last 12 calendar months including the month containing [now].
+  /// Half-open [start, end).
+  static ({DateTime start, DateTime end}) last12Months(DateTime now) {
+    var y = now.year;
+    var m = now.month - 11;
+    while (m < 1) {
+      m += 12;
+      y--;
+    }
+    return (start: DateTime(y, m, 1), end: _nextMonth(now));
+  }
+
+  /// Year-to-date: Jan 1 → first day of next month. Half-open.
+  static ({DateTime start, DateTime end}) ytd(DateTime now) =>
+      (start: DateTime(now.year, 1, 1), end: _nextMonth(now));
+
   /// Last [n] COMPLETED months before the month containing [now],
   /// oldest first. Current partial month is never included.
   static List<({int year, int month})> lastCompletedMonths(

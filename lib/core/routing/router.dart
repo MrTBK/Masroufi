@@ -17,6 +17,7 @@ import '../../features/reports/reports_page.dart';
 import '../../features/savings/savings_page.dart';
 import '../../features/settings/data_health_page.dart';
 import '../../features/settings/fx_rates_page.dart';
+import '../../features/settings/pro_page.dart';
 import '../../features/settings/settings_page.dart';
 import '../../features/transactions/history_page.dart';
 import '../../features/transactions/add_sheet.dart';
@@ -125,6 +126,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(path: '/settings', builder: (c, s) => const SettingsPage()),
+      GoRoute(path: '/settings/pro', builder: (c, s) => const ProPage()),
       GoRoute(
         path: '/settings/reports',
         builder: (c, s) => const ReportsPage(),

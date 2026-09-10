@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/providers.dart';
+import '../../core/ads/ad_banner.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/design.dart';
@@ -47,6 +48,7 @@ class ReportsPage extends ConsumerWidget {
           ),
         ],
       ),
+      bottomNavigationBar: const AdBanner(slot: 'reports'),
       body: FutureBuilder(
         future: Future.wait([
           db.monthSums(now.year, now.month),
@@ -427,6 +429,22 @@ class ReportsPage extends ConsumerWidget {
         filename:
             'masroufi_${now.year}-${now.month.toString().padLeft(2, '0')}.pdf',
       );
+      // P3: post-success interstitial (capped, silent when not ready).
+      try {
+        final shown = await ref
+            .read(adsServiceProvider)
+            .showInterstitialIfReady(
+              consentGiven: ref.read(adsConsentProvider),
+              isPro: ref.read(isProProvider),
+              onboardingDone: ref.read(onboardingDoneProvider),
+              lastShown: ref.read(interstitialLastShownProvider),
+              now: DateTime.now(),
+            );
+        if (shown) {
+          ref.read(interstitialLastShownProvider.notifier).state =
+              DateTime.now();
+        }
+      } catch (_) {}
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

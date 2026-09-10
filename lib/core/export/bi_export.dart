@@ -25,12 +25,20 @@ abstract final class BiExport {
         ['growth_pct', growth.pct],
       ],
       if (s.yoyExpense != null) ['yoy_expense_millimes', s.yoyExpense!],
+      if (s.yoyAnyExpense != null)
+        ['yoy_any_expense_millimes', s.yoyAnyExpense!],
+      if (s.avg3mExpense != null) ['avg3m_expense_millimes', s.avg3mExpense!],
+      // Recurring-aware forecast (P1): Excel-readable, millimes + pct.
+      ['forecast_projected_millimes', s.forecastProjected],
+      ['forecast_low_millimes', s.forecastLow],
+      ['forecast_high_millimes', s.forecastHigh],
+      if (s.forecastOverrun != null)
+        ['forecast_overrun_millimes', s.forecastOverrun!],
+      ['forecast_pace_pct', s.forecastPacePct],
       if (s.monthBudget != null) ['month_budget_millimes', s.monthBudget!],
       ['month_spent_millimes', s.monthSpent],
-      if (s.overallBudget != null) [
-        'overall_budget_millimes',
-        s.overallBudget!,
-      ],
+      if (s.overallBudget != null)
+        ['overall_budget_millimes', s.overallBudget!],
       ['overall_spent_millimes', s.overallSpent],
       ['monthly_obligations_millimes', s.monthlyObligations],
       if (s.obligationsShare != null)
@@ -39,6 +47,43 @@ abstract final class BiExport {
       ['overdue_debts', s.overdueDebts],
     ];
     return const ListToCsvConverter().convert(rows);
+  }
+
+  /// Per-wallet net-flow table (P1): income − expense + transfers in − out.
+  /// Excel opens this CSV directly; numbers stay raw millimes.
+  static String walletFlowsCsv(BiSnapshot s) {
+    const header = [
+      'wallet_id',
+      'wallet_name',
+      'expense_millimes',
+      'net_millimes',
+    ];
+    final names = {for (final w in s.wallets) w.id: w.name};
+    return const ListToCsvConverter().convert([
+      header,
+      for (final e in s.byWallet.entries)
+        [e.key, names[e.key] ?? e.key, e.value, s.netByWallet[e.key] ?? 0],
+    ]);
+  }
+
+  /// Anomaly flags (P1): one row per anomalous category. Empty string
+  /// (header only) when nothing anomalous — never noise.
+  static String anomalyCsv(
+    List<({String? id, int current, int mean, int pctOver})> flags, {
+    required Map<String?, String> names,
+  }) {
+    const header = [
+      'category_id',
+      'category',
+      'current_millimes',
+      'mean_millimes',
+      'pct_over',
+    ];
+    return const ListToCsvConverter().convert([
+      header,
+      for (final a in flags)
+        [a.id ?? '', names[a.id] ?? '', a.current, a.mean, a.pctOver],
+    ]);
   }
 
   /// Flat analytical dataset: one transaction per row with the full

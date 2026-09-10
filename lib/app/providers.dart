@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/ads/ads_service.dart';
 import '../core/analytics/bi_scope.dart';
 import '../data/database/app_db.dart';
 import '../data/repositories/analytics_repo.dart';
@@ -128,3 +129,20 @@ final biSnapshotProvider = FutureProvider<BiSnapshot>((ref) async {
   final filter = ref.watch(biFilterProvider);
   return ref.watch(filteredAnalyticsProvider).load(filter);
 });
+
+// ---- Ads + AI + PRO state (P2-P4, persisted via SettingsRepo) ----
+/// Personalized-ads consent (default off). Persisted `ads_consent`.
+final adsConsentProvider = StateProvider<bool>((ref) => false);
+
+/// PRO remove-ads entitlement (default off). Persisted `is_pro`.
+final isProProvider = StateProvider<bool>((ref) => false);
+
+/// Cloud-AI opt-in + notes flag (both default off).
+final aiCloudProvider = StateProvider<bool>((ref) => false);
+final aiNotesProvider = StateProvider<bool>((ref) => false);
+
+/// Last interstitial show time (frequency cap: 1 per 10 min).
+final interstitialLastShownProvider = StateProvider<DateTime?>((ref) => null);
+
+/// Shared ads runtime (preloaded interstitial/rewarded).
+final adsServiceProvider = Provider<AdsService>((ref) => AdsService());

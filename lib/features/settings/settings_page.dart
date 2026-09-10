@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:masroufi/core/config/brand.dart';
 
 import '../../app/providers.dart';
+import '../../core/ads/consent.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/notify/notifier.dart';
 import '../../core/security/app_lock.dart';
@@ -191,6 +192,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 const SizedBox(height: AppSpacing.lg),
                 _group(context, lang, 'security'),
                 _lockSection(lang),
+                const SizedBox(height: AppSpacing.lg),
+                _group(context, lang, 'privacyAds'),
+                _adsSection(lang),
                 const SizedBox(height: AppSpacing.lg),
                 _group(context, lang, 'about'),
                 ListTile(
@@ -466,6 +470,63 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 ),
             ],
           ),
+        ),
+      ],
+    );
+  }
+
+  /// Privacy & Ads (P2-P4): personalized-ads consent (UMP), PRO
+  /// remove-ads entry, cloud-AI opt-in. All default off; finance never
+  /// depends on these flags.
+  Widget _adsSection(String lang) {
+    final consent = ref.watch(adsConsentProvider);
+    final isPro = ref.watch(isProProvider);
+    final aiOn = ref.watch(aiCloudProvider);
+    return Column(
+      children: [
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          secondary: const Icon(Icons.ads_click),
+          title: Text(Strings.get(lang, 'adsPersonalized')),
+          subtitle: Text(Strings.get(lang, 'adsOfflineNote')),
+          value: consent,
+          onChanged: (v) async {
+            if (v) {
+              // Show Google UMP form when required; still honor the
+              // switch even when UMP is unavailable (tests/desktop).
+              try {
+                final ok = await AdsConsent.requestIfRequired();
+                // Keep switch ON regardless: banner gate also checks
+                // platform readiness at load time.
+                if (!ok && !mounted) return;
+              } catch (_) {}
+              await ref.read(adsServiceProvider).ensureInitialized();
+            }
+            await ref.read(settingsRepoProvider).setAdsConsent(v);
+            ref.read(adsConsentProvider.notifier).state = v;
+            setState(() {});
+          },
+        ),
+        _tile(
+          context,
+          lang,
+          icon: isPro ? Icons.workspace_premium : Icons.lock_open,
+          title: isPro
+              ? Strings.get(lang, 'proThanks')
+              : Strings.get(lang, 'adsRemove'),
+          route: '/settings/pro',
+        ),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          secondary: const Icon(Icons.auto_awesome),
+          title: Text(Strings.get(lang, 'aiExplain')),
+          subtitle: Text(Strings.get(lang, 'aiConsentText')),
+          value: aiOn,
+          onChanged: (v) async {
+            await ref.read(settingsRepoProvider).setAiCloudEnabled(v);
+            ref.read(aiCloudProvider.notifier).state = v;
+            setState(() {});
+          },
         ),
       ],
     );

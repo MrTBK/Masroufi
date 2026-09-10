@@ -42,8 +42,8 @@ stays on your device.
 
 ## Privacy
 
-- No account, no backend, no analytics, no ads — see [PRIVACY.md](PRIVACY.md).
-- Core features request **no network permission**; files are chosen through the system picker only.
+- No account. Ledger stays on-device; core finance works in airplane mode — see [PRIVACY.md](PRIVACY.md).
+- Ads (AdMob) + cloud AI are **opt-in, off by default** (`INTERNET`/`AD_ID` only for those). PRO removes ads.
 - Backups/exports are files **you** create and share; the app only writes them to your device.
 
 ## Money model (for contributors)

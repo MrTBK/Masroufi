@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 
 import 'app/app.dart';
 import 'app/providers.dart';
+import 'core/ads/ads_service.dart';
 import 'core/backup/auto_backup.dart';
 import 'core/security/app_lock.dart';
 import 'data/database/app_db.dart';
@@ -38,6 +39,25 @@ Future<void> main() async {
   try {
     rollover = await container.read(settingsRepoProvider).rolloverEnabled();
   } catch (_) {}
+  // Ads/AI/PRO flags (P2-P4, all default off, offline-cached).
+  var adsConsent = false;
+  var isPro = false;
+  var aiCloud = false;
+  var aiNotes = false;
+  try {
+    adsConsent = await container.read(settingsRepoProvider).adsConsent();
+    isPro = await container.read(settingsRepoProvider).isPro();
+    aiCloud = await container.read(settingsRepoProvider).aiCloudEnabled();
+    aiNotes = await container.read(settingsRepoProvider).aiIncludeNotes();
+  } catch (_) {}
+  // Ads init (best-effort, never blocks startup or finance).
+  // UMP consent UI is requested lazily in Settings; here we only warm up
+  // MobileAds so first banner loads fast when consented.
+  try {
+    if (adsConsent && !isPro) {
+      await AdsService().ensureInitialized();
+    }
+  } catch (_) {}
   // App lock: a stored PIN means the vault starts locked. Secure-storage
   // failures fail CLOSED only when a PIN was previously known... we cannot
   // know that without reading, so a read failure starts unlocked (same as
@@ -67,6 +87,10 @@ Future<void> main() async {
         ..read(hideBalancesProvider.notifier).state = hide
         ..read(weekStartProvider.notifier).state = weekStart
         ..read(rolloverProvider.notifier).state = rollover
+        ..read(adsConsentProvider.notifier).state = adsConsent
+        ..read(isProProvider.notifier).state = isPro
+        ..read(aiCloudProvider.notifier).state = aiCloud
+        ..read(aiNotesProvider.notifier).state = aiNotes
         ..read(lockEnabledProvider.notifier).state = hasPin
         ..read(lockedProvider.notifier).state = hasPin,
       child: const AppLockScope(child: MasroufiApp()),

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
+import '../../core/ads/ad_banner.dart';
 import '../../core/analytics/periods.dart';
 import '../../core/analytics/summary.dart';
 import '../../core/config/brand.dart';
@@ -26,8 +27,9 @@ final txnLimitProvider = StateProvider<int>((ref) => 300);
 
 /// Optional timeline date window (null = all time). Set by the filter
 /// sheet presets/custom range; half-open [from, to).
-final txnDateRangeProvider =
-    StateProvider<({DateTime from, DateTime to})?>((ref) => null);
+final txnDateRangeProvider = StateProvider<({DateTime from, DateTime to})?>(
+  (ref) => null,
+);
 
 /// Which date chip the range came from (today/week/month/custom/null).
 /// Display-only: the range above is the source of truth.
@@ -59,6 +61,7 @@ class TransactionsPage extends ConsumerWidget {
     return Scaffold(
       // Plain brand identity: on the main page the title is NOT a button
       // (no accidental-clickable look). The logo mark makes it a header.
+      bottomNavigationBar: const AdBanner(slot: 'dashboard'),
       appBar: AppBar(
         title: Row(
           mainAxisSize: MainAxisSize.min,
@@ -92,11 +95,11 @@ class TransactionsPage extends ConsumerWidget {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(
-            AppSpacing.md,
-            AppSpacing.sm,
-            AppSpacing.sm,
-            0,
-          ),
+              AppSpacing.md,
+              AppSpacing.sm,
+              AppSpacing.sm,
+              0,
+            ),
             child: HomeTopSwitch(
               showTransactions: true,
               lang: lang,
@@ -110,11 +113,11 @@ class TransactionsPage extends ConsumerWidget {
               onRefresh: () async => bumpRefresh(ref),
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
-                AppSpacing.md,
-                0,
-                AppSpacing.md,
-                AppSpacing.xl,
-              ),
+                  AppSpacing.md,
+                  0,
+                  AppSpacing.md,
+                  AppSpacing.xl,
+                ),
                 children: [
                   _TodayHero(lang: lang),
                   const SizedBox(height: AppSpacing.md),
@@ -283,9 +286,8 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
                   children: [
                     Text(
                       '${Strings.get(lang, 'wallets')} (${d.wallets.length})',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant),
                     ),
                     Icon(
                       _expanded ? Icons.expand_less : Icons.expand_more,
@@ -313,10 +315,7 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
                       ),
                       (hideAll || w.isBalanceHidden)
                           ? HiddenBalance(
-                              semanticLabel: Strings.get(
-                                lang,
-                                'hiddenBalance',
-                              ),
+                              semanticLabel: Strings.get(lang, 'hiddenBalance'),
                               style: Theme.of(context).textTheme.bodyMedium,
                             )
                           : MoneyText(
@@ -374,10 +373,8 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
               millimes: g.remaining,
               lang: lang,
               type: 'neutral',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: scheme.error,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.bodySmall
+                  ?.copyWith(color: scheme.error, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -396,9 +393,8 @@ class _TodayHeroState extends ConsumerState<_TodayHero> {
             '${Strings.get(lang, 'suggestedDaily')} '
             '${Money.inline(g.suggested, lang: lang)} · '
             '${g.daysLeft} ${Strings.get(lang, 'daysLeft')}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
+            style: Theme.of(context).textTheme.bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
           ),
           const SizedBox(height: AppSpacing.xs),
           ClipRRect(
@@ -560,8 +556,7 @@ class _Timeline extends ConsumerWidget {
           nameCatIds = [
             for (final c in allCats)
               if (matchedParents.contains(c.id) ||
-                  (c.parentId != null &&
-                      matchedParents.contains(c.parentId)))
+                  (c.parentId != null && matchedParents.contains(c.parentId)))
                 c.id,
           ];
           nameWalletIds = [

@@ -91,4 +91,27 @@ class SettingsRepo {
       await get('rollover_enabled') == '1';
   Future<void> setRolloverEnabled(bool v) =>
       set('rollover_enabled', v ? '1' : '0');
+
+  // ---- Ads + AI + PRO (P2-P4, all opt-in, offline-safe) ----
+  /// Personalized-ads consent (UMP). Off by default; enabling loads
+  /// AdMob banners/interstitials. Core finance never reads this.
+  Future<bool> adsConsent() async => await get('ads_consent') == '1';
+  Future<void> setAdsConsent(bool v) =>
+      set('ads_consent', v ? '1' : '0');
+
+  /// PRO remove-ads entitlement (Play Billing + manual code). Cached
+  /// offline; verified at purchase/restore time.
+  Future<bool> isPro() async => await get('is_pro') == '1';
+  Future<void> setPro(bool v) => set('is_pro', v ? '1' : '0');
+
+  /// Cloud-AI opt-in (P4). Off by default; when on, redacted BI summaries
+  /// may leave the device via the proxy. Notes excluded unless allowed.
+  Future<bool> aiCloudEnabled() async =>
+      await get('ai_cloud_enabled') == '1';
+  Future<void> setAiCloudEnabled(bool v) =>
+      set('ai_cloud_enabled', v ? '1' : '0');
+  Future<bool> aiIncludeNotes() async =>
+      await get('ai_include_notes') == '1';
+  Future<void> setAiIncludeNotes(bool v) =>
+      set('ai_include_notes', v ? '1' : '0');
 }

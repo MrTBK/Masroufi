@@ -5,13 +5,17 @@
 - [x] Debug APK builds; release AAB builds with local keystore
       (`.tooling/keystore/masroufi-release.jks`, git-ignored; `android/key.properties`
       git-ignored). Keys NEVER committed.
-- [x] Permissions audit: no INTERNET for core features (verify in manifest)
+- [x] Permissions audit: INTERNET + ACCESS_NETWORK_STATE + AD_ID for ads/AI opt-in only; core finance verified offline in airplane mode (verify in manifest)
 - [x] Listings EN/FR/AR written (title ≤30, short ≤80)
 - [x] Privacy policy finalized (store/privacy-policy.md)
+- [ ] AdMob: App ID `ca-app-pub-...` set via ADS_APP_ID, 4 units (2 banners, interstitial, rewarded) created; test IDs in debug, real IDs via --dart-define
+- [ ] UMP consent tested (EU flow), PRO purchase + restore tested, manual MASR- code tested with PRO_SECRET
+- [ ] AI proxy deployed (AI_PROXY_URL), quota 20/mo free / unlimited PRO, no prompt logging verified
 - [ ] Screenshots: capture per required sizes when a Play Console account exists
       (phone 16:9/9:16 min 2, 7-inch tablet, feature graphic 1024x500).
       Queries from QA: Arabic dark dashboard verified on emulator.
 - [ ] Create Play Console app record, upload SIGNED AAB to internal testing
 - [ ] Content rating questionnaire, target audience, data safety form
-      (declare: no data collected, no data shared — matches policy)
+      (declare: Device IDs (Ad ID by Google SDK), App interactions for ads (opt-in), AI summaries (opt-in, totals only) — matches policy)
+- [ ] Screenshots must show banner slot + consent + PRO page (ar/fr/en)
 - [ ] Rollout only after explicit authorization

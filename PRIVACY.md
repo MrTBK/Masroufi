@@ -1,17 +1,35 @@
-# Masroufi Privacy Policy (MVP v1.0, draft for release)
+# Masroufi Privacy Policy (v1.2 — BI + Ads + AI opt-in)
 
-Masroufi is an offline-first personal finance app. Your financial data stays
-on your device.
+Masroufi is an offline-first personal finance app. Your ledger stays
+on your device. Core finance (wallets, transactions, budgets, reports,
+backup) works in airplane mode with no account.
 
 - **No account.** Core features work without registration.
-- **No financial data leaves the device.** There is no backend, no analytics,
-  no advertising SDK, and no cloud sync in MVP. Transactions, wallets,
-  budgets, and settings are stored in a local SQLite database.
-- **Backups/exports you create** (JSON backup, CSV) are files you choose to
-  share or keep. The app only writes them to your device and opens the system
-  share sheet at your request.
-- **Permissions:** the app requests no network or contacts permissions for
-  core features. File access uses the system document picker only.
-- **No tracking.** No third-party trackers.
+- **Local ledger.** Transactions, wallets, budgets, and settings are
+  stored in an on-device SQLite database. Balances are derived, never
+  uploaded.
+- **Backups/exports you create** (JSON backup, CSV) are files you choose
+  to share or keep. The app only writes them to your device and opens
+  the system share sheet at your request.
+- **Ads (opt-in, Google AdMob).** Off by default. When you enable
+  "Personalized ads" in Settings → Privacy & Ads, Google AdMob may
+  collect your Advertising ID, approximate app interactions, and
+  performance diagnostics to show ads. Finance never depends on ads;
+  banners collapse offline. See https://policies.google.com/privacy.
+  PRO remove-ads disables all ad requests.
+- **Cloud AI explanations (opt-in).** Off by default. When you enable
+  it and tap "Explain", the app sends a redacted summary (period
+  totals, top categories by name, forecast — int millimes) to our
+  proxy, which forwards it to an LLM and returns plain-language text.
+  Notes and payees NEVER leave the device unless you explicitly enable
+  "include notes" (default off). No auto-sending, 15s timeout, no
+  prompt logging. AI explains on-device numbers only; planning aid,
+  not professional financial advice.
+- **Permissions:** `INTERNET` + `ACCESS_NETWORK_STATE` are used ONLY
+  for ads / AI-explain when opted in. `AD_ID` is used by AdMob only
+  with consent. `USE_BIOMETRIC` for app lock, `POST_NOTIFICATIONS`
+  for the optional digest. File access uses the system picker only.
+  Camera, contacts, location, microphone are never requested.
+- **Children:** general finance tool, no age-gated content, no accounts.
 
 Contact for privacy questions: provided at release time.

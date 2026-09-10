@@ -214,6 +214,22 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       await ref.read(settingsRepoProvider).setLastBackupAt(DateTime.now());
       if (mounted) setState(() {});
       setState(() => msg = uri?.toString() ?? f.path);
+      // P3: post-success interstitial (capped, silent when not ready).
+      try {
+        final shown = await ref
+            .read(adsServiceProvider)
+            .showInterstitialIfReady(
+              consentGiven: ref.read(adsConsentProvider),
+              isPro: ref.read(isProProvider),
+              onboardingDone: ref.read(onboardingDoneProvider),
+              lastShown: ref.read(interstitialLastShownProvider),
+              now: DateTime.now(),
+            );
+        if (shown) {
+          ref.read(interstitialLastShownProvider.notifier).state =
+              DateTime.now();
+        }
+      } catch (_) {}
     } finally {
       if (mounted) setState(() => busy = false);
     }

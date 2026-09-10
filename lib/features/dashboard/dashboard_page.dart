@@ -10,6 +10,8 @@ import 'package:intl/intl.dart' hide TextDirection;
 import 'package:path_provider/path_provider.dart';
 
 import '../../app/providers.dart';
+import '../../core/ads/ad_banner.dart';
+import '../../core/ai/ai_sheet.dart';
 import '../../core/analytics/bi_scope.dart';
 import '../../core/analytics/forecast.dart';
 import '../../core/export/bi_export.dart';
@@ -300,6 +302,7 @@ class DashboardPage extends ConsumerWidget {
     final async = ref.watch(_dashProvider);
     final bi = ref.watch(biSnapshotProvider);
     return Scaffold(
+      bottomNavigationBar: const AdBanner(slot: 'dashboard'),
       appBar: AppBar(
         title: HomeTitle(text: Brand.nameFor(lang), lang: lang),
         actions: [
@@ -1007,7 +1010,7 @@ class _BiFilterBar extends ConsumerWidget {
     final presets = <String, ({DateTime from, DateTime to})>{
       'today': (
         from: Periods.dayStart(now),
-        to: Periods.dayStart(now).add(const Duration(days: 1))
+        to: Periods.dayStart(now).add(const Duration(days: 1)),
       ),
       'thisWeek': (() {
         final r = Periods.week(now, weekStart);
@@ -1110,19 +1113,19 @@ class _BiFilterBar extends ConsumerWidget {
                     ],
                     onChanged: (v) =>
                         ref.read(biFilterProvider.notifier).state = BiFilter(
-                      from: filter.from,
-                      to: filter.to,
-                      walletIds: v == null ? const [] : [v],
-                      categoryIds: filter.categoryIds,
-                      type: filter.type,
-                    ),
+                          from: filter.from,
+                          to: filter.to,
+                          walletIds: v == null ? const [] : [v],
+                          categoryIds: filter.categoryIds,
+                          type: filter.type,
+                        ),
                   ),
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: DropdownButtonFormField<String?>(
-                    initialValue: singleCat != null &&
-                            roots.any((c) => c.id == singleCat)
+                    initialValue:
+                        singleCat != null && roots.any((c) => c.id == singleCat)
                         ? singleCat
                         : null,
                     isExpanded: true,
@@ -1138,11 +1141,7 @@ class _BiFilterBar extends ConsumerWidget {
                         DropdownMenuItem(
                           value: c.id,
                           child: Text(
-                            Strings.categoryName(
-                              lang,
-                              c.nameKey,
-                              c.customName,
-                            ),
+                            Strings.categoryName(lang, c.nameKey, c.customName),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1150,12 +1149,12 @@ class _BiFilterBar extends ConsumerWidget {
                     ],
                     onChanged: (v) =>
                         ref.read(biFilterProvider.notifier).state = BiFilter(
-                      from: filter.from,
-                      to: filter.to,
-                      walletIds: filter.walletIds,
-                      categoryIds: BiFilter.expandCategory(cats, v),
-                      type: filter.type,
-                    ),
+                          from: filter.from,
+                          to: filter.to,
+                          walletIds: filter.walletIds,
+                          categoryIds: BiFilter.expandCategory(cats, v),
+                          type: filter.type,
+                        ),
                   ),
                 ),
               ],
@@ -1176,7 +1175,11 @@ class _BiFilterBar extends ConsumerWidget {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  for (final t in const <String?>[null, 'expense', 'income']) ...[
+                  for (final t in const <String?>[
+                    null,
+                    'expense',
+                    'income',
+                  ]) ...[
                     ChoiceChip(
                       label: Text(
                         t == null
@@ -1186,12 +1189,12 @@ class _BiFilterBar extends ConsumerWidget {
                       selected: filter.type == t,
                       onSelected: (_) =>
                           ref.read(biFilterProvider.notifier).state = BiFilter(
-                        from: filter.from,
-                        to: filter.to,
-                        walletIds: filter.walletIds,
-                        categoryIds: filter.categoryIds,
-                        type: t,
-                      ),
+                            from: filter.from,
+                            to: filter.to,
+                            walletIds: filter.walletIds,
+                            categoryIds: filter.categoryIds,
+                            type: t,
+                          ),
                     ),
                     const SizedBox(width: AppSpacing.xs),
                   ],
@@ -1279,9 +1282,7 @@ class _KpiGrid extends StatelessWidget {
                   type: 'neutral',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: net < 0
-                        ? Theme.of(context).colorScheme.error
-                        : null,
+                    color: net < 0 ? Theme.of(context).colorScheme.error : null,
                   ),
                 ),
               ),
@@ -1326,10 +1327,7 @@ class _KpiGrid extends StatelessWidget {
                 context,
                 Strings.get(lang, 'monthlyAverage'),
                 avgMonthly == null
-                    ? Text(
-                        '—',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      )
+                    ? Text('—', style: Theme.of(context).textTheme.titleLarge)
                     : MoneyText(
                         millimes: avgMonthly,
                         lang: lang,
@@ -1403,9 +1401,8 @@ class _ForecastCard extends StatelessWidget {
                 Text(
                   '${Money.inline(s.monthBudget!, lang: lang)} • '
                   '${Strings.get(lang, 'pace')} ${f.pacePct}%',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall
+                      ?.copyWith(color: scheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 LinearProgressIndicator(
@@ -1546,13 +1543,20 @@ class _DrillTreeState extends ConsumerState<_DrillTree> {
         SectionHeader(title: Strings.get(lang, 'byCategory')),
         Text(
           Strings.get(lang, 'drillDown'),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
+          style: Theme.of(context).textTheme.bodySmall
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
         ),
         for (final e in parents) ...[
-          _drillRow(context, lang, s, byId, total, e.key, e.value,
-              isParent: true),
+          _drillRow(
+            context,
+            lang,
+            s,
+            byId,
+            total,
+            e.key,
+            e.value,
+            isParent: true,
+          ),
           if (_expanded == e.key)
             for (final c in s.cats)
               if (c.parentId == e.key && (rolled[c.id] ?? 0) > 0)
@@ -1586,7 +1590,8 @@ class _DrillTreeState extends ConsumerState<_DrillTree> {
   }) {
     final name = _catName(lang, s.cats, id);
     final share = AnalyticsStats.sharePct(part: value, total: total);
-    final hasKids = isParent && id != null && s.cats.any((c) => c.parentId == id);
+    final hasKids =
+        isParent && id != null && s.cats.any((c) => c.parentId == id);
     return InkWell(
       onTap: () {
         if (hasKids) {
@@ -1636,9 +1641,7 @@ class _DrillTreeState extends ConsumerState<_DrillTree> {
             if (hasKids)
               Icon(
                 Directionality.of(context) == TextDirection.rtl
-                    ? (_expanded == id
-                          ? Icons.expand_more
-                          : Icons.chevron_left)
+                    ? (_expanded == id ? Icons.expand_more : Icons.chevron_left)
                     : (_expanded == id
                           ? Icons.expand_more
                           : Icons.chevron_right),
@@ -1771,9 +1774,8 @@ class _WalletSection extends StatelessWidget {
                     children: [
                       Text(
                         Strings.get(lang, p),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant),
                       ),
                       MoneyText(
                         millimes: s.byPriority[p] ?? 0,
@@ -1889,9 +1891,8 @@ class _ExportRow extends ConsumerWidget {
     await f.writeAsString('\uFEFF$content');
     await FilePicker.saveFile(fileName: fileName, bytes: await f.readAsBytes());
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(Strings.get(lang, 'saved'))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(Strings.get(lang, 'saved'))));
     }
   }
 
@@ -1901,6 +1902,12 @@ class _ExportRow extends ConsumerWidget {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: [
+        FilledButton.icon(
+          icon: const Icon(Icons.auto_awesome, size: 20),
+          label: Text(Strings.get(lang, 'aiExplain')),
+          onPressed: () =>
+              showAiExplain(context: context, ref: ref, snapshot: s),
+        ),
         OutlinedButton.icon(
           icon: const Icon(Icons.summarize_outlined, size: 20),
           label: Text(Strings.get(lang, 'exportKpiCsv')),
@@ -1908,6 +1915,15 @@ class _ExportRow extends ConsumerWidget {
             context,
             'masroufi_kpi_${s.to.year}-${s.to.month.toString().padLeft(2, '0')}.csv',
             BiExport.kpiCsv(s),
+          ),
+        ),
+        OutlinedButton.icon(
+          icon: const Icon(Icons.account_balance_wallet_outlined, size: 20),
+          label: Text(Strings.get(lang, 'exportWalletCsv')),
+          onPressed: () => _save(
+            context,
+            'masroufi_wallets_${s.to.year}-${s.to.month.toString().padLeft(2, '0')}.csv',
+            BiExport.walletFlowsCsv(s),
           ),
         ),
         OutlinedButton.icon(
@@ -2056,9 +2072,8 @@ class _HealthSection extends StatelessWidget {
                     Expanded(child: Text(inputLabel(i.key))),
                     Text(
                       '${i.points}/100 · ${i.weight}%',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: scheme.onSurfaceVariant,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant),
                     ),
                   ],
                 ),
@@ -2075,9 +2090,7 @@ class _HealthSection extends StatelessWidget {
                 const SizedBox(height: AppSpacing.sm),
                 Row(
                   children: [
-                    Expanded(
-                      child: Text(Strings.get(lang, 'openDebts')),
-                    ),
+                    Expanded(child: Text(Strings.get(lang, 'openDebts'))),
                     MoneyText(
                       millimes: s.openOwed,
                       lang: lang,
