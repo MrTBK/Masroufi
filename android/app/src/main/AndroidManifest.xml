@@ -75,8 +75,8 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- AdMob App ID: test ID by default; replace via manifest
-             placeholder or --dart-define ADS_APP_ID at release. -->
+        <!-- AdMob App ID: test ID by default; replace with your real
+             App ID via manifest placeholder at release. -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />

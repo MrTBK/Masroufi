@@ -1,7 +1,10 @@
-import 'package:user_messaging_platform/user_messaging_platform.dart';
+import 'dart:async';
 
-/// UMP consent helper (P2). Best-effort: any failure means "no consent"
-/// and ads stay off. Never blocks startup or finance flows.
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+
+/// UMP consent helper (P2) via google_mobile_ads' bundled UMP.
+/// Best-effort: any failure means "no consent" and ads stay off.
+/// Never blocks startup or finance flows.
 abstract final class AdsConsent {
   static bool _requested = false;
 
@@ -12,18 +15,52 @@ abstract final class AdsConsent {
     if (_requested) return false;
     _requested = true;
     try {
-      final info = await UserMessagingPlatform.instance
-          .requestConsentInfoUpdate();
-      if (info.consentStatus == ConsentStatus.required) {
-        await UserMessagingPlatform.instance.showConsentForm();
-      }
-      final after = await UserMessagingPlatform.instance.getConsentInfo();
-      return after.consentStatus != ConsentStatus.required;
+      final done = Completer<bool>();
+      ConsentInformation.instance.requestConsentInfoUpdate(
+        ConsentRequestParameters(),
+        () async {
+          try {
+            final available = await ConsentInformation.instance
+                .isConsentFormAvailable();
+            if (available) {
+              final dismissed = Completer<void>();
+              ConsentForm.loadConsentForm(
+                (form) => form.show((_) {
+                  if (!dismissed.isCompleted) dismissed.complete();
+                }),
+                (_) {
+                  if (!dismissed.isCompleted) dismissed.complete();
+                },
+              );
+              await dismissed.future.timeout(const Duration(seconds: 30));
+            }
+            final status = await ConsentInformation.instance
+                .getConsentStatus();
+            if (!done.isCompleted) {
+              done.complete(status != ConsentStatus.required);
+            }
+          } catch (_) {
+            if (!done.isCompleted) done.complete(false);
+          }
+        },
+        (_) {
+          if (!done.isCompleted) done.complete(false);
+        },
+      );
+      return await done.future.timeout(
+        const Duration(seconds: 45),
+        onTimeout: () => false,
+      );
     } catch (_) {
       return false;
     }
   }
 
   /// Reset for tests / settings "reset consent".
-  static void resetForTest() => _requested = false;
+  static Future<void> resetForTest() async {
+    _requested = false;
+    try {
+      await ConsentInformation.instance.reset();
+    } catch (_) {}
+  }
 }
