@@ -11,7 +11,7 @@ Masroufi is an **offline-first, private personal finance app for
 Tunisia**, in **Arabic (RTL-first), French, and English**. No account:
 all money lives in an on-device SQLite database. Ads + cloud AI are
 opt-in only (off by default); core finance works in airplane mode.
-The current version is **1.1.0+2**
+The current version is **1.2.0+3**
 (`pubspec.yaml`), DB schema **v8**, backup codec **v8**.
 
 In one line: **personal finance management + embedded business
@@ -156,6 +156,33 @@ UI (features/*, core/widgets) → Riverpod providers (lib/app)
 
 ## 8. Release history
 
+### [1.2.0+3] — 2026-09-10
+
+Added: BI depth (YoY any-range, seasonal average/band, 3-month anchor,
+per-wallet net flows, wallet/anomaly CSV exports); recurring-aware
+forecast with confidence band; anomaly flags; what-if cut simulator;
+last-6/12-month + YTD periods. Opt-in AdMob (banners, post-export
+interstitial capped 1/10min, rewarded unlocks) with UMP consent and
+PRO remove-ads (Play Billing + manual MASR codes for Tunisia).
+Opt-in cloud AI explanations (redacted summaries, notes never leave
+the device, offline fallback) + on-device smart-categorize.
+Privacy & Ads settings hub, full ar/fr/en + RTL throughout.
+
+Changed: `INTERNET`/`ACCESS_NETWORK_STATE`/`AD_ID` permissions for
+ads/AI opt-in only (core finance still offline); privacy policy
+rewritten for opt-in posture. No schema change (DB v8, codec v8).
+
+### Résumé (fr)
+
+- BI approfondie (YoY, saisonnalité, prévision récurrente, anomalies,
+  simulateur), pubs AdMob opt-in + PRO, IA explicative opt-in,
+  ar/fr/en + RTL. Base v8 inchangée.
+
+### ملخص (ar)
+
+- تحليلات أعمق (مقارنة سنوية، توقع واعٍ بالمتكررات، شذوذ، محاكاة)،
+  إعلانات opt-in مع PRO، شرح ذكي opt-in، عربي/فرنسي/إنجليزي. قاعدة v8.
+
 ### [1.1.0+2] — 2026-09-09
 
 Added: Today-first Transactions home; Analytics dashboard (KPIs,
@@ -192,7 +219,7 @@ backup codec v1 → v8 (old backups restore cleanly).
 - Offline-first wallets, transactions, categories, budgets, reports.
 - JSON backup, CSV export, onboarding, settings, ar/fr/en + RTL.
 
-## 9. Roadmap (post-1.1, direction, no commitments)
+## 9. Roadmap (post-1.2, direction, no commitments)
 
 - On-device visual QA matrix on real hardware; signed release AAB
   + Play Console internal testing.

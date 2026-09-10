@@ -1,7 +1,7 @@
 name: masroufi
 description: "Masroufi — Tunisian offline-first personal finance (مصروفي)."
 publish_to: 'none'
-version: 1.1.0+2
+version: 1.2.0+3
 
 environment:
   sdk: ^3.13.2

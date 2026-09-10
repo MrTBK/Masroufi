@@ -202,7 +202,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   leading: const Icon(Icons.info),
                   title: Text(Strings.get(lang, 'aboutMasroufi')),
                   subtitle: Text(
-                    '${Strings.get(lang, 'appVersion')}: 1.1.0+2 • ${Brand.applicationId}',
+                    '${Strings.get(lang, 'appVersion')}: 1.2.0+3 • ${Brand.applicationId}',
                   ),
                 ),
                 ListTile(
