@@ -12,7 +12,7 @@ Tunisia**, in **Arabic (RTL-first), French, and English**. No account:
 all money lives in an on-device SQLite database. Ads load automatically
 when online (personalization switch in Settings); cloud AI stays opt-in.
 Core finance works in airplane mode.
-The current version is **1.3.2+6**
+The current version is **1.3.3+7**
 (`pubspec.yaml`), DB schema **v8**, backup codec **v8**.
 
 In one line: **personal finance management + embedded business
@@ -156,6 +156,11 @@ UI (features/*, core/widgets) → Riverpod providers (lib/app)
   committed).
 
 ## 8. Release history
+
+### [1.3.3+7], 2026-09-12
+
+Added: real AdMob app + all 4 unit IDs (banners auto-serve);
+release carries the seller PIN so manual codes verify on phones.
 
 ### [1.3.2+6], 2026-09-12
 
