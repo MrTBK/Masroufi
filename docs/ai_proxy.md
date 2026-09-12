@@ -1,4 +1,4 @@
-# AI proxy (P4) — deploy stub, no key in APK
+# AI proxy (P4): deploy stub, no key in APK
 
 The app NEVER calls an LLM directly. It POSTs a redacted summary to
 YOUR proxy (`--dart-define AI_PROXY_URL=https://.../explain`), which

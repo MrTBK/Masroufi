@@ -1,7 +1,7 @@
 # Localization
 
 Hand-rolled string tables in `lib/core/l10n/strings.dart` (no codegen step):
-`AppStrings.get(lang, key)` for `en`, `fr`, `ar`.
+`Strings.get(lang, key)` for `en`, `fr`, `ar`. Tests enforce full parity.
 
 - Arabic is first-class: `Directionality.rtl`, Material `locale: Locale('ar')`,
   mirrored layouts verified on dashboard/history/forms/dialogs/nav.

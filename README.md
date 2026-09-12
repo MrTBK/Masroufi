@@ -1,4 +1,4 @@
-# Masroufi (مصروفي) — Tunisian Personal Finance
+# Masroufi (مصروفي): Tunisian Personal Finance
 
 [![Latest release](https://img.shields.io/github/v/release/MrTBK/Masroufi)](https://github.com/MrTBK/Masroufi/releases)
 [![License: MIT](https://img.shields.io/badge/License-MIT-155E75.svg)](LICENSE)
@@ -15,35 +15,37 @@
   <a href="#build-from-source">Build from source</a>
 </p>
 
-Offline-first, private personal finance app for Tunisia — in **العربية (RTL)**,
+Offline-first, private personal finance app for Tunisia in **العربية (RTL)**,
 **Français** and **English**. No account, no cloud, no tracking: your money
 stays on your device.
 
-> **مصروفي** — تطبيق تونسي بسيط وخاص لإدارة المصاريف بالدينار، يشتغل كامل دون أنترنت.
+> **مصروفي**: تطبيق تونسي بسيط وخاص لإدارة المصاريف بالدينار، يشتغل كامل دون أنترنت.
 >
-> **Masroufi** — application tunisienne simple et privée pour gérer son argent
+> **Masroufi** : application tunisienne simple et privée pour gérer son argent
 > en dinar, 100&nbsp;% hors-ligne.
 
 ## Features
 
-- **Today-first home** — spending hero, month in/out, budget bar, upcoming payments, recent transactions, top categories
-- **Wallets** — Cash, Bank, Card, Savings + your own; archive, per-wallet balance hiding
-- **Expenses / Income / Transfers** — atomic transfers, edit, delete with undo, duplicate, templates
-- **Tunisian categories** — Café, Taxi, Louage, STEG, SONEDE, Internet… + custom categories, hierarchy, icon picker
-- **Mizania (budgets)** — overall monthly budget + per-category budgets, daily guidance, over-budget warnings
-- **Recurring transactions** — daily / weekly / monthly / yearly, auto-generated on launch
-- **Debts** — owe / owed-to-me, partial payments, auto-settle
-- **Savings goals** — separate ledger with contributions & withdrawals
-- **Analytics** — trends, averages, month comparison, insights, calendar, net-worth view
-- **Reports** — monthly statement PDF export, CSV export
-- **Backup** — versioned local JSON backup + restore (old backups restore cleanly)
-- **App lock** — PIN + biometrics; global + per-action hidden-balance gates
-- **Reminders** — local notifications digest; home-screen widget
+- **Today-first home**: spending hero, month in/out, budget bar, upcoming payments, recent transactions, top categories
+- **Wallets**: Cash, Bank, Card, Savings + your own; archive, per-wallet balance hiding
+- **Expenses / Income / Transfers**: atomic transfers, edit, delete with undo, duplicate, templates
+- **Tunisian categories**: Café, Taxi, Louage, STEG, SONEDE, Internet… + custom categories, hierarchy, icon picker
+- **Mizania (budgets)**: overall monthly budget + per-category budgets, daily guidance, over-budget warnings
+- **Recurring transactions**: daily / weekly / monthly / yearly, auto-generated on launch
+- **Debts**: owe / owed-to-me, partial payments, auto-settle
+- **Savings goals**: separate ledger with contributions & withdrawals
+- **Analytics**: trends, averages, month comparison, insights, calendar, net-worth view
+- **Reports**: monthly statement PDF export, CSV export
+- **Backup**: versioned local JSON backup + restore (old backups restore cleanly)
+- **App lock (PRO)**: PIN + biometrics; global + per-action hidden-balance gates
+- **Dark theme (PRO)**: light-first petrol identity, derived dark mode
+- **Reminders**: local notifications digest; home-screen widget
+- **Support the dev**: D17 + Ba9chich tips, PRO 9.9 DT (Settings)
 
 ## Privacy
 
-- No account. Ledger stays on-device; core finance works in airplane mode — see [PRIVACY.md](PRIVACY.md).
-- Ads (AdMob) + cloud AI are **opt-in, off by default** (`INTERNET`/`AD_ID` only for those). PRO removes ads.
+- No account. Ledger stays on-device; core finance works in airplane mode, see [PRIVACY.md](PRIVACY.md).
+- Ads (AdMob) load automatically when online; the Settings switch tunes personalization only. Cloud AI stays opt-in. PRO (9.9 DT) removes ads and unlocks dark theme + app lock.
 - Backups/exports are files **you** create and share; the app only writes them to your device.
 
 ## Money model (for contributors)
@@ -92,7 +94,7 @@ lib/
   features/       # onboarding, dashboard, transactions, wallets,
                   # categories, budgets, reports, recurring, debts,
                   # savings, backup, settings
-test/             # unit + widget tests (244 green)
+test/             # unit + widget tests (275 green)
 integration_test/ # on-device QA matrix
 docs/             # architecture, database, product, release, testing…
 store/            # Play Store listings (en/fr/ar), privacy policy
@@ -100,19 +102,19 @@ store/            # Play Store listings (en/fr/ar), privacy policy
 
 ## Docs
 
-- [`docs/product.md`](docs/product.md) — scope & upgrade decisions
-- [`docs/architecture.md`](docs/architecture.md) — UI → Riverpod → Repository → Drift
-- [`docs/database.md`](docs/database.md) — schema & migrations
-- [`docs/localization.md`](docs/localization.md) — ar/fr/en conventions
-- [`docs/testing.md`](docs/testing.md) — test inventory
-- [`docs/release.md`](docs/release.md) — signing & store notes
-- [`docs/cloud_receipts_options.md`](docs/cloud_receipts_options.md) — cloud/sync research
-- [`store/`](store/) — Play listings & release checklist
-- [`CHANGELOG.md`](CHANGELOG.md) — release history
+- [`docs/product.md`](docs/product.md): scope & upgrade decisions
+- [`docs/architecture.md`](docs/architecture.md): UI → Riverpod → Repository → Drift
+- [`docs/database.md`](docs/database.md): schema & migrations
+- [`docs/localization.md`](docs/localization.md): ar/fr/en conventions
+- [`docs/testing.md`](docs/testing.md): test inventory
+- [`docs/release.md`](docs/release.md): signing & store notes
+- [`docs/cloud_receipts_options.md`](docs/cloud_receipts_options.md): cloud/sync research
+- [`store/`](store/): Play listings & release checklist
+- [`CHANGELOG.md`](CHANGELOG.md): release history
 
 ## Roadmap
 
-- **Next:** split transactions, manual multi-currency display, savings↔wallet optional link, budget rollover & copy-last-month, year-in-review card.
+- **Next:** signed Play release + internal testing, manual multi-currency display, savings-to-wallet optional link.
 - **Later:** cloud backup/sync (E2EE), receipt capture, family budgets, bank integrations where officially supported.
 
 ## Contributing
@@ -127,6 +129,6 @@ Issues and pull requests are welcome. Please:
 
 ## License
 
-[MIT](LICENSE) — © 2026 MrTBK.
+[MIT](LICENSE), © 2026 MrTBK.
 
 > Financial figures and estimates shown in the app are planning aids, not professional financial advice.

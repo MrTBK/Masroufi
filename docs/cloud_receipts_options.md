@@ -1,4 +1,4 @@
-# Cloud + Receipts Options (Track 4 — research only, no code commitment)
+# Cloud + Receipts Options (Track 4: research only, no code commitment)
 
 Status: options paper. No backend, no SDK, no schema change in this track.
 Offline-first stays the default; anything cloud must preserve it.
@@ -36,7 +36,7 @@ Repos already use stable UUID ids + `createdAt`/`updatedAt` on every table
 
 1. Same `id` → higher `updatedAt` wins for scalar fields (last-writer-wins).
 2. Ledger tables (`transactions`, `savings_contributions`, `debt_payments`):
-   never update in place across devices — inserts only; deletes are
+   never update in place across devices: inserts only; deletes are
    tombstones (`{id, deletedAt}`) so a delete never resurrects.
 3. Settings/KV (`language`, `hide_balances`, …): LWW per key.
 4. Categories/wallets rename vs archive: archive flag merges OR-wise
@@ -59,8 +59,8 @@ the merged ledger (balances are derived, never stored).
   nullable column (future schema bump, not this track).
 - OCR: explicitly out of scope (roadmap V2, on-device only if ever).
   No server OCR (would break E2EE).
-- Ratings: capture UX ★★★★☆ (4/5 — useful, but storage + permissions
-  cost); sync ★★★☆☆ (3/5 — blob sync is enough for most users).
+- Ratings: capture UX ★★★★☆ (4/5: useful, but storage + permissions
+  cost); sync ★★★☆☆ (3/5: blob sync is enough for most users).
 
 ## What is NOT in this track
 

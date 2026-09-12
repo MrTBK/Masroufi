@@ -14,14 +14,16 @@ wallet/category/date/type filters, edit/delete/duplicate) -> Monthly overall
 budget -> Basic reports -> JSON backup/restore -> CSV export -> Settings
 (language, theme, backup).
 
-## Out of MVP (V1.1+)
+## Out of MVP (shipped in V1.1–V1.3)
 
-Debts, recurring transactions, savings goals, salary mode, category budgets,
-PDF, cloud sync, AI, bank/e-Dinar integrations (see README Roadmap).
+Debts, recurring transactions, savings goals, salary mode, category
+budgets, PDF, PRO + manual codes, D17/Ba9chich sales, donations,
+automatic ads, cloud AI opt-in. Still open: bank/e-Dinar integrations
+(see README Roadmap).
 
 ## Upgrade decisions (Track 3)
 
-- Savings ↔ wallets: documented as designed — savings goals are a
+- Savings ↔ wallets: documented as designed: savings goals are a
   separate ledger (default unlinked). Contributing/withdrawing never
   moves wallet money; wallet balances stay derived from the transaction
   ledger only. No auto-link; shown inline in the savings page.
