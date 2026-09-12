@@ -316,6 +316,7 @@ class DashboardPage extends ConsumerWidget {
         error: (e, _) => ErrorView(
           message: '$e',
           onRetry: () => ref.invalidate(_dashProvider),
+          lang: lang,
         ),
         data: (d) => RefreshIndicator(
           onRefresh: () async {
@@ -349,6 +350,7 @@ class DashboardPage extends ConsumerWidget {
                 error: (e, _) => ErrorView(
                   message: '$e',
                   onRetry: () => ref.invalidate(biSnapshotProvider),
+                  lang: lang,
                 ),
                 data: (s) => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

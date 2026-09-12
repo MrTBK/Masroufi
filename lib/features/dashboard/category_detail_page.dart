@@ -39,6 +39,7 @@ class CategoryDetailPage extends ConsumerWidget {
             return ErrorView(
               message: '${snap.error ?? ''}',
               onRetry: () => bumpRefresh(ref),
+              lang: lang,
             );
           }
           return _body(context, ref, lang, snap.data!);

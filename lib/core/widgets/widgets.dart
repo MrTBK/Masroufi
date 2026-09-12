@@ -69,7 +69,13 @@ class LoadingView extends StatelessWidget {
 class ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
-  const ErrorView({super.key, required this.message, required this.onRetry});
+  final String lang;
+  const ErrorView({
+    super.key,
+    required this.message,
+    required this.onRetry,
+    required this.lang,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +89,10 @@ class ErrorView extends StatelessWidget {
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            OutlinedButton(onPressed: onRetry, child: const Text('↻')),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: Text(Strings.get(lang, 'retry')),
+            ),
           ],
         ),
       ),
