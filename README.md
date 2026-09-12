@@ -5,7 +5,7 @@
 [![Flutter](https://img.shields.io/badge/Flutter-3.47-02569B?logo=flutter)](https://flutter.dev)
 
 <p align="center">
-  <a href="https://github.com/MrTBK/Masroufi/releases/latest/download/masroufi-v1.3.0.apk">
+  <a href="https://github.com/MrTBK/Masroufi/releases/latest/download/masroufi-v1.3.1.apk">
     <img src="https://img.shields.io/badge/⬇_Download-APK_(Android)-155E75?style=for-the-badge&logo=android" alt="Download Masroufi APK" />
   </a>
 </p>
