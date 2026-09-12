@@ -191,7 +191,6 @@ Future<void> showAiExplain({
                         final ok = await ref
                             .read(adsServiceProvider)
                             .showRewarded(
-                              consentGiven: ref.read(adsConsentProvider),
                               isPro: isPro,
                               onboardingDone: ref.read(onboardingDoneProvider),
                               onReward: () {},

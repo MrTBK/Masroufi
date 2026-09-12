@@ -16,6 +16,7 @@ class MasroufiApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
     final themeName = ref.watch(themeNameProvider);
+    final isPro = ref.watch(isProProvider);
     final router = ref.watch(routerProvider);
     // Rebuild the local alert plan + home widget once per launch
     // (covers reboots; WidgetRef is only available here, not in main()).
@@ -31,9 +32,11 @@ class MasroufiApp extends ConsumerWidget {
       title: Brand.nameFor(lang),
       theme: buildLightTheme(),
       darkTheme: buildDarkTheme(),
+      // Dark theme is a PRO entitlement: non-PRO stored prefs fall
+      // back to light instead of leaking the gated theme.
       themeMode: switch (themeName) {
+        'dark' => isPro ? ThemeMode.dark : ThemeMode.light,
         'light' => ThemeMode.light,
-        'dark' => ThemeMode.dark,
         _ => ThemeMode.system,
       },
       locale: Locale(lang),

@@ -1,4 +1,4 @@
-# Fiche Play — Français
+# Fiche Play: Français
 
 Titre (≤30) : Masroufi : argent en Tunisie
 
@@ -15,8 +15,9 @@ et entièrement hors-ligne, conçue pour la vie quotidienne en Tunisie.
 - Budget mensuel : dépensé / restant / pourcentage
 - Rapports simples : par catégorie, revenus vs dépenses, totaux mensuels
 - Sauvegarde locale versionnée + restauration, export CSV UTF-8
-- Arabe (RTL), français et anglais ; thème clair / sombre / système
-- Sans compte, sans cloud, 100 % hors-ligne — vos données restent sur l'appareil
+- Arabe (RTL), français et anglais ; thème clair (+ sombre avec PRO)
+- Sans compte, sans cloud, 100 % hors-ligne : vos données restent sur l'appareil
+- PRO (9,9 DT) supprime les pubs et débloque thème sombre + verrouillage
 
 Masroufi est une application originale. Les estimations affichées sont des
 aides à la planification, pas des conseils financiers professionnels.

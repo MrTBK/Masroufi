@@ -1,3 +1,5 @@
+import 'package:uuid/uuid.dart';
+
 import '../database/app_db.dart';
 
 /// Keys: language (en/fr/ar), theme (system/light/dark),
@@ -103,6 +105,40 @@ class SettingsRepo {
   /// offline; verified at purchase/restore time.
   Future<bool> isPro() async => await get('is_pro') == '1';
   Future<void> setPro(bool v) => set('is_pro', v ? '1' : '0');
+
+  /// App launch counter (PRO/donate nudge scheduling). Incremented once
+  /// per cold start in main().
+  Future<int> appLaunches() async => int.tryParse(await get('app_launches') ?? '') ?? 0;
+  Future<int> bumpLaunches() async {
+    final n = await appLaunches() + 1;
+    await set('app_launches', '$n');
+    return n;
+  }
+
+  /// Last PRO/donate nudge shown (ISO-8601 UTC), null when never.
+  Future<DateTime?> proNudgeAt() async {
+    final v = await get('pro_nudge_at');
+    if (v == null) return null;
+    try {
+      return DateTime.parse(v);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> setProNudgeAt(DateTime when) =>
+      set('pro_nudge_at', when.toUtc().toIso8601String());
+
+  /// Stable per-install id. Generated once, backs single-device PRO
+  /// manual codes: a code minted for this id verifies nowhere else.
+  Future<String> installId() async {
+    var id = await get('install_id');
+    if (id == null || id.isEmpty) {
+      id = const Uuid().v4();
+      await set('install_id', id);
+    }
+    return id;
+  }
 
   /// Cloud-AI opt-in (P4). Off by default; when on, redacted BI summaries
   /// may leave the device via the proxy. Notes excluded unless allowed.

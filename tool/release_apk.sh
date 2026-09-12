@@ -25,7 +25,25 @@ BT="/tmp/opencode/bundletool-all.jar"
   -o "$BT" https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
 
 flutter pub get
-flutter build appbundle --release
+# Prod AdMob IDs + PRO secret arrive via env (never committed).
+# Empty/missing values fall back to the Google test IDs compiled in
+# Brand (debug-safe); manual PRO codes stay disabled without PRO_SECRET.
+DEFINES=()
+for kv in \
+  "ADS_APP_ID:${ADS_APP_ID:-}" \
+  "ADS_BANNER_DASHBOARD:${ADS_BANNER_DASHBOARD:-}" \
+  "ADS_BANNER_REPORTS:${ADS_BANNER_REPORTS:-}" \
+  "ADS_INTERSTITIAL:${ADS_INTERSTITIAL:-}" \
+  "PRO_SECRET:${PRO_SECRET:-}" \
+  "PRO_PIN:${PRO_PIN:-}"; do
+  k="${kv%%:*}"; v="${kv#*:}"
+  [ -n "$v" ] && DEFINES+=(--dart-define "$k=$v")
+done
+if [ "${#DEFINES[@]}" -gt 0 ]; then
+  flutter build appbundle --release "${DEFINES[@]}"
+else
+  flutter build appbundle --release
+fi
 
 python3 - <<'EOF'
 props = {}

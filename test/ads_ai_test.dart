@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masroufi/core/ads/ads_service.dart';
+import 'package:masroufi/core/ads/nudge.dart';
 import 'package:masroufi/core/ads/pro_service.dart';
 import 'package:masroufi/core/ai/ai_summary.dart';
 import 'package:masroufi/core/ai/smart_categorize.dart';
@@ -19,29 +20,17 @@ AppDb _db() => AppDb.forTesting(NativeDatabase.memory());
 
 void main() {
   group('AdsGate', () {
-    test('loads only with consent, no PRO, onboarding done', () {
+    test('loads automatically: no PRO + onboarding done', () {
       expect(
-        AdsGate.canLoad(consentGiven: true, isPro: false, onboardingDone: true),
+        AdsGate.canLoad(isPro: false, onboardingDone: true),
         isTrue,
       );
       expect(
-        AdsGate.canLoad(
-          consentGiven: false,
-          isPro: false,
-          onboardingDone: true,
-        ),
+        AdsGate.canLoad(isPro: true, onboardingDone: true),
         isFalse,
       );
       expect(
-        AdsGate.canLoad(consentGiven: true, isPro: true, onboardingDone: true),
-        isFalse,
-      );
-      expect(
-        AdsGate.canLoad(
-          consentGiven: true,
-          isPro: false,
-          onboardingDone: false,
-        ),
+        AdsGate.canLoad(isPro: false, onboardingDone: false),
         isFalse,
       );
     });
@@ -55,6 +44,42 @@ void main() {
       );
       expect(
         AdsGate.interstitialDue(now.subtract(const Duration(minutes: 11)), now),
+        isTrue,
+      );
+    });
+  });
+
+  group('Nudge', () {
+    final now = DateTime(2026, 9, 15, 12);
+    test('fires on 5th launch, cools 14 days, never for PRO', () {
+      expect(
+        Nudge.due(launches: 4, lastShown: null, now: now, isPro: false),
+        isFalse,
+      );
+      expect(
+        Nudge.due(launches: 5, lastShown: null, now: now, isPro: false),
+        isTrue,
+      );
+      expect(
+        Nudge.due(launches: 50, lastShown: null, now: now, isPro: true),
+        isFalse,
+      );
+      expect(
+        Nudge.due(
+          launches: 50,
+          lastShown: now.subtract(const Duration(days: 5)),
+          now: now,
+          isPro: false,
+        ),
+        isFalse,
+      );
+      expect(
+        Nudge.due(
+          launches: 50,
+          lastShown: now.subtract(const Duration(days: 14)),
+          now: now,
+          isPro: false,
+        ),
         isTrue,
       );
     });

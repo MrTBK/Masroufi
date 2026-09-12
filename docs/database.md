@@ -8,7 +8,7 @@ Drift + SQLite, MVP tables only.
   is_archived BOOL, created_at, updated_at)`
   Current balance is **derived**: initial + sum(income) - sum(expense) + net transfers.
 - `categories(id TEXT pk, name_key, custom_name, icon, kind, priority,
-  parent_id NULLABLE, is_archived, sort_order, created_at)` — defaults
+  parent_id NULLABLE, is_archived, sort_order, created_at)`: defaults
   seeded by `name_key` (l10n lookup), user categories use `custom_name`.
   Archiving never deletes history. `parent_id` builds a single-level
   hierarchy (null = top-level parent, plain-text ref, no FK): 10 default
@@ -32,7 +32,7 @@ Drift + SQLite, MVP tables only.
   note)` (v8): child lines; parent row untouched, SUM == parent enforced.
 - `budgets(id TEXT pk, year INT, month INT, amount_millimes INT, created_at, updated_at)`
   One overall monthly budget (MVP). Unique index on (year, month).
-- `app_settings(key TEXT pk, value TEXT)` — language, theme, onboarding_done, name.
+- `app_settings(key TEXT pk, value TEXT)`: language, theme, onboarding_done, name.
 
 ## Precision
 

@@ -1,4 +1,4 @@
-# Masroufi (مصروفي) — App Overview & Changelog
+# Masroufi (مصروفي): App Overview & Changelog
 
 > Read this file first. It describes what the app is, what it does,
 > how it is built, and what changed in each release, so a new
@@ -9,13 +9,14 @@
 
 Masroufi is an **offline-first, private personal finance app for
 Tunisia**, in **Arabic (RTL-first), French, and English**. No account:
-all money lives in an on-device SQLite database. Ads + cloud AI are
-opt-in only (off by default); core finance works in airplane mode.
-The current version is **1.2.0+3**
+all money lives in an on-device SQLite database. Ads load automatically
+when online (personalization switch in Settings); cloud AI stays opt-in.
+Core finance works in airplane mode.
+The current version is **1.3.0+4**
 (`pubspec.yaml`), DB schema **v8**, backup codec **v8**.
 
 In one line: **personal finance management + embedded business
-intelligence + opt-in AI explanations + opt-in ads with PRO remove**.
+intelligence + opt-in AI explanations + automatic ads with PRO remove**.
 
 ## 2. What the app does (feature tour)
 
@@ -85,7 +86,7 @@ intelligence + opt-in AI explanations + opt-in ads with PRO remove**.
 UI (features/*, core/widgets) → Riverpod providers (lib/app)
 → repositories (lib/data/repositories/*) → Drift/SQLite (lib/data/database/*)
 + pure helpers: core/money, core/analytics (Periods, AnalyticsStats,
-  Insights, Kpi, Forecast, BiSnapshot engine), core/fx, core/safety,
+  Insights, Kpi, ForecastV2, BiSnapshot engine), core/fx, core/safety,
   core/security, core/notify, core/export, core/wealth
 ```
 
@@ -108,7 +109,7 @@ UI (features/*, core/widgets) → Riverpod providers (lib/app)
   `lib/core/money/calc.dart` (integer-only math).
 - Display: `12.500 TND` / `12.500 د.ت`. Every amount renders through
   `MoneyText` (standalone, LTR island, sign attached) or
-  `Money.inline` (inside sentences) — this is what fixes the Arabic
+  `Money.inline` (inside sentences): this is what fixes the Arabic
   minus-sign bug centrally. Never interpolate `Money.format` into
   RTL text.
 
@@ -135,13 +136,13 @@ UI (features/*, core/widgets) → Riverpod providers (lib/app)
   motion tokens, full component themes. Rules: everything flows
   from `ThemeData` (no inline colors/sizes in screens), tabular
   figures for amounts, one accent, 48dp targets, reduced-motion
-  respect. Decisions were tracked in `DESIGN.md` (removed before
-  publication; source of truth is now this file + code).
+  respect. Standing decisions live in root `DESIGN.md` plus
+  `docs/brand-guidelines.md`.
 
 ## 7. Quality gates (for contributors)
 
 - `flutter analyze` must be clean; `flutter test` must stay green
-  (32 files, ~250 tests: unit, widget incl. 360×640 small-screen
+  (36 files, 275 tests: unit, widget incl. 360×640 small-screen
   and 200% text-scale proofs, migration v1→v8, codec upgrades).
 - Rules: integer millimes only; schema changes need migration +
   codec bump + migration test; transfers stay transfers; no new
@@ -156,7 +157,34 @@ UI (features/*, core/widgets) → Riverpod providers (lib/app)
 
 ## 8. Release history
 
-### [1.2.0+3] — 2026-09-10
+### [1.3.0+4], 2026-09-12
+
+Added: PRO pay flow (D17 56597139 + Ba9chich, 9.9 DT, WhatsApp proof,
+per-device `MASR-NNNNNN` calculator codes + legacy HMAC path, seller
+mint tool, release `--dart-define` wiring); donation page + settings
+tile; PRO-gated dark theme + app lock (gated UI, runtime enforcement);
+automatic ads for all online users (consent switch now tunes
+personalization); PRO/donate nudge sheet on home (5th launch, 14-day
+cooldown); dashboard split into part files; reports folded onto the BI
+snapshot; labeled error retry; explicit back buttons on
+Wallets/Mizania. Full en/fr/ar + RTL throughout.
+
+Changed: removed dead summary services + forecast V1 (unified on
+ForecastV2); manual codes reject empty device ids. No schema change
+(DB v8, codec v8).
+
+### Résumé (fr)
+
+- Paiement PRO D17 + Ba9chich (9,9 DT, codes par appareil), page dons,
+  thème sombre + verrouillage PRO, pubs auto, rappel PRO/dons,
+  tableau découpé, rapports unifiés. Base v8 inchangée.
+
+### ملخص (ar)
+
+- دفع PRO عبر D17 وبقشيش (9.9 دنانير، أكواد لكل جهاز)، صفحة تبرع،
+  السمة الداكنة والقفل PRO، إعلانات تلقائية، تذكير PRO/تبرع. قاعدة v8.
+
+### [1.2.0+3], 2026-09-10
 
 Added: BI depth (YoY any-range, seasonal average/band, 3-month anchor,
 per-wallet net flows, wallet/anomaly CSV exports); recurring-aware
@@ -183,7 +211,7 @@ rewritten for opt-in posture. No schema change (DB v8, codec v8).
 - تحليلات أعمق (مقارنة سنوية، توقع واعٍ بالمتكررات، شذوذ، محاكاة)،
   إعلانات opt-in مع PRO، شرح ذكي opt-in، عربي/فرنسي/إنجليزي. قاعدة v8.
 
-### [1.1.0+2] — 2026-09-09
+### [1.1.0+2], 2026-09-09
 
 Added: Today-first Transactions home; Analytics dashboard (KPIs,
 filters, forecast, trends, drill-down, health score, insights);
@@ -214,7 +242,7 @@ backup codec v1 → v8 (old backups restore cleanly).
   متكررات، ديون، أهداف ادخار، قفل، إشعارات، ودجت، استيراد CSV مع
   تراجع، تصدير PDF/CSV، نسخ تلقائي. قاعدة v8، عربي/فرنسي/إنجليزي.
 
-### [1.0.0+1] — MVP baseline
+### [1.0.0+1]: MVP baseline
 
 - Offline-first wallets, transactions, categories, budgets, reports.
 - JSON backup, CSV export, onboarding, settings, ar/fr/en + RTL.

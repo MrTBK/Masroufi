@@ -216,11 +216,32 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
-  /// Real app-lock controls (replaces the old placeholder): PIN
-  /// set/change/remove, biometric toggle (hardware-gated), auto-lock
-  /// delay. Secrets never touch this page (see `PinStore`).
+  /// Real app-lock controls (PRO-gated): PIN set/change/remove,
+  /// biometric toggle (hardware-gated), auto-lock delay. Secrets never
+  /// touch this page (see `PinStore`).
   Widget _lockSection(String lang) {
     final enabled = ref.watch(lockEnabledProvider);
+    final isPro = ref.watch(isProProvider);
+    if (!isPro) {
+      return Column(
+        children: [
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.lock),
+            title: Text(
+              '${Strings.get(lang, 'appLock')} • ${Strings.get(lang, 'proOnly')}',
+            ),
+            subtitle: Text(Strings.get(lang, 'proLockedBody')),
+            trailing: Icon(
+              Directionality.of(context) == TextDirection.rtl
+                  ? Icons.chevron_left
+                  : Icons.chevron_right,
+            ),
+            onTap: () => context.push('/settings/pro'),
+          ),
+        ],
+      );
+    }
     return Column(
       children: [
         ListTile(
@@ -409,6 +430,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Widget _themeSection(String lang, String theme) {
+    final isPro = ref.watch(isProProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -424,18 +446,36 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           },
           child: Column(
             children: [
-              for (final t in ['system', 'light', 'dark'])
+              for (final t in ['system', 'light'])
                 RadioListTile<String>(
                   value: t,
                   contentPadding: EdgeInsets.zero,
                   title: Text(
                     Strings.get(
                       lang,
-                      t == 'system'
-                          ? 'themeSystem'
-                          : 'theme${t[0].toUpperCase()}${t.substring(1)}',
+                      t == 'system' ? 'themeSystem' : 'themeLight',
                     ),
                   ),
+                ),
+              if (isPro)
+                RadioListTile<String>(
+                  value: 'dark',
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(Strings.get(lang, 'themeDark')),
+                )
+              else
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.lock),
+                  title: Text(
+                    '${Strings.get(lang, 'themeDark')} • ${Strings.get(lang, 'proOnly')}',
+                  ),
+                  trailing: Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? Icons.chevron_left
+                        : Icons.chevron_right,
+                  ),
+                  onTap: () => context.push('/settings/pro'),
                 ),
             ],
           ),
@@ -500,7 +540,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 // platform readiness at load time.
                 if (!ok && !mounted) return;
               } catch (_) {}
-              await ref.read(adsServiceProvider).ensureInitialized();
+              final ads = ref.read(adsServiceProvider);
+              await ads.ensureInitialized();
+              // Preload now so the first post-consent moment can show;
+              // previously the first interstitial/rewarded always missed.
+              await ads.preloadInterstitial();
+              await ads.preloadRewarded();
             }
             await ref.read(settingsRepoProvider).setAdsConsent(v);
             ref.read(adsConsentProvider.notifier).state = v;
@@ -515,6 +560,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ? Strings.get(lang, 'proThanks')
               : Strings.get(lang, 'adsRemove'),
           route: '/settings/pro',
+        ),
+        _tile(
+          context,
+          lang,
+          icon: Icons.volunteer_activism,
+          title: Strings.get(lang, 'donate'),
+          route: '/settings/donate',
         ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,

@@ -1,4 +1,4 @@
-# Brand guidelines — Masroufi (مصروفي)
+# Brand guidelines: Masroufi (مصروفي)
 
 Source of truth for voice, identity, assets. Preserve-brand mode: systematizes
 existing identity, no overhaul.

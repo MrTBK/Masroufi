@@ -1,15 +1,18 @@
 # Testing
 
-- `test/money_test.dart` — millime parse/format, add/subtract, no-float proof
-  (0.1+0.2 style cases), transfer conservation.
-- `test/finance_logic_test.dart` — wallet balance derivation, month aggregates,
-  budget spent/remaining/percent, transfer exclusion from income/expense.
-- `test/backup_test.dart` — backup serialize/validate/restore round-trip,
-  version rejection, corrupt-file rejection.
-- Widget tests: onboarding flow, dashboard renders real totals, add-expense form
-  validation, history filter.
-- Manual MVP matrix (12 tests): fresh install, 100 TND wallet, 12.500 expense,
-  8.000 expense, 500 income, 100 transfer Cash->Bank, 250 budget, restart
-  persistence, offline, ar/fr/en switch, backup/restore, CSV export.
+36 files, 275 tests. Run: `flutter test`.
 
-Run: `flutter test`. Android: `flutter build apk --debug`, `flutter build appbundle`.
+- Money + calc: millime parse/format, no-float proof, transfer conservation.
+- Repos + DB: balances, aggregates, budgets, backup round-trip, v1→v8
+  migration, codec upgrades, finance v11 checks.
+- Analytics + BI: periods, stats, insights, KPI, ForecastV2, seasonality,
+  snapshot, scoped sums, exports, budget intel, movers, hierarchy.
+- Safety: lock/PIN, auto-backup, duplicate guard, data health, notify.
+- UX: redesign + refinement widgets, small-screen 360×640, 200% text
+  scale, RTL, ads gate, nudge schedule, PRO codes, nav back buttons.
+- Manual matrix: fresh install, 100 TND wallet, expenses + income +
+  transfer, budget, restart persistence, offline, ar/fr/en switch,
+  backup/restore, CSV + PDF export, PRO code activation.
+
+Android: `flutter build apk --debug`, `flutter build appbundle --release`.
+Release APK via `tool/release_apk.sh` (see `docs/release.md`).

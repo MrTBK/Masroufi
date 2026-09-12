@@ -32,6 +32,7 @@ class WalletsPage extends ConsumerWidget {
     final txns = ref.watch(transactionsRepoProvider);
     return Scaffold(
       appBar: AppBar(
+        leading: BackButton(onPressed: () => context.go('/')),
         title: HomeTitle(
           text: '${Brand.nameFor(lang)} • ${Strings.get(lang, 'wallets')}',
           lang: lang,

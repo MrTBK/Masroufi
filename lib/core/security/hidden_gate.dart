@@ -27,12 +27,14 @@ abstract final class HiddenGate {
   }) => revealsHidden && hasPin;
 
   /// UI: returns true when the action may proceed. Never throws.
+  /// PRO-gated like the lock itself: non-PRO installs never challenge.
   static Future<bool> ensureUnlocked(
     BuildContext context,
     WidgetRef ref, {
     required bool revealsHidden,
   }) async {
     try {
+      if (!ref.read(isProProvider)) return true;
       final hasPin = await ref.read(pinStoreProvider).hasPin();
       if (!needsAuth(revealsHidden: revealsHidden, hasPin: hasPin)) {
         return true;

@@ -10,9 +10,11 @@ import '../config/brand.dart';
 ///
 /// Two activation paths (Tunisia reality: Play Billing often unusable):
 /// 1. Play Billing one-time purchase `masroufi_pro_2026`.
-/// 2. Manual code `MASR-XXXX-XXXX` (HMAC-SHA256 of device id with a
-///    release-time secret, verified offline). You sell codes via e-Dinar /
-///    cash and the user pastes the code — no network needed.
+/// 2. Manual code, two shapes (verified offline, single-device):
+///    `MASR-NNNNNN` (calculator: hex-sum × PIN + 2904 mod 10^6, seller
+///    needs only a phone) or legacy `MASR-XXXX-XXXX` (HMAC-SHA256 of
+///    install id with a release-time secret). You sell codes via D17 /
+///    Ba9chich and the user pastes the code — no network needed.
 ///
 /// The secret never ships in debug/test builds: manual codes verify only
 /// against [manualSecret] provided via `--dart-define PRO_SECRET`.
@@ -23,15 +25,54 @@ abstract final class ProService {
     defaultValue: '',
   );
 
-  /// Verify a manual code offline. Format `MASR-XXXX-XXXX` (uppercase
-  /// alnum). Returns true when HMAC(deviceId, secret) prefix matches.
+  /// Numeric seller PIN for calculator-minted codes
+  /// (`MASR-NNNNNN`). Release builds only, via `--dart-define PRO_PIN`.
+  static const String proPin = String.fromEnvironment(
+    'PRO_PIN',
+    defaultValue: '',
+  );
+
+  /// Hex-digit sum of an 8-char install ref (A=10..F=15). -1 on bad input.
+  static int hexSum(String ref8) {
+    if (ref8.length != 8) return -1;
+    var sum = 0;
+    for (var i = 0; i < 8; i++) {
+      final v = int.tryParse(ref8[i], radix: 16);
+      if (v == null) return -1;
+      sum += v;
+    }
+    return sum;
+  }
+
+  /// Calculator code for [deviceId]: (hexSum × PIN + 2904) mod 10^6,
+  /// zero-padded to 6 digits. '' when PIN unset.
+  static String pinCodeFor(String deviceId) {
+    if (proPin.isEmpty) return '';
+    final pin = int.tryParse(proPin);
+    if (pin == null) return '';
+    final ref8 = deviceId.replaceAll('-', '').toUpperCase();
+    if (ref8.length < 8) return '';
+    final sum = hexSum(ref8.substring(0, 8));
+    if (sum < 0) return '';
+    return ((sum * pin + 2904) % 1000000).toString().padLeft(6, '0');
+  }
+
+  /// Verify a manual code offline against this install's [deviceId].
+  /// Two shapes: `MASR-NNNNNN` (calculator PIN path) and legacy
+  /// `MASR-XXXXXXXX` (HMAC path). Empty device ids never verify,
+  /// closing the old shared-code hole. Returns true on match.
   static bool verifyManualCode(String code, String deviceId) {
+    if (deviceId.isEmpty) return false;
+    final norm = code.trim().toUpperCase().replaceAll(' ', '').replaceAll(
+      '-',
+      '',
+    );
+    // Calculator path: MASR + 6 digits.
+    if (RegExp(r'^MASR\d{6}$').hasMatch(norm)) {
+      if (proPin.isEmpty) return false;
+      return norm.substring(4) == pinCodeFor(deviceId);
+    }
     if (manualSecret.isEmpty) return false;
-    final norm = code
-        .trim()
-        .toUpperCase()
-        .replaceAll(' ', '')
-        .replaceAll('-', '');
     if (!RegExp(r'^MASR[A-Z0-9]{8}$').hasMatch(norm)) return false;
     final suffix = norm.substring(4); // 8 chars
     final hmac = Hmac(sha256, utf8.encode(manualSecret));

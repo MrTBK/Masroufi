@@ -1,4 +1,4 @@
-# DESIGN.md — Masroufi standing design contract
+# DESIGN.md: Masroufi standing design contract
 
 Reading: finance trust-first utility app for Tunisian users, en/fr/ar (RTL), Android+iOS. Petrol identity, PlexSans voice, light-first + designed dark. Register: utility. Dials V3/M3/D5.
 

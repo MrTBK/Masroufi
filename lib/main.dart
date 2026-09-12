@@ -50,19 +50,25 @@ Future<void> main() async {
     aiCloud = await container.read(settingsRepoProvider).aiCloudEnabled();
     aiNotes = await container.read(settingsRepoProvider).aiIncludeNotes();
   } catch (_) {}
-  // Ads init (best-effort, never blocks startup or finance).
+  // Ads warm-up (best-effort, never blocks startup or finance).
+  // Loads for everyone post-onboarding with internet: MobileAds init
+  // + preloads run unconditionally; gates apply at show time.
   // UMP consent UI is requested lazily in Settings; here we only warm up
-  // MobileAds so first banner loads fast when consented.
+  // so the first banner loads fast when online.
   try {
-    if (adsConsent && !isPro) {
-      await AdsService().ensureInitialized();
-    }
+    final ads = AdsService();
+    await ads.ensureInitialized();
+    await ads.preloadInterstitial();
+    await ads.preloadRewarded();
   } catch (_) {}
-  // App lock: a stored PIN means the vault starts locked. Secure-storage
-  // failures fail CLOSED only when a PIN was previously known... we cannot
-  // know that without reading, so a read failure starts unlocked (same as
-  // no PIN) rather than bricking the app; the settings UI shows status.
+  // Launch counter for the PRO/donate nudge schedule.
+  try {
+    await container.read(settingsRepoProvider).bumpLaunches();
+  } catch (_) {}
+  // App lock: a stored PIN means the vault starts locked — PRO only.
+  // Non-PRO installs start unlocked even with a legacy PIN stored.
   final hasPin = await container.read(pinStoreProvider).hasPin();
+  final lockOn = hasPin && isPro;
   // Seed categories early so first run has Tunisian defaults.
   await container.read(categoriesRepoProvider).seedDefaults();
   // Materialize due recurring occurrences (user-controlled via active rules).
@@ -91,8 +97,8 @@ Future<void> main() async {
         ..read(isProProvider.notifier).state = isPro
         ..read(aiCloudProvider.notifier).state = aiCloud
         ..read(aiNotesProvider.notifier).state = aiNotes
-        ..read(lockEnabledProvider.notifier).state = hasPin
-        ..read(lockedProvider.notifier).state = hasPin,
+        ..read(lockEnabledProvider.notifier).state = lockOn
+        ..read(lockedProvider.notifier).state = lockOn,
       child: const AppLockScope(child: MasroufiApp()),
     ),
   );

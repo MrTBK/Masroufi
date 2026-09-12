@@ -1,4 +1,4 @@
-# Store listing — English
+# Store listing: English
 
 Title (≤30): Masroufi: Money in Tunisia
 
@@ -15,8 +15,9 @@ designed for everyday life in Tunisia.
 - Monthly budget with spent / remaining / percentage
 - Simple reports: spending by category, income vs expenses, monthly totals
 - Versioned local backup + restore, UTF-8 CSV export
-- Arabic (RTL), French and English; light / dark / system theme
-- No account, no cloud, works fully offline — your data stays on your device
+- Arabic (RTL), French and English; light theme (+ dark with PRO)
+- No account, no cloud, works fully offline: your data stays on your device
+- PRO (9.9 DT) removes ads and unlocks dark theme + app lock
 
 Masroufi is an original application. Financial estimates shown in the app are
 planning aids, not professional financial advice.
