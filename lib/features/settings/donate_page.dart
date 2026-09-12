@@ -6,6 +6,7 @@ import '../../app/providers.dart';
 import '../../core/config/brand.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/haptics.dart';
 import '../../core/widgets/design.dart';
 
 /// Donations (Tunisia): D17 + Ba9chich, copy-to-clipboard, zero new
@@ -18,6 +19,7 @@ class DonatePage extends ConsumerWidget {
     WidgetRef ref,
     String text,
   ) async {
+    Haptics.tap();
     await Clipboard.setData(ClipboardData(text: text));
     if (context.mounted) {
       final lang = ref.read(languageProvider);
@@ -72,6 +74,38 @@ class DonatePage extends ConsumerWidget {
                     ],
                   ),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          AppCard(
+            child: Column(
+              children: [
+                for (final k in ['donateWhy1', 'donateWhy2', 'donateWhy3'])
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.favorite,
+                          size: 20,
+                          color: AppColors.expense,
+                          semanticLabel: Strings.get(lang, k),
+                        ),
+                        const SizedBox(width: AppSpacing.md2),
+                        Expanded(
+                          child: Text(
+                            Strings.get(lang, k),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),

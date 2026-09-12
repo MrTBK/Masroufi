@@ -10,6 +10,7 @@ import '../../core/ads/pro_service.dart';
 import '../../core/config/brand.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/utils/haptics.dart';
 import '../../core/widgets/design.dart';
 
 /// PRO paywall: remove ads + unlock AI quota + advanced BI export.
@@ -144,17 +145,39 @@ class _ProPageState extends ConsumerState<ProPage> {
           ),
           const SizedBox(height: AppSpacing.sm),
           AppCard(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
               children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  color: AppColors.income,
-                  semanticLabel: Strings.get(lang, 'proBenefits'),
-                ),
-                const SizedBox(width: AppSpacing.md2),
-                Expanded(
-                  child: Text(Strings.get(lang, 'proBenefitsBody')),
+                for (final k in ['proWhy1', 'proWhy2', 'proWhy3'])
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppSpacing.xs,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          size: 20,
+                          color: AppColors.income,
+                          semanticLabel: Strings.get(lang, k),
+                        ),
+                        const SizedBox(width: AppSpacing.md2),
+                        Expanded(
+                          child: Text(
+                            Strings.get(lang, k),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  Strings.get(lang, 'proBenefitsBody'),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ],
             ),
@@ -299,6 +322,7 @@ class _PaySection extends ConsumerWidget {
     WidgetRef ref,
     String text,
   ) async {
+    Haptics.tap();
     await Clipboard.setData(ClipboardData(text: text));
     if (context.mounted) {
       final lang = ref.read(languageProvider);
