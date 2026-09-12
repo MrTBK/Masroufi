@@ -12,7 +12,7 @@ Tunisia**, in **Arabic (RTL-first), French, and English**. No account:
 all money lives in an on-device SQLite database. Ads load automatically
 when online (personalization switch in Settings); cloud AI stays opt-in.
 Core finance works in airplane mode.
-The current version is **1.3.1+5**
+The current version is **1.3.2+6**
 (`pubspec.yaml`), DB schema **v8**, backup codec **v8**.
 
 In one line: **personal finance management + embedded business
@@ -156,6 +156,14 @@ UI (features/*, core/widgets) → Riverpod providers (lib/app)
   committed).
 
 ## 8. Release history
+
+### [1.3.2+6], 2026-09-12
+
+Fixed: reinstalls reset PRO. Android Auto Backup used to clone the
+install id + PRO flag to the new install; a backup-excluded probe
+file now detects restores, rotates to a fresh id, and drops PRO so
+the buyer buys again with a new ref. Device-to-device transfer
+excluded too (clones would share codes).
 
 ### [1.3.1+5], 2026-09-12
 

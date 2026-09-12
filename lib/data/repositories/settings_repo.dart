@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../database/app_db.dart';
@@ -143,6 +146,25 @@ class SettingsRepo {
       await set('install_id', id);
     }
     return id;
+  }
+
+  /// Reinstall detector. The `no_backup/probe` file is excluded from
+  /// Android Auto Backup / transfer (see manifest rules), while the DB
+  /// restores. DB has an id but probe missing = restored install:
+  /// rotate to a fresh id and drop PRO so the buyer buys again.
+  /// Returns true when a rotation happened. [baseDir] is test-only.
+  Future<bool> ensureFreshInstall({Directory? baseDir}) async {
+    final base = baseDir ?? await getApplicationDocumentsDirectory();
+    final probe = File('${base.path}/no_backup/probe');
+    if (await probe.exists()) return false;
+    await probe.parent.create(recursive: true);
+    await probe.writeAsString('1');
+    if ((await get('install_id'))?.isNotEmpty == true) {
+      await set('install_id', const Uuid().v4());
+      await set('is_pro', '0');
+      return true;
+    }
+    return false;
   }
 
   /// Cloud-AI opt-in (P4). Off by default; when on, redacted BI summaries

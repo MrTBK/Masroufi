@@ -30,6 +30,12 @@ Future<void> main() async {
   final container = ProviderContainer(
     overrides: [appDbProvider.overrideWithValue(db)],
   );
+  // Restored-install rotation FIRST: a backup-restored DB keeps its
+  // install_id, so without this PRO + ref would clone to the new
+  // install. After rotation the buyer gets a new ref and buys again.
+  try {
+    await container.read(settingsRepoProvider).ensureFreshInstall();
+  } catch (_) {}
   final lang = await container.read(settingsRepoProvider).language();
   final theme = await container.read(settingsRepoProvider).theme();
   final done = await container.read(settingsRepoProvider).onboardingDone();

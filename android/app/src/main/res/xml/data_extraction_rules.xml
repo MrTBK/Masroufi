@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Data extraction (API 31+): same probe exclusion for cloud backup
+     AND device-to-device transfer. A transferred clone must not inherit
+     PRO: codes are single-device, so a copy would be a sharing hole. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="app_flutter/no_backup/" />
+        <exclude domain="file" path="no_backup/" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="app_flutter/no_backup/" />
+        <exclude domain="file" path="no_backup/" />
+    </device-transfer>
+</data-extraction-rules>

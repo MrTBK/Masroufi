@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Auto Backup (API 23-30): everything backs up EXCEPT the reinstall
+     probe. The probe lives outside the backup set, so a restored install
+     is detectable: DB has an install_id but the probe file is missing.
+     That means reinstall → fresh install_id, PRO off, buy again. -->
+<full-backup-content>
+    <exclude domain="file" path="app_flutter/no_backup/" />
+    <exclude domain="file" path="no_backup/" />
+</full-backup-content>

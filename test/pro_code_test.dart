@@ -1,8 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:masroufi/core/ads/pro_service.dart';
+import 'package:masroufi/data/database/app_db.dart';
+import 'package:masroufi/data/repositories/settings_repo.dart';
 
 /// Single-device manual codes. Run with test secrets:
 /// flutter test test/pro_code_test.dart --dart-define PRO_SECRET=t --dart-define TEST_PRO_SECRET=t --dart-define PRO_PIN=123456 --dart-define TEST_PRO_PIN=123456
@@ -58,6 +62,33 @@ void main() {
         isFalse,
       );
       expect(ProService.verifyManualCode('MASR-000000', uuid), isFalse);
+    });
+  });
+
+  group('ensureFreshInstall', () {
+    Future<Directory> tmp() =>
+        Directory.systemTemp.createTemp('masroufi-probe-');
+
+    test('fresh install: probe created, no rotation', () async {
+      final db = AppDb.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final repo = SettingsRepo(db);
+      final base = await tmp();
+      expect(await repo.ensureFreshInstall(baseDir: base), isFalse);
+      expect(await File('${base.path}/no_backup/probe').exists(), isTrue);
+      expect(await repo.ensureFreshInstall(baseDir: base), isFalse);
+    });
+
+    test('restored install: new id, PRO dropped', () async {
+      final db = AppDb.forTesting(NativeDatabase.memory());
+      addTearDown(db.close);
+      final repo = SettingsRepo(db);
+      await repo.set('install_id', 'old-id');
+      await repo.setPro(true);
+      final base = await tmp();
+      expect(await repo.ensureFreshInstall(baseDir: base), isTrue);
+      expect(await repo.get('install_id'), isNot('old-id'));
+      expect(await repo.isPro(), isFalse);
     });
   });
 }
