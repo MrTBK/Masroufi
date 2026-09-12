@@ -228,6 +228,8 @@ void main() {
       'support',
       'nudgeTitle',
       'nudgeBody',
+      'proOnly',
+      'proLockedBody',
     ];
     test('every new key exists in en/fr/ar and is non-empty', () {
       for (final lang in ['en', 'fr', 'ar']) {

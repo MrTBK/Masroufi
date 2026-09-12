@@ -10,6 +10,7 @@ import 'package:masroufi/data/repositories/wallets_repo.dart';
 import 'package:masroufi/features/budgets/budget_page.dart';
 import 'package:masroufi/features/settings/donate_page.dart';
 import 'package:masroufi/features/settings/pro_page.dart';
+import 'package:masroufi/features/settings/settings_page.dart';
 import 'package:masroufi/features/transactions/transactions_page.dart';
 import 'package:masroufi/features/wallets/wallets_page.dart';
 
@@ -135,5 +136,39 @@ void main() {
       expect(find.byIcon(Icons.volunteer_activism), findsWidgets);
       await unmountClean(t);
     }
+  });
+
+  testWidgets('settings gates dark theme + lock behind PRO', (t) async {
+    final db = AppDb.forTesting(NativeDatabase.memory());
+    final container = ProviderContainer(
+      overrides: [appDbProvider.overrideWithValue(db)],
+    );
+    addTearDown(() {
+      container.dispose();
+      db.close();
+    });
+    container.read(languageProvider.notifier).state = 'en';
+    final router = GoRouter(
+      initialLocation: '/settings',
+      routes: [
+        GoRoute(path: '/settings', builder: (_, _) => const SettingsPage()),
+        GoRoute(
+          path: '/settings/pro',
+          builder: (_, _) => const Scaffold(body: Text('PROPAGE')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await t.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await t.pump(const Duration(milliseconds: 200));
+    // Upsell tiles visible, no plain dark radio, no PIN setup button.
+    expect(find.textContaining('PRO'), findsWidgets);
+    expect(find.widgetWithText(RadioListTile<String>, 'Dark'), findsNothing);
+    await unmountClean(t);
   });
 }
