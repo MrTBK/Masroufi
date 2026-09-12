@@ -12,7 +12,7 @@ Tunisia**, in **Arabic (RTL-first), French, and English**. No account:
 all money lives in an on-device SQLite database. Ads load automatically
 when online (personalization switch in Settings); cloud AI stays opt-in.
 Core finance works in airplane mode.
-The current version is **1.4.0+8**
+The current version is **1.4.1+9**
 (`pubspec.yaml`), DB schema **v8**, backup codec **v8**.
 
 In one line: **personal finance management + embedded business
@@ -156,6 +156,11 @@ UI (features/*, core/widgets) → Riverpod providers (lib/app)
   committed).
 
 ## 8. Release history
+
+### [1.4.1+9], 2026-09-12
+
+Fixed: donate support ad preloads on page open and reports honestly
+when unready instead of failing silent. No schema change.
 
 ### [1.4.0+8], 2026-09-12
 
