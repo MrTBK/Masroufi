@@ -102,6 +102,8 @@ abstract final class Strings {
       'proManualHint': 'e.g. MASR-AB12-CD34',
       'proManualInvalid': 'Invalid code.',
       'proActivate': 'Activate',
+      'proManualDisabled':
+          'Manual codes work in release builds only. This test build accepts no codes.',
       'proPayTitle': 'Pay with D17 or Ba9chich',
       'proPayBody':
           'Send 9.9 DT to 56597139 on D17, or a 10-Diamond tip on Ba9chich. Then WhatsApp the payment screenshot plus your ref below to 56597139. Your code arrives by WhatsApp reply — paste it above.',
@@ -509,6 +511,8 @@ abstract final class Strings {
       'proManualHint': 'ex. MASR-AB12-CD34',
       'proManualInvalid': 'Code invalide.',
       'proActivate': 'Activer',
+      'proManualDisabled':
+          'Les codes manuels marchent en build release uniquement. Ce build de test n’accepte aucun code.',
       'proPayTitle': 'Payer via D17 ou Ba9chich',
       'proPayBody':
           'Envoyez 9,9 DT au 56597139 sur D17, ou un pourboire de 10 Diamants sur Ba9chich. Puis WhatsApp la capture du paiement plus votre réf ci-dessous au 56597139. Votre code arrive en réponse WhatsApp — collez-le ci-dessus.',
@@ -912,6 +916,8 @@ abstract final class Strings {
       'proManualHint': 'مثال MASR-AB12-CD34',
       'proManualInvalid': 'كود غير صالح.',
       'proActivate': 'فعّل',
+      'proManualDisabled':
+          'الأكواد اليدوية تشتغل في نسخة الإصدار فقط. نسخة التجربة لا تقبل أي كود.',
       'proPayTitle': 'ادفع عبر D17 أو Ba9chich',
       'proPayBody':
           'أرسل 9.9 دنانير إلى 56597139 عبر D17، أو بقشيش 10 ماسات على Ba9chich. ثم أرسل لقطة الدفع مع مرجعك بالأسفل واتساب إلى 56597139. يصلك الكود ردا على واتساب — الصقه بالأعلى.',

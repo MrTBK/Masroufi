@@ -176,6 +176,15 @@ class _ProPageState extends ConsumerState<ProPage> {
                     Strings.get(lang, 'proManualTitle'),
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
+                  if (ProService.proPin.isEmpty &&
+                      ProService.manualSecret.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xs),
+                      child: Text(
+                        Strings.get(lang, 'proManualDisabled'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: codeCtl,
