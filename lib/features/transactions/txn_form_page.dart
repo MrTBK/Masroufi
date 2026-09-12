@@ -152,6 +152,22 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
     super.dispose();
   }
 
+  Future<void> _postSaveAd(WidgetRef ref) async {
+    try {
+      final shown = await ref
+          .read(adsServiceProvider)
+          .showInterstitialIfReady(
+            isPro: ref.read(isProProvider),
+            onboardingDone: ref.read(onboardingDoneProvider),
+            lastShown: ref.read(interstitialLastShownProvider),
+            now: DateTime.now(),
+          );
+      if (shown) {
+        ref.read(interstitialLastShownProvider.notifier).state = DateTime.now();
+      }
+    } catch (_) {}
+  }
+
   Future<void> save() async {
     final lang = ref.read(languageProvider);
     setState(() => error = null);
@@ -262,6 +278,10 @@ class _TxnFormPageState extends ConsumerState<TxnFormPage> {
       unawaited(ref.read(notifierProvider).replan(ref));
       unawaited(ref.read(masroufiWidgetProvider).refreshFrom(ref));
       if (mounted) context.pop();
+      // Natural break AFTER the money screen closes (the form itself
+      // stays ad-free): post-save interstitial, capped, silent when
+      // unready. No context needed, safe post-pop.
+      unawaited(_postSaveAd(ref));
     } finally {
       if (mounted) setState(() => saving = false);
     }

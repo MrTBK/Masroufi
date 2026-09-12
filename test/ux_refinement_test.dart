@@ -214,6 +214,8 @@ void main() {
       'donateWhy1',
       'donateWhy2',
       'donateWhy3',
+      'donateWatch',
+      'donateThanks',
       'proWhy1',
       'proWhy2',
       'proWhy3',

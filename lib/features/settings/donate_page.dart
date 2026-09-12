@@ -79,6 +79,28 @@ class DonatePage extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
+          FilledButton.icon(
+            icon: const Icon(Icons.play_circle_outline, size: 20),
+            label: Text(Strings.get(lang, 'donateWatch')),
+            onPressed: () async {
+              Haptics.tap();
+              final ok = await ref
+                  .read(adsServiceProvider)
+                  .showRewarded(
+                    isPro: ref.read(isProProvider),
+                    onboardingDone: ref.read(onboardingDoneProvider),
+                    onReward: () {},
+                  );
+              if (ok && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(Strings.get(lang, 'donateThanks')),
+                  ),
+                );
+              }
+            },
+          ),
+          const SizedBox(height: AppSpacing.sm),
           AppCard(
             child: Column(
               children: [
