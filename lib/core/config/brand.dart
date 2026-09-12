@@ -13,15 +13,15 @@ abstract final class Brand {
   };
 
   // ---- Ads (AdMob) + PRO ----
-  // Prod IDs arrive via --dart-define so real IDs never commit.
-  // Debug/test builds fall back to Google test IDs.
+  // Real IDs committed (AdMob IDs are public, not secrets).
+  // Debug/test builds override via --dart-define back to Google test IDs.
   static const String adAppId = String.fromEnvironment(
     'ADS_APP_ID',
-    defaultValue: 'ca-app-pub-3940256099942544~3347511713',
+    defaultValue: 'ca-app-pub-9608102363292478~9458215826',
   );
   static const String bannerDashboardId = String.fromEnvironment(
     'ADS_BANNER_DASHBOARD',
-    defaultValue: 'ca-app-pub-3940256099942544/6300978111',
+    defaultValue: 'ca-app-pub-9608102363292478/3687014390',
   );
   static const String bannerReportsId = String.fromEnvironment(
     'ADS_BANNER_REPORTS',

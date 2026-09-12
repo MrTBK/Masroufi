@@ -25,9 +25,10 @@ BT="/tmp/opencode/bundletool-all.jar"
   -o "$BT" https://github.com/google/bundletool/releases/download/1.18.3/bundletool-all-1.18.3.jar
 
 flutter pub get
-# Prod AdMob IDs + PRO secret arrive via env (never committed).
-# Empty/missing values fall back to the Google test IDs compiled in
-# Brand (debug-safe); manual PRO codes stay disabled without PRO_SECRET.
+# Prod AdMob IDs ship as defaults in Brand/manifest (public IDs).
+# Override per build via env (ADS_*_*, PRO_SECRET, PRO_PIN); empty/missing
+# values keep compiled defaults. Debug-style test IDs via --dart-define
+# back to Google test IDs when needed.
 DEFINES=()
 for kv in \
   "ADS_APP_ID:${ADS_APP_ID:-}" \
