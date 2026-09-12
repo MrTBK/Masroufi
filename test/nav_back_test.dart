@@ -8,6 +8,7 @@ import 'package:masroufi/data/database/app_db.dart';
 import 'package:masroufi/data/repositories/categories_repo.dart';
 import 'package:masroufi/data/repositories/wallets_repo.dart';
 import 'package:masroufi/features/budgets/budget_page.dart';
+import 'package:masroufi/features/settings/pro_page.dart';
 import 'package:masroufi/features/transactions/transactions_page.dart';
 import 'package:masroufi/features/wallets/wallets_page.dart';
 
@@ -75,6 +76,40 @@ void main() {
     await t.tap(find.byType(BackButton));
     await t.pumpAndSettle();
     expect(router.state.matchedLocation, '/');
+    await unmountClean(t);
+  });
+
+  testWidgets('pro page opens without store (manual path)', (t) async {
+    final db = AppDb.forTesting(NativeDatabase.memory());
+    final container = ProviderContainer(
+      overrides: [appDbProvider.overrideWithValue(db)],
+    );
+    addTearDown(() {
+      container.dispose();
+      db.close();
+    });
+    container.read(languageProvider.notifier).state = 'en';
+    await t.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(home: ProPage()),
+      ),
+    );
+    await t.pump(const Duration(milliseconds: 100));
+    await t.pump(const Duration(milliseconds: 100));
+    // No store on desktop/tests: either the manual box or its loader
+    // shows. The regression was a LateError crash in initState.
+    expect(
+      find
+          .byType(TextField)
+          .evaluate()
+          .isNotEmpty ||
+          find
+              .byType(CircularProgressIndicator)
+              .evaluate()
+              .isNotEmpty,
+      isTrue,
+    );
     await unmountClean(t);
   });
 }

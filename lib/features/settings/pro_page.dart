@@ -35,10 +35,15 @@ class _ProPageState extends ConsumerState<ProPage> {
   void initState() {
     super.initState();
     _loadProduct();
-    _sub = InAppPurchase.instance.purchaseStream.listen(
-      _onPurchases,
-      onError: (_) {},
-    );
+    // No store on desktop/tests: guard, manual-code path stays usable.
+    try {
+      _sub = InAppPurchase.instance.purchaseStream.listen(
+        _onPurchases,
+        onError: (_) {},
+      );
+    } catch (_) {
+      _sub = null;
+    }
   }
 
   Future<void> _loadProduct() async {
