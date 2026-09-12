@@ -216,6 +216,7 @@ void main() {
       'donateWhy3',
       'donateWatch',
       'donateThanks',
+      'donateAdNotReady',
       'proWhy1',
       'proWhy2',
       'proWhy3',

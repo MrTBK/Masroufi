@@ -33,6 +33,11 @@ class DonatePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
     final scheme = Theme.of(context).colorScheme;
+    // Warm the rewarded slot on open: startup preload may have missed
+    // (offline at launch), and without this the first tap always fails.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => ref.read(adsServiceProvider).preloadRewarded(),
+    );
     return Scaffold(
       appBar: AppBar(title: Text(Strings.get(lang, 'donate'))),
       body: ListView(
@@ -91,13 +96,17 @@ class DonatePage extends ConsumerWidget {
                     onboardingDone: ref.read(onboardingDoneProvider),
                     onReward: () {},
                   );
-              if (ok && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(Strings.get(lang, 'donateThanks')),
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    Strings.get(
+                      lang,
+                      ok ? 'donateThanks' : 'donateAdNotReady',
+                    ),
                   ),
-                );
-              }
+                ),
+              );
             },
           ),
           const SizedBox(height: AppSpacing.sm),
