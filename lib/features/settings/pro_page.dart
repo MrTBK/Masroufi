@@ -93,21 +93,69 @@ class _ProPageState extends ConsumerState<ProPage> {
   Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
     final isPro = ref.watch(isProProvider);
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(Strings.get(lang, 'proTitle'))),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
+                  child: const Icon(
+                    Icons.workspace_premium,
+                    size: 28,
+                    semanticLabel: 'PRO',
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        Strings.get(lang, 'proBenefits'),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          Brand.proPriceLabel,
+                          style: Theme.of(context).textTheme.headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           AppCard(
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  Strings.get(lang, 'proBenefits'),
-                  style: Theme.of(context).textTheme.titleMedium,
+                Icon(
+                  Icons.check_circle_outline,
+                  color: AppColors.income,
+                  semanticLabel: Strings.get(lang, 'proBenefits'),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(Strings.get(lang, 'proBenefitsBody')),
+                const SizedBox(width: AppSpacing.md2),
+                Expanded(
+                  child: Text(Strings.get(lang, 'proBenefitsBody')),
+                ),
               ],
             ),
           ),
@@ -263,73 +311,148 @@ class _PaySection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            '${Strings.get(lang, 'proPayTitle')} • ${Brand.proPriceLabel}',
-            style: Theme.of(context).textTheme.titleSmall,
+    final scheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        SectionHeader(title: Strings.get(lang, 'proPayTitle')),
+        Text(
+          Strings.get(lang, 'proPayBody'),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: scheme.onSurfaceVariant,
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            Strings.get(lang, 'proPayBody'),
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          FutureBuilder<String>(
-            future: ref.watch(settingsRepoProvider).installId(),
-            builder: (context, snap) {
-              final id = snap.data ?? '';
-              final short = id.length >= 8
-                  ? id.substring(0, 8).toUpperCase()
-                  : '…';
-              final msg =
-                  'Masroufi PRO ${Brand.proPriceLabel} ref $short';
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    '${Strings.get(lang, 'proMyRef')}: $short',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Wrap(
-                    spacing: AppSpacing.sm,
-                    runSpacing: AppSpacing.sm,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        FutureBuilder<String>(
+          future: ref.watch(settingsRepoProvider).installId(),
+          builder: (context, snap) {
+            final id = snap.data ?? '';
+            final short = id.length >= 8
+                ? id.substring(0, 8).toUpperCase()
+                : '…';
+            final msg = 'Masroufi PRO ${Brand.proPriceLabel} ref $short';
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                AppCard(
+                  child: Row(
                     children: [
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.copy, size: 18),
-                        label: Text(
-                          '${Strings.get(lang, 'proCopy')} ${Brand.proD17Number}',
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: scheme.primaryContainer,
+                        foregroundColor: scheme.onPrimaryContainer,
+                        child: const Icon(
+                          Icons.smartphone,
+                          size: 22,
+                          semanticLabel: 'D17',
                         ),
+                      ),
+                      const SizedBox(width: AppSpacing.md2),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'D17',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            Directionality(
+                              textDirection: TextDirection.ltr,
+                              child: Text(
+                                '${Brand.proD17Number} • ${Brand.proPriceLabel}',
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: Strings.get(lang, 'proCopy'),
+                        icon: const Icon(Icons.copy, size: 20),
                         onPressed: () =>
                             _copy(context, ref, Brand.proD17Number),
                       ),
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.copy, size: 18),
-                        label: Text(Strings.get(lang, 'proCopyLink')),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                AppCard(
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 20,
+                        backgroundColor: scheme.primaryContainer,
+                        foregroundColor: scheme.onPrimaryContainer,
+                        child: const Icon(
+                          Icons.volunteer_activism,
+                          size: 22,
+                          semanticLabel: 'Ba9chich',
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.md2),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Ba9chich',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              '10 Diamonds',
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: Strings.get(lang, 'proCopyLink'),
+                        icon: const Icon(Icons.copy, size: 20),
                         onPressed: () =>
                             _copy(context, ref, Brand.ba9chichUrl),
                       ),
-                      OutlinedButton.icon(
-                        icon: const Icon(Icons.copy, size: 18),
-                        label: Text(Strings.get(lang, 'proCopyRef')),
-                        onPressed: () => _copy(context, ref, short),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '${Strings.get(lang, 'proMyRef')}: $short',
+                              style: Theme.of(context).textTheme.titleSmall
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: Strings.get(lang, 'proCopyRef'),
+                            icon: const Icon(Icons.copy, size: 20),
+                            onPressed: () => _copy(context, ref, short),
+                          ),
+                        ],
                       ),
+                      const SizedBox(height: AppSpacing.xs),
                       OutlinedButton.icon(
-                        icon: const Icon(Icons.copy, size: 18),
+                        icon: const Icon(Icons.chat_outlined, size: 18),
                         label: Text(Strings.get(lang, 'proCopyMsg')),
                         onPressed: () => _copy(context, ref, msg),
                       ),
                     ],
                   ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+                ),
+              ],
+            );
+          },
+        ),
+      ],
     );
   }
 }

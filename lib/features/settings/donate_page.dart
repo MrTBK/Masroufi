@@ -30,44 +30,110 @@ class DonatePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
+    final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: Text(Strings.get(lang, 'donate'))),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.md),
         children: [
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            decoration: BoxDecoration(
+              color: scheme.primaryContainer,
+              borderRadius: BorderRadius.circular(AppRadius.lg),
+            ),
+            child: Row(
               children: [
-                Text(
-                  Strings.get(lang, 'donateTitle'),
-                  style: Theme.of(context).textTheme.titleMedium,
+                CircleAvatar(
+                  radius: 26,
+                  backgroundColor: scheme.primary,
+                  foregroundColor: scheme.onPrimary,
+                  child: const Icon(
+                    Icons.volunteer_activism,
+                    size: 28,
+                    semanticLabel: 'donate',
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  Strings.get(lang, 'donateBody'),
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: [
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.copy, size: 18),
-                      label: Text(
-                        '${Strings.get(lang, 'proCopy')} ${Brand.proD17Number}',
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        Strings.get(lang, 'donateTitle'),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.bold),
                       ),
-                      onPressed: () =>
-                          _copy(context, ref, Brand.proD17Number),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        Strings.get(lang, 'donateBody'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          AppCard(
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: scheme.primaryContainer,
+                  foregroundColor: scheme.onPrimaryContainer,
+                  child: const Icon(
+                    Icons.smartphone,
+                    size: 22,
+                    semanticLabel: 'D17',
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md2),
+                Expanded(
+                  child: Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Text(
+                      Brand.proD17Number,
+                      style: Theme.of(context).textTheme.titleSmall
+                          ?.copyWith(fontWeight: FontWeight.bold),
                     ),
-                    OutlinedButton.icon(
-                      icon: const Icon(Icons.copy, size: 18),
-                      label: Text(Strings.get(lang, 'proCopyLink')),
-                      onPressed: () =>
-                          _copy(context, ref, Brand.ba9chichUrl),
-                    ),
-                  ],
+                  ),
+                ),
+                IconButton(
+                  tooltip: Strings.get(lang, 'proCopy'),
+                  icon: const Icon(Icons.copy, size: 20),
+                  onPressed: () => _copy(context, ref, Brand.proD17Number),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          AppCard(
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: scheme.primaryContainer,
+                  foregroundColor: scheme.onPrimaryContainer,
+                  child: const Icon(
+                    Icons.volunteer_activism,
+                    size: 22,
+                    semanticLabel: 'Ba9chich',
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md2),
+                Expanded(
+                  child: Text(
+                    'Ba9chich',
+                    style: Theme.of(context).textTheme.titleSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  tooltip: Strings.get(lang, 'proCopyLink'),
+                  icon: const Icon(Icons.copy, size: 20),
+                  onPressed: () => _copy(context, ref, Brand.ba9chichUrl),
                 ),
               ],
             ),

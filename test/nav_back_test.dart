@@ -8,6 +8,7 @@ import 'package:masroufi/data/database/app_db.dart';
 import 'package:masroufi/data/repositories/categories_repo.dart';
 import 'package:masroufi/data/repositories/wallets_repo.dart';
 import 'package:masroufi/features/budgets/budget_page.dart';
+import 'package:masroufi/features/settings/donate_page.dart';
 import 'package:masroufi/features/settings/pro_page.dart';
 import 'package:masroufi/features/transactions/transactions_page.dart';
 import 'package:masroufi/features/wallets/wallets_page.dart';
@@ -111,5 +112,28 @@ void main() {
       isTrue,
     );
     await unmountClean(t);
+  });
+
+  testWidgets('donate page renders en + ar RTL', (t) async {
+    for (final lang in ['en', 'ar']) {
+      final db = AppDb.forTesting(NativeDatabase.memory());
+      final container = ProviderContainer(
+        overrides: [appDbProvider.overrideWithValue(db)],
+      );
+      addTearDown(() {
+        container.dispose();
+        db.close();
+      });
+      container.read(languageProvider.notifier).state = lang;
+      await t.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: const MaterialApp(home: DonatePage()),
+        ),
+      );
+      await t.pump(const Duration(milliseconds: 100));
+      expect(find.byIcon(Icons.volunteer_activism), findsWidgets);
+      await unmountClean(t);
+    }
   });
 }
