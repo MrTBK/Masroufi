@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/providers.dart';
 import '../../core/ads/ad_banner.dart';
+import '../../core/ads/nudge.dart';
 import '../../core/analytics/periods.dart';
 import '../../core/analytics/summary.dart';
 import '../../core/config/brand.dart';
@@ -57,6 +58,7 @@ class TransactionsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final lang = ref.watch(languageProvider);
     ref.watch(refreshTickProvider);
+    Nudge.maybeShow(context, ref);
     final scheme = Theme.of(context).colorScheme;
     return Scaffold(
       // Plain brand identity: on the main page the title is NOT a button

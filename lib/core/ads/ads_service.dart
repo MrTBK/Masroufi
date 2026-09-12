@@ -7,19 +7,21 @@ import '../config/brand.dart';
 /// Central AdMob gate (P2/P3).
 ///
 /// Rules (never change casually):
-/// - No ads before onboarding, on lock, or in money-entry (`/add`).
+/// - Ads load automatically for everyone post-onboarding with internet:
+///   no opt-in tap needed. Consent switch tunes personalization only.
+/// - No ads before onboarding, on lock, PRO, or in money-entry (`/add`).
 /// - Interstitial max 1 per 10 minutes, only after success moments
 ///   (PDF export, backup). Silent skip when not loaded / offline / PRO.
 /// - Never logs amounts, notes, category names, or wallet names.
 /// - All methods are best-effort: any failure returns null/false and the
 ///   finance flow continues. Fully test-mockable via [AdsGate].
 abstract final class AdsGate {
-  /// True when ads may load: consent given, not PRO, onboarding done.
+  /// True when ads may load: onboarding done, not PRO. Personalization
+  /// is a separate flag applied per request, never a load gate.
   static bool canLoad({
-    required bool consentGiven,
     required bool isPro,
     required bool onboardingDone,
-  }) => consentGiven && !isPro && onboardingDone;
+  }) => !isPro && onboardingDone;
 
   /// Frequency cap for interstitials.
   static bool interstitialDue(DateTime? lastShown, DateTime now) {
@@ -69,17 +71,12 @@ class AdsService {
   /// Show preloaded interstitial if ready + cap allows. Returns true
   /// when an ad was shown (caller updates last-shown time).
   Future<bool> showInterstitialIfReady({
-    required bool consentGiven,
     required bool isPro,
     required bool onboardingDone,
     required DateTime? lastShown,
     required DateTime now,
   }) async {
-    if (!AdsGate.canLoad(
-      consentGiven: consentGiven,
-      isPro: isPro,
-      onboardingDone: onboardingDone,
-    )) {
+    if (!AdsGate.canLoad(isPro: isPro, onboardingDone: onboardingDone)) {
       return false;
     }
     if (!AdsGate.interstitialDue(lastShown, now)) return false;
@@ -122,7 +119,6 @@ class AdsService {
   /// Show rewarded; [onReward] runs only when the user earns it.
   /// Returns true when reward was earned.
   Future<bool> showRewarded({
-    required bool consentGiven,
     required bool isPro,
     required bool onboardingDone,
     required void Function() onReward,
@@ -132,11 +128,7 @@ class AdsService {
       onReward();
       return true;
     }
-    if (!AdsGate.canLoad(
-      consentGiven: consentGiven,
-      isPro: isPro,
-      onboardingDone: onboardingDone,
-    )) {
+    if (!AdsGate.canLoad(isPro: isPro, onboardingDone: onboardingDone)) {
       return false;
     }
     final ad = _rewarded;

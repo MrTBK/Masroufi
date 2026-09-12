@@ -7,7 +7,9 @@ import '../config/brand.dart';
 
 /// Adaptive banner slot (P2).
 ///
-/// - Collapses to zero height offline / PRO / no-consent / load failure.
+/// - Loads automatically post-onboarding with internet (no opt-in tap).
+///   Consent switch tunes personalization, never loading.
+/// - Collapses to zero height offline / PRO / load failure.
 /// - Never placed on onboarding, lock, or `/add` money-entry.
 /// - Fixed 50dp + SafeArea so money buttons never shift unexpectedly.
 class AdBanner extends ConsumerStatefulWidget {
@@ -33,15 +35,15 @@ class _AdBannerState extends ConsumerState<AdBanner> {
   }
 
   Future<void> _tryLoad() async {
-    final consent = ref.read(adsConsentProvider);
     final isPro = ref.read(isProProvider);
     final done = ref.read(onboardingDoneProvider);
-    if (!(consent && !isPro && done)) return;
+    if (isPro || !done) return;
+    final consent = ref.read(adsConsentProvider);
     try {
       final ad = BannerAd(
         adUnitId: _unitId,
         size: AdSize.banner,
-        request: const AdRequest(),
+        request: AdRequest(nonPersonalizedAds: !consent),
         listener: BannerAdListener(
           onAdLoaded: (_) {
             if (mounted) setState(() => _ready = true);
@@ -69,11 +71,10 @@ class _AdBannerState extends ConsumerState<AdBanner> {
 
   @override
   Widget build(BuildContext context) {
-    // Reactive collapse: toggling PRO/consent hides immediately.
-    final consent = ref.watch(adsConsentProvider);
+    // Reactive collapse: toggling PRO hides immediately.
     final isPro = ref.watch(isProProvider);
     final done = ref.watch(onboardingDoneProvider);
-    if (!(consent && !isPro && done) || !_ready || _ad == null) {
+    if (isPro || !done || !_ready || _ad == null) {
       return const SizedBox.shrink();
     }
     return SafeArea(

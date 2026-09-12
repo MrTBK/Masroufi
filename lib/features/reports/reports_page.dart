@@ -205,7 +205,6 @@ class ReportsPage extends ConsumerWidget {
         final shown = await ref
             .read(adsServiceProvider)
             .showInterstitialIfReady(
-              consentGiven: ref.read(adsConsentProvider),
               isPro: ref.read(isProProvider),
               onboardingDone: ref.read(onboardingDoneProvider),
               lastShown: ref.read(interstitialLastShownProvider),

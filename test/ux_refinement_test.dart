@@ -226,6 +226,8 @@ void main() {
       'proCopyMsg',
       'proManualDisabled',
       'support',
+      'nudgeTitle',
+      'nudgeBody',
     ];
     test('every new key exists in en/fr/ar and is non-empty', () {
       for (final lang in ['en', 'fr', 'ar']) {

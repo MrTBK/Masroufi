@@ -88,7 +88,11 @@ abstract final class Strings {
       'exportWalletCsv': 'Wallets (CSV)',
       'privacyAds': 'Privacy & Ads',
       'adsPersonalized': 'Personalized ads',
-      'adsOfflineNote': 'Finance works offline. Ads need internet.',
+      'adsOfflineNote':
+          'Ads load automatically when online. Switch tunes personalization only.',
+      'nudgeTitle': 'Enjoying Masroufi?',
+      'nudgeBody':
+          'PRO removes ads forever for 9.9 DT — or toss a tip to keep it free for everyone.',
       'adsRemove': 'Remove ads (PRO)',
       'proTitle': 'Masroufi PRO',
       'proBenefits': 'PRO unlocks more',
@@ -504,7 +508,10 @@ abstract final class Strings {
       'privacyAds': 'Confidentialité & Pubs',
       'adsPersonalized': 'Publicités personnalisées',
       'adsOfflineNote':
-          'La finance marche hors-ligne. Les pubs exigent internet.',
+          'Pubs auto en ligne. L’interrupteur règle la personnalisation.',
+      'nudgeTitle': 'Masroufi vous plaît ?',
+      'nudgeBody':
+          'PRO supprime les pubs pour 9,9 DT — ou laissez un pourboire pour le garder gratuit.',
       'adsRemove': 'Supprimer les pubs (PRO)',
       'proTitle': 'Masroufi PRO',
       'proBenefits': 'PRO débloque plus',
@@ -914,7 +921,10 @@ abstract final class Strings {
       'exportWalletCsv': 'المحافظ (CSV)',
       'privacyAds': 'الخصوصية والإعلانات',
       'adsPersonalized': 'إعلانات مخصصة',
-      'adsOfflineNote': 'المالية تشتغل دون أنترنت. الإعلانات تحتاج أنترنت.',
+      'adsOfflineNote': 'الإعلانات تظهر وحدها مع الأنترنت. الزر للتخصيص فقط.',
+      'nudgeTitle': 'عاجبك مصروفي؟',
+      'nudgeBody':
+          'PRO ينحي الإعلانات بـ 9.9 دنانير — أو لوّح ببقشيش يخليه مجاني للجميع.',
       'adsRemove': 'إزالة الإعلانات (PRO)',
       'proTitle': 'مصروفي PRO',
       'proBenefits': 'PRO يفتح المزيد',

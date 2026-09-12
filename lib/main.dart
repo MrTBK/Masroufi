@@ -50,16 +50,20 @@ Future<void> main() async {
     aiCloud = await container.read(settingsRepoProvider).aiCloudEnabled();
     aiNotes = await container.read(settingsRepoProvider).aiIncludeNotes();
   } catch (_) {}
-  // Ads init (best-effort, never blocks startup or finance).
+  // Ads warm-up (best-effort, never blocks startup or finance).
+  // Loads for everyone post-onboarding with internet: MobileAds init
+  // + preloads run unconditionally; gates apply at show time.
   // UMP consent UI is requested lazily in Settings; here we only warm up
-  // MobileAds so first banner loads fast when consented.
+  // so the first banner loads fast when online.
   try {
-    if (adsConsent && !isPro) {
-      final ads = AdsService();
-      await ads.ensureInitialized();
-      await ads.preloadInterstitial();
-      await ads.preloadRewarded();
-    }
+    final ads = AdsService();
+    await ads.ensureInitialized();
+    await ads.preloadInterstitial();
+    await ads.preloadRewarded();
+  } catch (_) {}
+  // Launch counter for the PRO/donate nudge schedule.
+  try {
+    await container.read(settingsRepoProvider).bumpLaunches();
   } catch (_) {}
   // App lock: a stored PIN means the vault starts locked. Secure-storage
   // failures fail CLOSED only when a PIN was previously known... we cannot

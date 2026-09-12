@@ -219,7 +219,6 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         final shown = await ref
             .read(adsServiceProvider)
             .showInterstitialIfReady(
-              consentGiven: ref.read(adsConsentProvider),
               isPro: ref.read(isProProvider),
               onboardingDone: ref.read(onboardingDoneProvider),
               lastShown: ref.read(interstitialLastShownProvider),
