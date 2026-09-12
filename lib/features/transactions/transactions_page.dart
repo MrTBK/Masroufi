@@ -600,6 +600,7 @@ class _Timeline extends ConsumerWidget {
           return ErrorView(
             message: '${snap.error}',
             onRetry: () => bumpRefresh(ref),
+            lang: lang,
           );
         }
         final list = snap.data![0] as List<Transaction>;

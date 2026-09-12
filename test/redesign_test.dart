@@ -358,6 +358,7 @@ void main() {
       'yourMoney',
       'totalMoney',
       'totalSpent',
+      'retry',
       'lastWeek',
       'avgSpending',
       'monthlyAverage',
