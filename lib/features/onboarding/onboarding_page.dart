@@ -8,7 +8,7 @@ import '../../core/money/money.dart';
 import '../../core/theme/app_theme.dart';
 
 /// 2 steps: language -> first wallet (+balance, optional name).
-/// Theme stays on 'system' here (changeable later in Settings).
+/// Theme starts on 'light' (dark is PRO-only, chosen later in Settings).
 class OnboardingPage extends ConsumerStatefulWidget {
   const OnboardingPage({super.key});
   @override
@@ -21,7 +21,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   final walletCtl = TextEditingController();
   final balanceCtl = TextEditingController(text: '0');
   final nameCtl = TextEditingController();
-  String theme = 'system';
+  String theme = 'light';
   bool saving = false;
   String? error;
 

@@ -25,7 +25,12 @@ class SettingsRepo {
       (db.delete(db.appSettings)..where((s) => s.key.equals(key))).go();
 
   Future<String> language() async => await get('language') ?? 'en';
-  Future<String> theme() async => await get('theme') ?? 'system';
+  /// Light by default; 'system' follow removed (dark is PRO-only).
+  /// Legacy stored 'system' resolves to light.
+  Future<String> theme() async {
+    final v = await get('theme');
+    return v == 'dark' ? 'dark' : 'light';
+  }
   Future<bool> onboardingDone() async => await get('onboarding_done') == '1';
 
   /// Global privacy switch: when true every balance renders masked.

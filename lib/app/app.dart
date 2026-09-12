@@ -32,12 +32,11 @@ class MasroufiApp extends ConsumerWidget {
       title: Brand.nameFor(lang),
       theme: buildLightTheme(),
       darkTheme: buildDarkTheme(),
-      // Dark theme is a PRO entitlement: non-PRO stored prefs fall
-      // back to light instead of leaking the gated theme.
+      // Dark theme is a PRO entitlement; default is light, no system
+      // follow. Non-PRO stored prefs fall back to light.
       themeMode: switch (themeName) {
         'dark' => isPro ? ThemeMode.dark : ThemeMode.light,
-        'light' => ThemeMode.light,
-        _ => ThemeMode.system,
+        _ => ThemeMode.light,
       },
       locale: Locale(lang),
       supportedLocales: const [Locale('en'), Locale('fr'), Locale('ar')],

@@ -57,7 +57,7 @@ final splitsRepoProvider = Provider<SplitsRepo>(
 
 /// UI state (persisted to app_settings on change by settings page/onboarding).
 final languageProvider = StateProvider<String>((ref) => 'en');
-final themeNameProvider = StateProvider<String>((ref) => 'system');
+final themeNameProvider = StateProvider<String>((ref) => 'light');
 final onboardingDoneProvider = StateProvider<bool>((ref) => false);
 
 /// Global balance-privacy switch (display-only; math never reads this).

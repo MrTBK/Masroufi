@@ -446,17 +446,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           },
           child: Column(
             children: [
-              for (final t in ['system', 'light'])
-                RadioListTile<String>(
-                  value: t,
-                  contentPadding: EdgeInsets.zero,
-                  title: Text(
-                    Strings.get(
-                      lang,
-                      t == 'system' ? 'themeSystem' : 'themeLight',
-                    ),
-                  ),
-                ),
+              RadioListTile<String>(
+                value: 'light',
+                contentPadding: EdgeInsets.zero,
+                title: Text(Strings.get(lang, 'themeLight')),
+              ),
               if (isPro)
                 RadioListTile<String>(
                   value: 'dark',
