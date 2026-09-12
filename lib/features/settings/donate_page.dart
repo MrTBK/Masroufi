@@ -125,13 +125,23 @@ class DonatePage extends ConsumerWidget {
                 ),
                 const SizedBox(width: AppSpacing.md2),
                 Expanded(
-                  child: Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Text(
-                      Brand.proD17Number,
-                      style: Theme.of(context).textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'D17',
+                        style: Theme.of(context).textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          Brand.proD17Number,
+                          style: Theme.of(context).textTheme.bodyMedium
+                              ?.copyWith(fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
                 IconButton(
