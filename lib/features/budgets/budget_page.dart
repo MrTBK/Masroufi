@@ -52,6 +52,7 @@ class _BudgetPageState extends ConsumerState<BudgetPage> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: BackButton(onPressed: () => context.go('/')),
         title: HomeTitle(
           text: '${Strings.get(lang, 'mizania')} • ${monthName()}',
           lang: lang,

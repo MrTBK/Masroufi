@@ -55,7 +55,10 @@ Future<void> main() async {
   // MobileAds so first banner loads fast when consented.
   try {
     if (adsConsent && !isPro) {
-      await AdsService().ensureInitialized();
+      final ads = AdsService();
+      await ads.ensureInitialized();
+      await ads.preloadInterstitial();
+      await ads.preloadRewarded();
     }
   } catch (_) {}
   // App lock: a stored PIN means the vault starts locked. Secure-storage

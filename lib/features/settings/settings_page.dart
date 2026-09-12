@@ -500,7 +500,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 // platform readiness at load time.
                 if (!ok && !mounted) return;
               } catch (_) {}
-              await ref.read(adsServiceProvider).ensureInitialized();
+              final ads = ref.read(adsServiceProvider);
+              await ads.ensureInitialized();
+              // Preload now so the first post-consent moment can show;
+              // previously the first interstitial/rewarded always missed.
+              await ads.preloadInterstitial();
+              await ads.preloadRewarded();
             }
             await ref.read(settingsRepoProvider).setAdsConsent(v);
             ref.read(adsConsentProvider.notifier).state = v;
