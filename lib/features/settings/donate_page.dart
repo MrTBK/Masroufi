@@ -41,15 +41,16 @@ class DonatePage extends ConsumerWidget {
           Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(
-              color: scheme.primaryContainer,
+              color: scheme.surfaceContainerLow,
               borderRadius: BorderRadius.circular(AppRadius.lg),
+              border: Border.all(color: scheme.outlineVariant),
             ),
             child: Row(
               children: [
                 CircleAvatar(
                   radius: 26,
-                  backgroundColor: scheme.primary,
-                  foregroundColor: scheme.onPrimary,
+                  backgroundColor: scheme.primaryContainer,
+                  foregroundColor: scheme.onPrimaryContainer,
                   child: const Icon(
                     Icons.volunteer_activism,
                     size: 28,

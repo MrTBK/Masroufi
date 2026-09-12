@@ -121,7 +121,7 @@ abstract final class Strings {
       'donate': 'Donate',
       'donateTitle': 'Support Masroufi',
       'donateBody':
-          'Masroufi is free and offline-first. Tips via D17 to 56597139 or Ba9chich keep it growing. Thank you!',
+          'I’m Aziz, a Tunisian student learning development and BI. Masroufi is my first app and I’m working hard to make it great. Your support keeps it free and growing. Thank you!',
       'donateWhy1': 'Every dinar funds features, never ads',
       'donateWhy2': 'Built by an indie dev in Tunisia',
       'donateWhy3': 'Free forever, with or without a tip',
@@ -541,7 +541,7 @@ abstract final class Strings {
       'donate': 'Faire un don',
       'donateTitle': 'Soutenir Masroufi',
       'donateBody':
-          'Masroufi est gratuit et hors-ligne. Vos pourboires via D17 au 56597139 ou Ba9chich le font grandir. Merci !',
+          'Je suis Aziz, étudiant tunisien en développement et BI. Masroufi est ma première app et je travaille dur pour la rendre géniale. Votre soutien la garde gratuite. Merci !',
       'donateWhy1': 'Chaque dinar finance des fonctions, jamais des pubs',
       'donateWhy2': 'Développé par un indé en Tunisie',
       'donateWhy3': 'Gratuit pour toujours, avec ou sans don',
@@ -957,7 +957,7 @@ abstract final class Strings {
       'donate': 'تبرع',
       'donateTitle': 'ادعم مصروفي',
       'donateBody':
-          'مصروفي مجاني ويشتغل دون أنترنت. تبرعاتكم عبر D17 إلى 56597139 أو Ba9chich تساعد على تطويره. شكرا!',
+          'أنا عزيز، طالب تونسي نتعلم البرمجة وذكاء الأعمال. مصروفي أول تطبيق ليا ونخدم بجهد باش يكون في المستوى. دعمكم يخليه مجاني ويكبر. شكرا!',
       'donateWhy1': 'كل دينار يمول ميزات، موش إعلانات',
       'donateWhy2': 'مطور مستقل في تونس',
       'donateWhy3': 'مجاني ديما، بتبرع أو بلاش',
