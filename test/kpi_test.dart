@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:masroufi/core/analytics/forecast.dart';
+import 'package:masroufi/core/analytics/forecast_v2.dart';
 import 'package:masroufi/core/analytics/kpi.dart';
 
 void main() {
@@ -83,7 +83,7 @@ void main() {
 
     test('forecast projects run-rate with overrun and pace', () {
       // Sept (30 days), day 15, 600 spent of 1000 budget.
-      final f = Forecast.project(
+      final f = ForecastV2.project(
         spentSoFarMillimes: 600000,
         now: DateTime(2026, 9, 15),
         budgetMillimes: 1000000,
@@ -95,14 +95,14 @@ void main() {
 
     test('forecast null without spend; pace 100 without budget', () {
       expect(
-        Forecast.project(
+        ForecastV2.project(
           spentSoFarMillimes: 0,
           now: DateTime(2026, 9, 15),
           budgetMillimes: 1000000,
         ),
         isNull,
       );
-      final f = Forecast.project(
+      final f = ForecastV2.project(
         spentSoFarMillimes: 300000,
         now: DateTime(2026, 2, 14),
         budgetMillimes: null,

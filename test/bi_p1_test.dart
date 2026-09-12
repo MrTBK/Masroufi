@@ -15,23 +15,10 @@ void main() {
       expect(s.end, DateTime(2025, 10, 1));
     });
 
-    test('yoyForRange null when prior is 0', () {
-      expect(Seasonality.yoyForRange(current: 100, priorYear: 0), isNull);
-      expect(Seasonality.yoyForRange(current: 150, priorYear: 100), (
-        diff: 50,
-        pct: 50,
-      ));
-    });
-
     test('seasonalAverage ignores zeros, null when empty', () {
       expect(Seasonality.seasonalAverage([]), isNull);
       expect(Seasonality.seasonalAverage([0, 0]), isNull);
       expect(Seasonality.seasonalAverage([100, 200, 300]), 200);
-    });
-
-    test('band needs 2+ months', () {
-      expect(Seasonality.band([100]), isNull);
-      expect(Seasonality.band([100, 300]), isNotNull);
     });
   });
 

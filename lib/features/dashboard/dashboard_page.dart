@@ -13,14 +13,13 @@ import '../../app/providers.dart';
 import '../../core/ads/ad_banner.dart';
 import '../../core/ai/ai_sheet.dart';
 import '../../core/analytics/bi_scope.dart';
-import '../../core/analytics/forecast.dart';
+import '../../core/analytics/forecast_v2.dart';
 import '../../core/export/bi_export.dart';
 import '../../core/export/monthly_statement.dart';
 import '../../core/analytics/insights.dart';
 import '../../core/analytics/kpi.dart';
 import '../../core/analytics/periods.dart';
 import '../../core/analytics/stats.dart';
-import '../../core/analytics/summary.dart';
 import '../../core/money/money.dart';
 import '../../core/config/brand.dart';
 import '../../core/l10n/strings.dart';
@@ -125,11 +124,7 @@ final _dashProvider = FutureProvider<_DashData>((ref) async {
   final analytics = ref.watch(analyticsRepoProvider);
   final catsRepo = ref.watch(categoriesRepoProvider);
   final txns = ref.watch(transactionsRepoProvider);
-  final summary = FinancialSummaryService(
-    analytics: analytics,
-    wallets: walletsRepo,
-  );
-  final total = await summary.totalMoney();
+  final total = await walletsRepo.visibleBalance();
   final wallets = await walletsRepo.all(includeArchived: false);
   final cats = await catsRepo.all();
   final hasTxns = (await txns.list(const TxnFilter(limit: 1))).isNotEmpty;
@@ -1373,7 +1368,7 @@ class _ForecastCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final f = Forecast.project(
+    final f = ForecastV2.project(
       spentSoFarMillimes: s.monthSpent,
       now: DateTime.now(),
       budgetMillimes: s.monthBudget,

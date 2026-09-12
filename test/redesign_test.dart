@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:masroufi/core/routing/router.dart' show shouldInterceptBack;
 import 'package:masroufi/core/analytics/periods.dart';
-import 'package:masroufi/core/analytics/summary.dart';
+import 'package:masroufi/core/analytics/stats.dart';
 import 'package:masroufi/core/icons/category_icons.dart';
 import 'package:masroufi/core/icons/category_visuals.dart';
 import 'package:masroufi/core/l10n/strings.dart';
@@ -237,7 +237,7 @@ void main() {
     });
   });
 
-  group('FinancialSummaryService + CategorySpendingService', () {
+  group('AnalyticsRepo + WalletsRepo totals', () {
     late AppDb db;
     late WalletsRepo wallets;
     late TransactionsRepo txns;
@@ -292,29 +292,37 @@ void main() {
         when: DateTime(2026, 6, 10, 8),
       );
 
-      final summary = FinancialSummaryService(
-        analytics: analytics,
-        wallets: wallets,
-      );
       final sept = Periods.month(now);
-      expect(await summary.spentIn(sept.start, sept.end), 205000);
-      expect(await summary.incomeIn(sept.start, sept.end), 500000);
+      expect(await analytics.expenseTotal(sept.start, sept.end), 205000);
+      expect(await analytics.incomeTotal(sept.start, sept.end), 500000);
       // initial 1,000,000 - expenses(205k+900k) + income 500k
-      expect(await summary.totalMoney(), 1000000 - 1105000 + 500000);
+      expect(await wallets.visibleBalance(), 1000000 - 1105000 + 500000);
 
-      final avg = await summary.averageSpending(sept.start, sept.end, now);
-      expect(avg.days, 8);
-      expect(avg.dailyAverage, 205000 ~/ 8);
+      final expense = await analytics.expenseTotal(sept.start, sept.end);
+      final days = Periods.elapsedDays(sept.start, sept.end, now);
+      expect(days, 8);
+      expect(expense ~/ days, 205000 ~/ 8);
 
-      final monthly = await summary.monthlyAverage(now);
-      expect(monthly.months, 3);
-      expect(monthly.monthlyAverage, 300000);
+      final series = await analytics.monthlySeries(
+        now: now,
+        monthsBack: 3,
+        includeCurrent: false,
+      );
+      final expenses = [for (final m in series) m.expense];
+      expect(expenses.length, 3);
+      expect(AnalyticsStats.averageMonthly(expenses), 300000);
 
-      final spending = CategorySpendingService(analytics: analytics);
-      final top = await spending.topCategories(sept.start, sept.end);
-      expect(top, hasLength(2));
-      expect(top.first.total, 120000);
-      expect(top.last.total, 85000);
+      final byCat = await analytics.expenseByCategory(sept.start, sept.end);
+      final top =
+          byCat.entries
+              .where((e) => e.value > 0)
+              .map((e) => (id: e.key, total: e.value))
+              .toList()
+            ..sort((a, b) => b.total.compareTo(a.total));
+      final top2 = top.take(2).toList();
+      expect(top2, hasLength(2));
+      expect(top2.first.total, 120000);
+      expect(top2.last.total, 85000);
 
       // Transfers never leak into income/expense.
       final bank = await wallets.create(name: 'Bank');
@@ -323,7 +331,7 @@ void main() {
         fromWalletId: cash,
         toWalletId: bank,
       );
-      expect(await summary.spentIn(sept.start, sept.end), 205000);
+      expect(await analytics.expenseTotal(sept.start, sept.end), 205000);
     });
 
     test('archived category history still resolves', () async {
