@@ -16,6 +16,7 @@ import '../../features/recurring/recurring_page.dart';
 import '../../features/reports/reports_page.dart';
 import '../../features/savings/savings_page.dart';
 import '../../features/settings/data_health_page.dart';
+import '../../features/settings/donate_page.dart';
 import '../../features/settings/fx_rates_page.dart';
 import '../../features/settings/pro_page.dart';
 import '../../features/settings/settings_page.dart';
@@ -127,6 +128,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/settings', builder: (c, s) => const SettingsPage()),
       GoRoute(path: '/settings/pro', builder: (c, s) => const ProPage()),
+      GoRoute(
+        path: '/settings/donate',
+        builder: (c, s) => const DonatePage(),
+      ),
       GoRoute(
         path: '/settings/reports',
         builder: (c, s) => const ReportsPage(),
@@ -256,6 +261,12 @@ abstract final class SettingsRoutes {
       route: '/settings/backup',
       group: 'data',
     ),
+    (
+      key: 'donate',
+      icon: Icons.volunteer_activism,
+      route: '/settings/donate',
+      group: 'support',
+    ),
   ];
 
   static String groupLabel(String lang, String group) =>
@@ -263,6 +274,7 @@ abstract final class SettingsRoutes {
         'money' => 'money',
         'analysis' => 'analysis',
         'data' => 'data',
+        'support' => 'support',
         _ => 'customization',
       });
 }

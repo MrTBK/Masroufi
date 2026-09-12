@@ -10,9 +10,10 @@ import '../config/brand.dart';
 ///
 /// Two activation paths (Tunisia reality: Play Billing often unusable):
 /// 1. Play Billing one-time purchase `masroufi_pro_2026`.
-/// 2. Manual code `MASR-XXXX-XXXX` (HMAC-SHA256 of device id with a
-///    release-time secret, verified offline). You sell codes via e-Dinar /
-///    cash and the user pastes the code — no network needed.
+/// 2. Manual code `MASR-XXXX-XXXX` (HMAC-SHA256 of the install id with a
+///    release-time secret, verified offline). Single-device: a code
+///    minted for one install verifies nowhere else, so codes cannot be
+///    shared. Legacy empty-id codes are rejected.
 ///
 /// The secret never ships in debug/test builds: manual codes verify only
 /// against [manualSecret] provided via `--dart-define PRO_SECRET`.
@@ -23,10 +24,12 @@ abstract final class ProService {
     defaultValue: '',
   );
 
-  /// Verify a manual code offline. Format `MASR-XXXX-XXXX` (uppercase
-  /// alnum). Returns true when HMAC(deviceId, secret) prefix matches.
+  /// Verify a manual code offline against this install's [deviceId].
+  /// Format `MASR-XXXX-XXXX` (uppercase alnum). Empty device ids never
+  /// verify, closing the old shared-code hole. Returns true on match.
   static bool verifyManualCode(String code, String deviceId) {
     if (manualSecret.isEmpty) return false;
+    if (deviceId.isEmpty) return false;
     final norm = code
         .trim()
         .toUpperCase()

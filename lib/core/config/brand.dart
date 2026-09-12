@@ -37,6 +37,12 @@ abstract final class Brand {
   );
   static const String proRemoveAdsSku = 'masroufi_pro_2026';
 
+  // ---- Manual PRO sales (Tunisia, D17 + Ba9chich) ----
+  static const String proD17Number = '56597139';
+  static const String proWhatsApp = '21656597139';
+  static const String proPriceLabel = '9.9 DT';
+  static const String ba9chichUrl = 'https://ba9chich.com/fr/aziz_tabakh';
+
   /// True when running with Google test IDs (debug default).
   static bool get usingTestAds => adAppId.contains('3940256099942544');
 }

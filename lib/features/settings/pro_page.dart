@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../app/providers.dart';
 import '../../core/ads/pro_service.dart';
+import '../../core/config/brand.dart';
 import '../../core/l10n/strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/design.dart';
@@ -159,6 +161,8 @@ class _ProPageState extends ConsumerState<ProPage> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
+            const _PaySection(),
+            const SizedBox(height: AppSpacing.md),
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -178,10 +182,10 @@ class _ProPageState extends ConsumerState<ProPage> {
                   OutlinedButton(
                     onPressed: () async {
                       final langNow = ref.read(languageProvider);
-                      // Device id:稳定的 install UUID would be ideal;
-                      // fallback to empty (code minted for empty id still
-                      // verifies when seller uses same convention).
-                      const deviceId = '';
+                      // Single-device binding: code must match this install.
+                      final deviceId = await ref
+                          .read(settingsRepoProvider)
+                          .installId();
                       final ok = ProService.verifyManualCode(
                         codeCtl.text,
                         deviceId,
@@ -215,6 +219,101 @@ class _ProPageState extends ConsumerState<ProPage> {
             const SizedBox(height: AppSpacing.md),
             Text(msg!),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Pay with D17 or Ba9chich (Tunisia): fixed 9.9 DT, proof over
+/// WhatsApp. Zero new deps: everything copies to clipboard, the buyer
+/// sends the screenshot + ref from their own chat app, the code comes
+/// back the same way and pastes into the manual box above.
+class _PaySection extends ConsumerWidget {
+  const _PaySection();
+
+  Future<void> _copy(
+    BuildContext context,
+    WidgetRef ref,
+    String text,
+  ) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    if (context.mounted) {
+      final lang = ref.read(languageProvider);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(Strings.get(lang, 'saved'))),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lang = ref.watch(languageProvider);
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            '${Strings.get(lang, 'proPayTitle')} • ${Brand.proPriceLabel}',
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            Strings.get(lang, 'proPayBody'),
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          FutureBuilder<String>(
+            future: ref.watch(settingsRepoProvider).installId(),
+            builder: (context, snap) {
+              final id = snap.data ?? '';
+              final short = id.length >= 8
+                  ? id.substring(0, 8).toUpperCase()
+                  : '…';
+              final msg =
+                  'Masroufi PRO ${Brand.proPriceLabel} ref $short';
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    '${Strings.get(lang, 'proMyRef')}: $short',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.copy, size: 18),
+                        label: Text(
+                          '${Strings.get(lang, 'proCopy')} ${Brand.proD17Number}',
+                        ),
+                        onPressed: () =>
+                            _copy(context, ref, Brand.proD17Number),
+                      ),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.copy, size: 18),
+                        label: Text(Strings.get(lang, 'proCopyLink')),
+                        onPressed: () =>
+                            _copy(context, ref, Brand.ba9chichUrl),
+                      ),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.copy, size: 18),
+                        label: Text(Strings.get(lang, 'proCopyRef')),
+                        onPressed: () => _copy(context, ref, short),
+                      ),
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.copy, size: 18),
+                        label: Text(Strings.get(lang, 'proCopyMsg')),
+                        onPressed: () => _copy(context, ref, msg),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
         ],
       ),
     );
