@@ -521,6 +521,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               : Strings.get(lang, 'adsRemove'),
           route: '/settings/pro',
         ),
+        _tile(
+          context,
+          lang,
+          icon: Icons.volunteer_activism,
+          title: Strings.get(lang, 'donate'),
+          route: '/settings/donate',
+        ),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
           secondary: const Icon(Icons.auto_awesome),

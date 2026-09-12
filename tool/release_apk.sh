@@ -34,7 +34,8 @@ for kv in \
   "ADS_BANNER_DASHBOARD:${ADS_BANNER_DASHBOARD:-}" \
   "ADS_BANNER_REPORTS:${ADS_BANNER_REPORTS:-}" \
   "ADS_INTERSTITIAL:${ADS_INTERSTITIAL:-}" \
-  "PRO_SECRET:${PRO_SECRET:-}"; do
+  "PRO_SECRET:${PRO_SECRET:-}" \
+  "PRO_PIN:${PRO_PIN:-}"; do
   k="${kv%%:*}"; v="${kv#*:}"
   [ -n "$v" ] && DEFINES+=(--dart-define "$k=$v")
 done
