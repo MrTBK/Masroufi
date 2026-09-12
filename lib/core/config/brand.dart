@@ -25,15 +25,15 @@ abstract final class Brand {
   );
   static const String bannerReportsId = String.fromEnvironment(
     'ADS_BANNER_REPORTS',
-    defaultValue: 'ca-app-pub-3940256099942544/6300978111',
+    defaultValue: 'ca-app-pub-9608102363292478/5570941707',
   );
   static const String interstitialExportId = String.fromEnvironment(
     'ADS_INTERSTITIAL',
-    defaultValue: 'ca-app-pub-3940256099942544/1033173712',
+    defaultValue: 'ca-app-pub-9608102363292478/7226417112',
   );
   static const String rewardedUnlockId = String.fromEnvironment(
     'ADS_REWARDED',
-    defaultValue: 'ca-app-pub-3940256099942544/5224354917',
+    defaultValue: 'ca-app-pub-9608102363292478/2329313654',
   );
   static const String proRemoveAdsSku = 'masroufi_pro_2026';
 
