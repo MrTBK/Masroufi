@@ -5,39 +5,63 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/providers.dart';
 import '../../core/config/brand.dart';
 import '../../core/l10n/strings.dart';
+import '../../core/promos/promos.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/haptics.dart';
 import '../../core/widgets/design.dart';
 
 /// Donations (Tunisia): D17 + Ba9chich, copy-to-clipboard, zero new
 /// deps. No tracking, no amounts leave the device.
-class DonatePage extends ConsumerWidget {
+class DonatePage extends ConsumerStatefulWidget {
   const DonatePage({super.key});
 
-  Future<void> _copy(
-    BuildContext context,
-    WidgetRef ref,
-    String text,
-  ) async {
+  @override
+  ConsumerState<DonatePage> createState() => _DonatePageState();
+}
+
+class _DonatePageState extends ConsumerState<DonatePage> {
+  /// Connectivity checked once on open: null while checking, false when
+  /// offline (ads unavailable), true when online (preload + show).
+  bool? _online;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkOnce();
+  }
+
+  Future<void> _checkOnce() async {
+    // Warm the rewarded slot on open when online: startup preload may
+    // have missed (offline at launch), and without this the first tap
+    // always fails. Offline: skip preload, ads cannot load anyway.
+    final online = await ref.read(onlineCheckProvider)();
+    if (!mounted) return;
+    setState(() => _online = online);
+    if (online) {
+      await ref.read(adsServiceProvider).preloadRewarded();
+    }
+  }
+
+  Future<void> _copy(BuildContext context, WidgetRef ref, String text) async {
     Haptics.tap();
     await Clipboard.setData(ClipboardData(text: text));
     if (context.mounted) {
       final lang = ref.read(languageProvider);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(Strings.get(lang, 'saved'))),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(Strings.get(lang, 'saved'))));
     }
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final lang = ref.watch(languageProvider);
     final scheme = Theme.of(context).colorScheme;
-    // Warm the rewarded slot on open: startup preload may have missed
-    // (offline at launch), and without this the first tap always fails.
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => ref.read(adsServiceProvider).preloadRewarded(),
-    );
+    final offline = _online == false;
+    final isPro = ref.watch(isProProvider);
+    // Paid promo of the day; null while registry empty (house invite
+    // card shows instead). PRO hides the slot entirely.
+    final promo = isPro ? null : Promos.pickFor(DateTime.now());
+    final showInvite = !isPro && promo == null;
     return Scaffold(
       appBar: AppBar(title: Text(Strings.get(lang, 'donate'))),
       body: ListView(
@@ -89,6 +113,13 @@ class DonatePage extends ConsumerWidget {
             label: Text(Strings.get(lang, 'donateWatch')),
             onPressed: () async {
               Haptics.tap();
+              if (offline) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(Strings.get(lang, 'donateOffline'))),
+                );
+                return;
+              }
               final ok = await ref
                   .read(adsServiceProvider)
                   .showRewarded(
@@ -100,16 +131,90 @@ class DonatePage extends ConsumerWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    Strings.get(
-                      lang,
-                      ok ? 'donateThanks' : 'donateAdNotReady',
-                    ),
+                    Strings.get(lang, ok ? 'donateThanks' : 'donateAdNotReady'),
                   ),
                 ),
               );
             },
           ),
           const SizedBox(height: AppSpacing.sm),
+          if (offline)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.cloud_off,
+                    size: 18,
+                    color: scheme.onSurfaceVariant,
+                    semanticLabel: Strings.get(lang, 'donateOffline'),
+                  ),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      Strings.get(lang, 'donateOffline'),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          if (!isPro && (showInvite || promo != null))
+            AppCard(
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: scheme.primaryContainer,
+                    foregroundColor: scheme.onPrimaryContainer,
+                    child: Icon(
+                      promo == null ? Icons.campaign : Icons.storefront,
+                      size: 22,
+                      semanticLabel: promo == null
+                          ? Strings.get(lang, 'promoInviteTitle')
+                          : Strings.get(lang, promo.titleKey),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.md2),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          promo == null
+                              ? Strings.get(lang, 'promoInviteTitle')
+                              : Strings.get(lang, promo.titleKey),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          promo == null
+                              ? Strings.get(lang, 'promoInviteBody')
+                              : Strings.get(lang, promo.bodyKey),
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Text(
+                            promo?.link ?? Brand.proWhatsApp,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: Strings.get(lang, 'proCopy'),
+                    icon: const Icon(Icons.copy, size: 20),
+                    onPressed: () =>
+                        _copy(context, ref, promo?.link ?? Brand.proWhatsApp),
+                  ),
+                ],
+              ),
+            ),
+          if (!isPro && (showInvite || promo != null))
+            const SizedBox(height: AppSpacing.sm),
           AppCard(
             child: Column(
               children: [

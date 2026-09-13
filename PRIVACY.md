@@ -18,7 +18,10 @@ backup) works in airplane mode with no account.
   your Advertising ID, approximate app interactions, and performance
   diagnostics to show ads. Finance never depends on ads; banners
   collapse offline. See https://policies.google.com/privacy.
-  PRO remove-ads disables all ad requests.
+   PRO remove-ads disables all ad requests.
+- **Static promos (donate page).** The advertise-here card and any
+  future paid placements ship inside the app: no SDK, no tracking,
+  no data leaves the device. Tapping copy only fills your clipboard.
 - **Cloud AI explanations (opt-in).** Off by default. When you enable
   it and tap "Explain", the app sends a redacted summary (period
   totals, top categories by name, forecast: int millimes) to our

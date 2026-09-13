@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/ads/ads_service.dart';
 import '../core/analytics/bi_scope.dart';
+import '../core/net/connectivity.dart';
 import '../data/database/app_db.dart';
 import '../data/repositories/analytics_repo.dart';
 import '../data/repositories/budgets_repo.dart';
@@ -146,3 +147,9 @@ final interstitialLastShownProvider = StateProvider<DateTime?>((ref) => null);
 
 /// Shared ads runtime (preloaded interstitial/rewarded).
 final adsServiceProvider = Provider<AdsService>((ref) => AdsService());
+
+/// Injectable online probe for ads moments (donate page checks once on
+/// open). Overridden in widget tests; defaults to a real DNS lookup.
+final onlineCheckProvider = Provider<Future<bool> Function()>(
+  (ref) => isOnline,
+);

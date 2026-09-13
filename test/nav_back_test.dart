@@ -102,14 +102,8 @@ void main() {
     // No store on desktop/tests: either the manual box or its loader
     // shows. The regression was a LateError crash in initState.
     expect(
-      find
-          .byType(TextField)
-          .evaluate()
-          .isNotEmpty ||
-          find
-              .byType(CircularProgressIndicator)
-              .evaluate()
-              .isNotEmpty,
+      find.byType(TextField).evaluate().isNotEmpty ||
+          find.byType(CircularProgressIndicator).evaluate().isNotEmpty,
       isTrue,
     );
     await unmountClean(t);
@@ -119,7 +113,12 @@ void main() {
     for (final lang in ['en', 'ar']) {
       final db = AppDb.forTesting(NativeDatabase.memory());
       final container = ProviderContainer(
-        overrides: [appDbProvider.overrideWithValue(db)],
+        overrides: [
+          appDbProvider.overrideWithValue(db),
+          // No real DNS in widget tests: pending lookup timers outlive
+          // the tree and trip the test binding invariant.
+          onlineCheckProvider.overrideWithValue(() async => true),
+        ],
       );
       addTearDown(() {
         container.dispose();
